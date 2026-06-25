@@ -13,32 +13,54 @@ this folder plus the build prompt and work through the steps below.
 
 ```
 cellar-club/
-├─ index.html                 Member app shell (PWA)
+├─ index.html                 Member PWA — all screens, wired to app.js
+├─ admin.html                 Manager admin panel — wired to admin.js
 ├─ manifest.webmanifest       Installable app config
 ├─ service-worker.js          Push handling + safe cache
 ├─ netlify.toml               Deploy config (SW no-cache, SPA fallback)
 ├─ .env.example               Every key, client vs secret
-├─ css/tokens.css             LOCKED "Hushed Luxury" design system
+├─ css/
+│  ├─ tokens.css              LOCKED "Hushed Luxury" design system
+│  ├─ app.css                 Member screen components (ported from prototype)
+│  └─ admin.css               Admin screen components (ported from prototype)
 ├─ js/
-│  ├─ config.js               Public-safe keys (fill in)
-│  └─ app.js                  Install gate, register, push subscribe, source capture
-├─ icons/                     (add icon-192/512, maskable, badge-72)
+│  ├─ config.js               Public-safe keys (fill in VAPID public)
+│  ├─ app.js                  Member: install gate, register, push, router, live data
+│  └─ admin.js                Admin: passphrase gate, AI post, broadcast, draw, etc.
+├─ icons/                     icon-192/512, maskable-512, badge-72, apple-touch (generated)
 └─ supabase/
-   ├─ schema.sql              All Phase 1 tables + RLS scaffolding
+   ├─ schema.sql              All Phase 1 tables + RLS scaffolding (already run)
+   ├─ phase1-extra.sql        RUN THIS TOO — membership-number sequence + upsert constraints
    └─ functions/
-      ├─ send-push/           Broadcast → Web Push (VAPID), logs to feed
-      └─ generate-post/       Manager photo + note → polished copy (Claude), never invents a price
+      ├─ member-api/          Public, service-role: register, save push sub, RSVP, waitlist
+      ├─ admin-api/           Token-gated, service-role: stats, members, draw, staff, suppliers, settings
+      ├─ send-push/           Broadcast → Web Push (VAPID), logs to feed  (token-gated)
+      └─ generate-post/       Manager photo + note → polished copy (Claude), never invents a price (token-gated)
 ```
 
-## What Claude Code finishes
-1. **Port the screens.** Lift the markup from `cellar-club-prototype.html` (member) and
-   `cellar-club-admin-prototype.html` (admin) into real views, wired to `app.js` / Supabase.
-2. **Build `admin.html` + `js/admin.js`** for the manager tools (create post, broadcast,
-   prize draw, staff leaderboard, insights, members, suppliers).
-3. Wire the AI "Generate post" UI to the `generate-post` function, and image cutout +
-   branded-template compositing (cutout via an image service; template in canvas/SVG).
-4. Member self-service RLS policies (if using Supabase Auth).
-5. Live deploy + end-to-end test (install → register → receive a real push).
+## Status — what's been built
+- **Member app** is complete: install gate (iOS instructions / Android `beforeinstallprompt`
+  / desktop), registration with hard 18+ gate + separate POPIA marketing consent, push
+  subscribe, Home, Discovery Box (waiting-list vs live via the `settings` flag), Wine
+  Library + detail, Member Specials, Events + RSVP, real QR Membership Card, Notifications
+  feed, re-engagement banner. Catalogue reads fall back to seed content against an empty DB.
+- **Admin app** is complete: passphrase sign-in, dashboard, AI "Generate post" with the
+  no-invented-price guardrail + client-side branded-template compositing, Broadcast
+  composer (audience + channels), Prize Draw, Staff Champions, Insights, Members (+ CSV
+  export), Suppliers (tier cycling), Discovery Box mode switch.
+- **Security model:** member PII never touches the anon client. All member writes go
+  through `member-api`; all admin reads/writes through `admin-api`. The anon key is used
+  only for public catalogue reads (RLS public-read policies).
+
+## What you finish at your computer (needs your accounts)
+1. Run `supabase/phase1-extra.sql` (after `schema.sql`).
+2. Generate VAPID keys → public into `js/config.js`, private into Supabase secrets.
+3. Set the `ADMIN_TOKEN` secret (this IS the manager's admin passphrase) and `ANTHROPIC_API_KEY`.
+4. Deploy the four Edge Functions.
+5. **Rotate the exposed `service_role` key** before real members register (see below).
+6. Connect to Netlify, point DNS at it, set Supabase Site URL, deploy.
+7. Test on a phone (install → register → enable alerts → fire a test push).
+8. Generate per-zone QR codes with `?source=` — last.
 
 ---
 
@@ -46,19 +68,29 @@ cellar-club/
 
 ### 1. Supabase
 - Create a project. Copy the **Project URL**, **anon key**, **service-role key**.
-- SQL editor → run `supabase/schema.sql`.
+- SQL editor → run `supabase/schema.sql`, then `supabase/phase1-extra.sql`.
 
 ### 2. Keys
 - VAPID keypair: `npx web-push generate-vapid-keys`
-- Put **public** values in `js/config.js`; keep **private/secret** values out of the client.
+- Put the **public** key in `js/config.js` (`VAPID_PUBLIC_KEY`); keep **private/secret**
+  values out of the client. (`SUPABASE_URL` + `SUPABASE_ANON_KEY` are already in `config.js`.)
+- Choose a long random **admin passphrase** — this becomes `ADMIN_TOKEN` and is what the
+  manager types to sign into `admin.html`. It is never stored in the front end.
 
 ### 3. Edge Functions
 ```
-supabase functions deploy send-push
-supabase functions deploy generate-post
+supabase functions deploy member-api      # public (verify_jwt on); service-role inside
+supabase functions deploy admin-api        # token-gated
+supabase functions deploy send-push        # token-gated
+supabase functions deploy generate-post    # token-gated
+
 supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:ashley@duncanbrown.co.za
 supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+supabase secrets set ADMIN_TOKEN=<your-long-random-admin-passphrase>
 ```
+> `member-api` is public (it only performs safe member writes) but still requires the anon
+> JWT that the app sends automatically. `admin-api`, `send-push` and `generate-post` reject
+> any request without the matching `x-admin-token`.
 
 ### 4. Domain (cPanel → Netlify)
 - Keep DNS at cPanel; **do not switch nameservers** (preserves your email).
