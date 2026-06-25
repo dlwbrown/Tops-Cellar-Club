@@ -7,27 +7,297 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Cellar Club" />
+  <meta name="description" content="Wine discovery, member specials and exclusive experiences from TOPS at SPAR Beacon Isle." />
   <title>TOPS Cellar Selection Club</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/css/tokens.css" />
+  <link rel="stylesheet" href="/css/app.css" />
 </head>
 <body>
-  <!-- App mounts here. Port the approved screens from cellar-club-prototype.html into
-       these views (gate / register / alerts / home / box / discover / wine / specials /
-       events / card / notifications), then drive them with the functions in app.js. -->
-  <div id="app">
-    <noscript>The Cellar Selection Club needs JavaScript.</noscript>
+  <noscript>The Cellar Selection Club needs JavaScript enabled.</noscript>
+
+  <!-- Boot splash (hidden once the first screen renders) -->
+  <div id="boot">
+    <div class="crest">&#127863;</div>
+    <div class="eb">TOPS Cellar Selection Club</div>
+    <div class="nm">The Cellar</div>
+  </div>
+
+  <div id="app" hidden>
+    <div class="vp" id="vp">
+
+      <!-- ============ GATE ============ -->
+      <section class="view" id="gate">
+        <div class="gate">
+          <div class="crest">&#127863;</div>
+          <div class="eb"><span class="eyebrow">TOPS CELLAR SELECTION CLUB</span></div>
+          <h1>Welcome to<br>the Club</h1>
+          <div class="sub">Add the club to your Home Screen to unlock your membership card, Discovery Box alerts and member-only specials.</div>
+
+          <!-- iOS instructions -->
+          <div class="steps" id="gate-ios" hidden>
+            <div class="stp"><div class="nm">1</div><div class="tx">Tap the <b>Share</b> icon
+              <svg class="share-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+              in the browser bar.</div></div>
+            <div class="stp"><div class="nm">2</div><div class="tx">Choose <b>Add to Home Screen</b>.</div></div>
+            <div class="stp"><div class="nm">3</div><div class="tx">Open the <b>Cellar Club</b> from your Home Screen to continue.</div></div>
+          </div>
+
+          <!-- Android: native install -->
+          <div class="steps" id="gate-android" hidden>
+            <div class="stp"><div class="nm">1</div><div class="tx">Tap <b>Install the Cellar Club</b> below.</div></div>
+            <div class="stp"><div class="nm">2</div><div class="tx">Confirm <b>Install</b> in the prompt.</div></div>
+            <div class="stp"><div class="nm">3</div><div class="tx">Open the <b>Cellar Club</b> from your Home Screen to continue.</div></div>
+          </div>
+
+          <!-- Desktop / other -->
+          <div class="steps" id="gate-other" hidden>
+            <div class="stp"><div class="nm">1</div><div class="tx">Open this page on your <b>phone</b> to join.</div></div>
+            <div class="stp"><div class="nm">2</div><div class="tx">Use your browser&rsquo;s <b>Install</b> / Add to Home Screen option.</div></div>
+            <div class="stp"><div class="nm">3</div><div class="tx">Open the app from your Home Screen to continue.</div></div>
+          </div>
+
+          <div class="cta">
+            <button class="btn block" id="btn-android-install" data-act="android-install" hidden>Install the Cellar Club</button>
+            <div class="note">Membership is free. You must be 18+ to join.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ REGISTER ============ -->
+      <section class="view" id="register">
+        <div class="bhead"><div class="ti" style="font-size:26px">Create your<br>membership</div></div>
+        <form class="reg" id="regform" novalidate>
+          <div class="field"><div class="fl">First name</div><input class="fi" name="first_name" placeholder="Ashley" autocomplete="given-name" required><div class="err">Please enter your first name.</div></div>
+          <div class="field"><div class="fl">Surname</div><input class="fi" name="surname" placeholder="Brown" autocomplete="family-name" required><div class="err">Please enter your surname.</div></div>
+          <div class="field"><div class="fl">Mobile</div><input class="fi" name="mobile" type="tel" placeholder="082 555 0142" autocomplete="tel" required><div class="err">Please enter your mobile number.</div></div>
+          <div class="field"><div class="fl">Email</div><input class="fi" name="email" type="email" placeholder="ashley@example.co.za" autocomplete="email" required><div class="err">Please enter a valid email.</div></div>
+          <div class="field"><div class="fl">Date of birth</div><input class="fi" name="dob" type="date" required><div class="err">You must be 18 or older to join.</div></div>
+          <div class="field"><div class="fl">Preferred store</div>
+            <select class="fi" name="preferred_store">
+              <option value="Beacon Isle">TOPS at SPAR Beacon Isle</option>
+            </select>
+          </div>
+          <div class="field"><div class="fl">Favourite wine styles</div>
+            <div class="pillrow" data-multi="fav_wine_styles">
+              <span class="pill" data-val="Red blends">Red blends</span>
+              <span class="pill" data-val="Chenin">Chenin</span>
+              <span class="pill" data-val="Cabernet">Cabernet</span>
+              <span class="pill" data-val="Pinotage">Pinotage</span>
+              <span class="pill" data-val="Bubbly">Bubbly</span>
+              <span class="pill" data-val="Ros&eacute;">Ros&eacute;</span>
+              <span class="pill" data-val="Sauvignon Blanc">Sauvignon Blanc</span>
+            </div>
+          </div>
+          <div class="field"><div class="fl">Favourite spirits</div>
+            <div class="pillrow" data-multi="fav_spirits">
+              <span class="pill" data-val="Whisky">Whisky</span>
+              <span class="pill" data-val="Gin">Gin</span>
+              <span class="pill" data-val="Brandy">Brandy</span>
+              <span class="pill" data-val="Rum">Rum</span>
+              <span class="pill" data-val="Tequila">Tequila</span>
+            </div>
+          </div>
+          <label class="consent" data-toggle="marketing_consent">
+            <span class="ck">&#10003;</span>
+            <span>Yes, send me member specials, events and Discovery Box news. I can opt out anytime. (Optional &mdash; not required to join.)</span>
+          </label>
+          <div class="consent" style="cursor:default;margin-top:10px">
+            <span class="ck on">&#10003;</span>
+            <span>I&rsquo;m 18 or older and agree to join the Cellar Selection Club.</span>
+          </div>
+          <div style="margin-top:20px"><button class="btn block" type="submit" id="reg-submit">Become a member</button></div>
+        </form>
+      </section>
+
+      <!-- ============ ALERTS ============ -->
+      <section class="view" id="alerts">
+        <div class="alerts">
+          <div class="bigbell">&#128276;</div>
+          <h1>One last thing &mdash;<br>switch on your alerts</h1>
+          <p>We&rsquo;ll let you know the moment your Discovery Box is ready, when new member specials drop, and when tasting tickets go live.</p>
+          <div class="cta">
+            <button class="btn block" data-act="enable-alerts">Enable my member alerts</button>
+            <div style="margin-top:12px"><button class="btn block ghost" data-act="skip-alerts">Maybe later</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ HOME ============ -->
+      <section class="view" id="home">
+        <div class="topbar"><div><div class="eyebrow">TOPS CELLAR SELECTION CLUB</div><div class="wm">The Cellar</div></div><div class="bell" id="home-bell" data-go="notifications">&#128276;</div></div>
+        <div class="greeting"><div class="hi" id="greeting">Welcome back,<br><em>Member</em></div><div class="meta" id="home-meta">Cellar Selection Club</div></div>
+        <div class="prize" id="home-prize"><span class="ic">&#127942;</span><div class="tx">You&rsquo;re entered in this month&rsquo;s draw &mdash; <b>R3,000 drinks hamper</b></div></div>
+
+        <div id="reengage-slot"></div>
+
+        <div class="hero" id="home-hero" data-go="box">
+          <div class="ht">THIS MONTH&rsquo;S DISCOVERY BOX</div><div class="hn">No.&nbsp;01</div>
+          <h2>The Cape<br>Winelands Edition</h2><p>Six bottles, hand-picked by Duncan. First boxes ship September.</p>
+          <div class="hr"><div class="pr">From R649</div><button class="btn" data-go="box" data-stop>Join the list</button></div>
+        </div>
+
+        <div class="label"><span>Quick actions</span><div class="ln"></div></div>
+        <div class="quick">
+          <div class="qa" data-go="box"><div class="ic">&#127863;</div><div class="t">Discovery Box</div></div>
+          <div class="qa" data-go="cellar" data-nav="cellar"><div class="ic">&#128214;</div><div class="t">Magazine</div></div>
+          <div class="qa" data-go="events"><div class="ic">&#127862;</div><div class="t">Events</div></div>
+          <div class="qa" data-go="specials"><div class="ic">&#127991;</div><div class="t">Specials</div></div>
+          <div class="qa" data-go="discover" data-nav="discover"><div class="ic">&#11088;</div><div class="t">Rate wines</div></div>
+          <div class="qa" data-go="card" data-nav="card"><div class="ic">&#127183;</div><div class="t">My card</div></div>
+        </div>
+
+        <div class="label"><span>This week</span><div class="ln"></div></div>
+        <div class="split" id="home-thisweek">
+          <div class="mini" data-go="cellar" data-nav="cellar"><div class="te">ISSUE 01 &middot; AUG</div><h3>Meet the Winemaker</h3><div class="s">Eben Sadie, Swartland</div><div class="c">Read this issue &rarr;</div></div>
+          <div class="mini" data-go="events"><div class="dt">Thu 27 &middot; 18:30</div><h3>Chenin &amp; Charcuterie</h3><div class="s">8 seats remaining</div><div class="c">RSVP &rarr;</div></div>
+        </div>
+
+        <div class="label"><span>Featured wine</span><div class="ln"></div></div>
+        <div id="home-featured">
+          <div class="wine" data-go="wine" data-wine="seed-palladius">
+            <div class="bottle"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
+            <div class="winfo"><div class="te">SADIE FAMILY WINES</div><h3>Palladius 2022</h3><div class="rg">Swartland &middot; White blend</div><div class="nt">&ldquo;Stone fruit, dried pear and a long saline finish.&rdquo;</div><div class="st"><span class="s">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="r">4.8 &middot; 126 members</span></div></div>
+          </div>
+        </div>
+        <div class="sp"></div>
+      </section>
+
+      <!-- ============ BOX ============ -->
+      <section class="view" id="box">
+        <div class="bhead"><div class="bk" data-go="home">&#8249;</div><div class="ti">Discovery Box</div></div>
+        <div class="hero" id="box-hero" style="margin:14px 22px 0;cursor:default">
+          <div class="ht" id="box-ht">THIS MONTH&rsquo;S BOX &middot; SHIPS SEPTEMBER</div><div class="hn">No.&nbsp;01</div>
+          <h2>The Cape<br>Winelands Edition</h2><p>Six bottles, hand-picked by Duncan, with tasting notes &amp; pairings.</p>
+          <div class="hr"><div class="pr">From R649</div></div>
+        </div>
+        <div class="label"><span>What&rsquo;s inside</span><div class="ln"></div></div>
+        <div id="box-included" style="padding:0 22px;font-size:12.5px;line-height:1.9;color:rgba(247,244,238,.82)">
+          &bull; 6 curated wines, spirits &amp; craft beers<br>&bull; Detailed tasting notes<br>&bull; Food pairing guide<br>&bull; The Cellar Selection magazine
+        </div>
+        <div style="padding:22px">
+          <button class="btn block" id="box-cta" data-act="join-waitlist">Join the priority list</button>
+          <div id="box-cta-note" style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:12px">Subscriptions open September &mdash; you&rsquo;ll be first to know.</div>
+        </div>
+        <div class="label"><span>Previous boxes</span><div class="ln"></div></div>
+        <div id="box-previous" style="padding:0 22px 24px;font-size:12px;color:var(--muted);font-style:italic;font-family:var(--disp)">Your past boxes will appear here once the first ships.</div>
+      </section>
+
+      <!-- ============ DISCOVER (wine library) ============ -->
+      <section class="view" id="discover">
+        <div class="bhead"><div class="ti">Wine Library</div></div>
+        <div style="padding:0 22px"><input class="fi" id="wine-search" placeholder="&#128269;  Search wines, regions, producers" style="background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:11px 14px;font-size:12px;color:var(--paper);width:100%"></div>
+        <div id="wine-list" style="margin-top:8px">
+          <div class="lrow" data-go="wine" data-wine="seed-palladius"><div class="mb"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="li"><h4>Palladius 2022</h4><div class="sm">Sadie Family &middot; Swartland</div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733; 4.8</div></div></div>
+          <div class="lrow" data-go="wine" data-wine="seed-heritage"><div class="mb"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="li"><h4>Heritage Heroes</h4><div class="sm">Nederburg &middot; Western Cape</div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734; 4.2</div></div></div>
+          <div class="lrow" data-go="wine" data-wine="seed-chenin"><div class="mb"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="li"><h4>Kleine Zalze Chenin</h4><div class="sm">Kleine Zalze &middot; Stellenbosch</div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734; 4.5</div></div></div>
+          <div class="lrow" data-go="wine" data-wine="seed-sixdogs"><div class="mb"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="li"><h4>Six Dogs Blue Gin</h4><div class="sm">Six Dogs &middot; Wellington</div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733; 4.7</div></div></div>
+        </div>
+        <div class="sp"></div>
+      </section>
+
+      <!-- ============ WINE DETAIL ============ -->
+      <section class="view" id="wine">
+        <div class="wdhero">
+          <div class="bk2" data-go="discover" data-nav="discover">&#8249;</div>
+          <div class="fav" id="wine-fav" data-act="toggle-fav">&#9825;</div>
+          <div class="big" id="wine-big"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
+        </div>
+        <div class="wbody" id="wine-body">
+          <div class="te">SADIE FAMILY WINES</div>
+          <h1>Palladius 2022</h1>
+          <div class="rg">Swartland &middot; White blend &middot; 13.5%</div>
+          <div class="specs">
+            <div class="spec"><div class="k">Region</div><div class="v">Swartland</div></div>
+            <div class="spec"><div class="k">Serve at</div><div class="v">10&ndash;12&deg;C</div></div>
+            <div class="spec"><div class="k">Pairing</div><div class="v">Roast chicken, aged cheese</div></div>
+            <div class="spec"><div class="k">Rating</div><div class="v">&#9733; 4.8 &middot; 126 members</div></div>
+          </div>
+          <div class="ptext">A benchmark Cape white from eleven varieties, old vines and dry-grown bush. Stone fruit and dried pear give way to a saline, mineral length that rewards patience. One of the most collected whites in the country.</div>
+          <div style="margin-top:18px;display:flex;gap:10px"><button class="btn" style="flex:1" data-act="rate-wine">Add my rating</button><button class="btn ghost" data-act="note-wine">My notes</button></div>
+        </div>
+      </section>
+
+      <!-- ============ SPECIALS ============ -->
+      <section class="view" id="specials">
+        <div class="bhead"><div class="bk" data-go="home">&#8249;</div><div class="ti">Member Specials</div></div>
+        <div class="spgrid" id="specials-list">
+          <div class="spcard"><span class="cat">WINE</span><div class="mb2"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="spinfo"><h4>Nederburg Heritage</h4><div class="sm">This weekend only &middot; Fri&ndash;Sun</div><div class="prc"><span class="now">R89.99</span><span class="was">R119.99</span></div></div></div>
+          <div class="spcard"><span class="cat">WHISKY</span><div class="mb2"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="spinfo"><h4>Bain&rsquo;s Cape Mountain</h4><div class="sm">Member price</div><div class="prc"><span class="now">R249</span><span class="was">R319</span></div></div></div>
+          <div class="spcard"><span class="cat">GIN</span><div class="mb2"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="spinfo"><h4>Six Dogs Blue</h4><div class="sm">While stocks last</div><div class="prc"><span class="now">R329</span><span class="was">R399</span></div></div></div>
+        </div>
+      </section>
+
+      <!-- ============ EVENTS ============ -->
+      <section class="view" id="events">
+        <div class="bhead"><div class="bk" data-go="home">&#8249;</div><div class="ti">Events</div></div>
+        <div class="evlist" id="events-list">
+          <div class="ev"><div class="cal"><div class="mo">Aug</div><div class="dy">27</div><div class="tm">18:30</div></div><div class="ei"><h4>Chenin &amp; Charcuterie</h4><div class="lo">Beacon Isle &middot; Tasting Room</div><div class="seats">8 seats remaining</div><span class="rsvp">RSVP</span></div></div>
+          <div class="ev"><div class="cal"><div class="mo">Sep</div><div class="dy">05</div><div class="tm">19:00</div></div><div class="ei"><h4>Swartland Masterclass</h4><div class="lo">With Eben Sadie</div><div class="seats">12 seats remaining</div><span class="rsvp">RSVP</span></div></div>
+          <div class="ev"><div class="cal"><div class="mo">Sep</div><div class="dy">20</div><div class="tm">18:00</div></div><div class="ei"><h4>Whisky &amp; Chocolate</h4><div class="lo">Brand ambassador evening</div><div class="seats">Limited seats</div><span class="rsvp">RSVP</span></div></div>
+        </div>
+      </section>
+
+      <!-- ============ CARD ============ -->
+      <section class="view" id="card">
+        <div class="bhead"><div class="ti">Membership</div></div>
+        <div class="cardview">
+          <div class="memcard">
+            <div class="eb"><span class="eyebrow">TOPS CELLAR SELECTION CLUB</span></div>
+            <div class="nm" id="card-name">Cellar Member</div>
+            <div class="no" id="card-no">MEMBER NO. ----</div>
+            <div class="qr" id="card-qr">
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100" height="100" fill="#f7f4ee"/>
+                <defs><pattern id="m" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#100f12"/><rect x="4" y="4" width="4" height="4" fill="#100f12"/></pattern></defs>
+                <rect x="14" y="14" width="72" height="72" fill="url(#m)"/>
+                <rect x="6" y="6" width="22" height="22" fill="#100f12"/><rect x="10" y="10" width="14" height="14" fill="#f7f4ee"/><rect x="13" y="13" width="8" height="8" fill="#100f12"/>
+                <rect x="72" y="6" width="22" height="22" fill="#100f12"/><rect x="76" y="10" width="14" height="14" fill="#f7f4ee"/><rect x="79" y="13" width="8" height="8" fill="#100f12"/>
+                <rect x="6" y="72" width="22" height="22" fill="#100f12"/><rect x="10" y="76" width="14" height="14" fill="#f7f4ee"/><rect x="13" y="79" width="8" height="8" fill="#100f12"/>
+              </svg>
+            </div>
+            <div class="scan">Scan in store to identify yourself</div>
+          </div>
+          <div class="tier" id="card-tier">Member since 2026 &middot; <b>Founding Member</b></div>
+        </div>
+      </section>
+
+      <!-- ============ NOTIFICATIONS ============ -->
+      <section class="view" id="notifications">
+        <div class="bhead"><div class="bk" data-go="home">&#8249;</div><div class="ti">Notifications</div></div>
+        <div class="nlist" id="notif-list">
+          <div class="empty">Your member alerts will appear here.</div>
+        </div>
+      </section>
+
+      <!-- ============ CELLAR (Phase 2 stub) ============ -->
+      <section class="view" id="cellar">
+        <div class="ph-screen"><div class="ic">&#128214;</div><h1>My Cellar &amp;<br>Magazine</h1><p>Your ratings, tasting notes, favourites and the digital magazine live here.</p><div class="soon">Phase 2</div></div>
+      </section>
+
+      <!-- ============ SOMMELIER (Phase 3 stub) ============ -->
+      <section class="view" id="sommelier">
+        <div class="ph-screen"><div class="ic">&#9678;</div><h1>AI Sommelier</h1><p>&ldquo;I&rsquo;ve got steak tonight&rdquo; &mdash; ask, and get the perfect bottle. Your personal wine guide.</p><div class="soon">Phase 3</div></div>
+      </section>
+
+    </div>
+
+    <!-- NAV -->
+    <nav class="nav hidden" id="nav">
+      <div class="ni2 on" data-nav="home" data-go="home"><div class="g">&#9737;</div>Home</div>
+      <div class="ni2" data-nav="discover" data-go="discover"><div class="g">&#9672;</div>Discover</div>
+      <div class="ni2" data-nav="cellar" data-go="cellar"><div class="g">&#9783;</div>Cellar</div>
+      <div class="ni2" data-nav="card" data-go="card"><div class="g">&#127183;</div>Card</div>
+      <div class="ni2" data-nav="sommelier" data-go="sommelier"><div class="g">&#9678;</div>Sommelier</div>
+    </nav>
+
+    <div class="toast" id="toast"></div>
   </div>
 
   <script src="/js/config.js"></script>
-  <script type="module">
-    import { boot } from '/js/app.js';
-    boot().then((state) => {
-      // state.stage === 'gate' | 'register'
-      // Render the matching screen. See README "Front-end" for the porting checklist.
-      console.log('Boot stage:', state);
-    });
-  </script>
+  <script type="module" src="/js/app.js"></script>
 </body>
 </html>

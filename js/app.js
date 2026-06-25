@@ -1,14 +1,23 @@
 // js/app.js
-// Core wiring for the member PWA. Screen markup ports from cellar-club-prototype.html;
-// this file holds the logic the prototype only mimicked: install gate, register, push.
+// Core controller for the member PWA. Screen markup is ported from the approved
+// cellar-club-prototype.html into index.html; this file is the logic the prototype
+// only mimicked: install gate, registration, push, routing and live data.
+//
+// Security model: member PII never touches the anon client. Public catalogue reads
+// use the anon key (RLS public-read policies); every member WRITE (register, save
+// push subscription, RSVP, waitlist, rating) goes through the `member-api` Edge
+// Function, which runs server-side with the service-role key.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const sb = createClient(window.CONFIG.SUPABASE_URL, window.CONFIG.SUPABASE_ANON_KEY);
+const CFG = window.CONFIG || {};
+const sb = createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+const FN = `${CFG.SUPABASE_URL}/functions/v1`;
+const LS_KEY = 'cellar.member';
 
-/* ---------- 1. INSTALL GATE ----------
-   Membership is only granted once the app runs installed (standalone) AND notifications
-   are on. iOS Safari has no install API, so we DETECT install rather than force it. */
+/* ============================================================= *
+ * 1. PLATFORM / INSTALL DETECTION
+ * ============================================================= */
 export function isInstalled() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
@@ -18,10 +27,17 @@ export function platform() {
   if (/Android/.test(ua)) return 'android';
   return 'other';
 }
+export function signupSource() {
+  return new URLSearchParams(location.search).get('source') || 'app';
+}
+export function staffCode() {
+  return new URLSearchParams(location.search).get('staff') || null;
+}
 
-/* Android can be offered a real install prompt; capture the event for a custom button. */
 let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; renderGate(); });
+window.addEventListener('appinstalled', () => { deferredPrompt = null; });
+
 export async function triggerAndroidInstall() {
   if (!deferredPrompt) return false;
   deferredPrompt.prompt();
@@ -30,18 +46,42 @@ export async function triggerAndroidInstall() {
   return outcome === 'accepted';
 }
 
-/* Capture the QR zone, e.g. ?source=whisky */
-export function signupSource() {
-  return new URLSearchParams(location.search).get('source') || 'app';
-}
-
-/* ---------- 2. SERVICE WORKER ---------- */
+/* ============================================================= *
+ * 2. SERVICE WORKER
+ * ============================================================= */
 export async function registerSW() {
   if (!('serviceWorker' in navigator)) return null;
-  return navigator.serviceWorker.register('/service-worker.js');
+  try { return await navigator.serviceWorker.register('/service-worker.js'); }
+  catch { return null; }
 }
 
-/* ---------- 3. PUSH SUBSCRIPTION ---------- */
+/* ============================================================= *
+ * 3. MEMBER STATE (local, non-PII-safe — id + display only)
+ * ============================================================= */
+function getMember() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch { return null; }
+}
+function setMember(m) { localStorage.setItem(LS_KEY, JSON.stringify(m)); }
+
+/* Edge Function helpers (anon JWT satisfies default verify_jwt; service role is internal). */
+async function memberApi(action, payload = {}) {
+  const res = await fetch(`${FN}/member-api`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': CFG.SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${CFG.SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+/* ============================================================= *
+ * 4. PUSH SUBSCRIPTION
+ * ============================================================= */
 function urlB64ToUint8(base64) {
   const pad = '='.repeat((4 - (base64.length % 4)) % 4);
   const b64 = (base64 + pad).replace(/-/g, '+').replace(/_/g, '/');
@@ -50,58 +90,491 @@ function urlB64ToUint8(base64) {
 }
 
 export async function enablePush(memberId) {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return { granted: false };
   const reg = await navigator.serviceWorker.ready;
   const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return { granted: false };
-
+  if (permission !== 'granted') {
+    await memberApi('set-notif', { member_id: memberId, granted: false }).catch(() => {});
+    return { granted: false };
+  }
+  if (!CFG.VAPID_PUBLIC_KEY || CFG.VAPID_PUBLIC_KEY.startsWith('YOUR-')) {
+    // No VAPID key configured yet — record permission, skip subscription.
+    await memberApi('set-notif', { member_id: memberId, granted: true }).catch(() => {});
+    return { granted: true, subscribed: false };
+  }
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlB64ToUint8(window.CONFIG.VAPID_PUBLIC_KEY),
+    applicationServerKey: urlB64ToUint8(CFG.VAPID_PUBLIC_KEY),
   });
   const json = sub.toJSON();
-  await sb.from('push_subscriptions').insert({
+  await memberApi('save-subscription', {
     member_id: memberId,
     endpoint: json.endpoint,
     p256dh: json.keys.p256dh,
     auth: json.keys.auth,
     device_type: platform(),
   });
-  await sb.from('members').update({ notif_permission_granted: true }).eq('id', memberId);
-  return { granted: true };
+  return { granted: true, subscribed: true };
 }
 
-/* ---------- 4. REGISTRATION ---------- */
+/* ============================================================= *
+ * 5. REGISTRATION
+ * ============================================================= */
 export async function registerMember(form) {
-  // form: { first_name, surname, mobile, email, dob, preferred_store,
-  //         fav_wine_styles[], fav_spirits[], marketing_consent }
   const age = (Date.now() - new Date(form.dob)) / (365.25 * 864e5);
-  if (age < 18) throw new Error('You must be 18 or older to join.');
-
-  const membership_number = String(Math.floor(1000 + Math.random() * 9000)); // replace with a real sequence
-  const now = new Date().toISOString();
-
-  const { data, error } = await sb.from('members').insert({
+  if (!form.dob || age < 18) throw new Error('You must be 18 or older to join.');
+  const member = await memberApi('register', {
     ...form,
-    membership_number,
     signup_source: signupSource(),
+    staff_code: staffCode(),
     install_completed: isInstalled(),
-    account_consent: true,
-    account_consent_at: now,
     marketing_consent: !!form.marketing_consent,
-    marketing_consent_at: form.marketing_consent ? now : null,
-  }).select().single();
-  if (error) throw error;
-
-  // auto-enter the current monthly prize draw (handle the join table / draw record server-side or here)
-  return data;
+  });
+  setMember(member);
+  return member;
 }
 
-/* ---------- 5. BOOT ---------- */
+/* ============================================================= *
+ * 6. ROUTER
+ * ============================================================= */
+const ONBOARDING = ['gate', 'register', 'alerts'];
+function go(id, nav) {
+  document.querySelectorAll('.view').forEach((v) => v.classList.remove('on'));
+  const view = document.getElementById(id);
+  if (view) view.classList.add('on');
+  document.getElementById('vp').scrollTop = 0;
+  const navbar = document.getElementById('nav');
+  navbar.classList.toggle('hidden', ONBOARDING.includes(id));
+  if (nav) setNav(nav);
+  if (id === 'card') renderCard();
+  if (id === 'notifications') markNotificationsSeen();
+}
+function setNav(n) {
+  document.querySelectorAll('.ni2').forEach((x) => x.classList.toggle('on', x.getAttribute('data-nav') === n));
+}
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (h && document.getElementById(h)) go(h); });
+
+/* ============================================================= *
+ * 7. UI HELPERS
+ * ============================================================= */
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 2600);
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function rands(n) { if (n == null || n === '') return ''; return 'R' + Number(n).toLocaleString('en-ZA', { minimumFractionDigits: Number(n) % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
+function timeAgo(iso) {
+  const s = (Date.now() - new Date(iso)) / 1000;
+  if (s < 3600) return Math.max(1, Math.round(s / 60)) + 'm ago';
+  if (s < 86400) return Math.round(s / 3600) + 'h ago';
+  return Math.round(s / 86400) + 'd ago';
+}
+
+/* ============================================================= *
+ * 8. GATE RENDERING
+ * ============================================================= */
+function renderGate() {
+  const p = platform();
+  document.getElementById('gate-ios').hidden = p !== 'ios';
+  document.getElementById('gate-android').hidden = p !== 'android';
+  document.getElementById('gate-other').hidden = p === 'ios' || p === 'android';
+  const btn = document.getElementById('btn-android-install');
+  btn.hidden = !(p === 'android' && deferredPrompt);
+}
+
+/* ============================================================= *
+ * 9. REGISTER FORM WIRING
+ * ============================================================= */
+function wireRegister() {
+  const form = document.getElementById('regform');
+  // multi-select pills
+  form.querySelectorAll('.pillrow[data-multi] .pill').forEach((pill) => {
+    pill.addEventListener('click', () => pill.classList.toggle('on'));
+  });
+  // marketing consent toggle
+  const consent = form.querySelector('[data-toggle="marketing_consent"]');
+  consent.addEventListener('click', (e) => { e.preventDefault(); consent.querySelector('.ck').classList.toggle('on'); });
+
+  // DOB max = today - 18y (hint; hard-checked on submit + DB)
+  const dob = form.querySelector('[name="dob"]');
+  const max = new Date(); max.setFullYear(max.getFullYear() - 18);
+  dob.max = max.toISOString().slice(0, 10);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    form.querySelectorAll('.field').forEach((f) => f.classList.remove('invalid'));
+    const data = Object.fromEntries(new FormData(form).entries());
+    let ok = true;
+    const fail = (name) => { const f = form.querySelector(`[name="${name}"]`)?.closest('.field'); if (f) f.classList.add('invalid'); ok = false; };
+    if (!data.first_name?.trim()) fail('first_name');
+    if (!data.surname?.trim()) fail('surname');
+    if (!data.mobile?.trim()) fail('mobile');
+    if (!/^\S+@\S+\.\S+$/.test(data.email || '')) fail('email');
+    const age = data.dob ? (Date.now() - new Date(data.dob)) / (365.25 * 864e5) : 0;
+    if (!data.dob || age < 18) fail('dob');
+    if (!ok) { toast('Please check the highlighted fields.'); return; }
+
+    data.fav_wine_styles = [...form.querySelectorAll('[data-multi="fav_wine_styles"] .pill.on')].map((p) => p.dataset.val);
+    data.fav_spirits = [...form.querySelectorAll('[data-multi="fav_spirits"] .pill.on')].map((p) => p.dataset.val);
+    data.marketing_consent = consent.querySelector('.ck').classList.contains('on');
+
+    const btn = document.getElementById('reg-submit');
+    btn.disabled = true; btn.textContent = 'Creating your membership…';
+    try {
+      await registerMember(data);
+      go('alerts');
+    } catch (err) {
+      toast(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Become a member';
+    }
+  });
+}
+
+/* ============================================================= *
+ * 10. DATA LOADERS (public reads; seed markup stays if empty/offline)
+ * ============================================================= */
+async function loadSettings() {
+  try {
+    const { data } = await sb.from('settings').select('value').eq('key', 'discovery_box_mode').single();
+    return (data?.value || 'waitlist').toString().replace(/"/g, '');
+  } catch { return 'waitlist'; }
+}
+
+async function loadHome() {
+  const m = getMember();
+  if (m) {
+    const hour = new Date().getHours();
+    const part = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('greeting').innerHTML = `${part},<br><em>${esc(m.first_name || 'Member')}</em>`;
+    const bits = [];
+    if (m.membership_number) bits.push('Member No. ' + esc(m.membership_number));
+    if (m.preferred_store) bits.push(esc(m.preferred_store));
+    document.getElementById('home-meta').textContent = bits.join(' · ') || 'Cellar Selection Club';
+  }
+  // current discovery box hero
+  try {
+    const { data } = await sb.from('discovery_boxes').select('*').neq('status', 'past').order('created_at', { ascending: false }).limit(1);
+    if (data && data[0]) applyBoxHero(document.getElementById('home-hero'), data[0], true);
+  } catch {}
+  // featured wine
+  try {
+    const { data } = await sb.from('wines').select('*').order('avg_rating', { ascending: false }).limit(1);
+    if (data && data[0]) renderFeaturedWine(data[0]);
+  } catch {}
+}
+
+function renderFeaturedWine(w) {
+  const host = document.getElementById('home-featured');
+  host.innerHTML = `
+    <div class="wine" data-go="wine" data-wine="${esc(w.id)}">
+      <div class="bottle${w.image_url ? ' img' : ''}"${w.image_url ? ` style="background-image:url('${esc(w.image_url)}')"` : ''}><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
+      <div class="winfo"><div class="te">${esc((w.producer || '').toUpperCase())}</div><h3>${esc(w.name)}</h3><div class="rg">${esc([w.region, w.varietal].filter(Boolean).join(' · '))}</div>
+      ${w.tasting_notes ? `<div class="nt">&ldquo;${esc(w.tasting_notes)}&rdquo;</div>` : ''}
+      <div class="st"><span class="s">★★★★★</span><span class="r">${(w.avg_rating || 0).toFixed(1)}</span></div></div>
+    </div>`;
+}
+
+function applyBoxHero(el, box, compact) {
+  el.querySelector('h2').innerHTML = esc(box.title || 'This month’s box');
+  const p = el.querySelector('p'); if (p && box.availability) p.textContent = box.availability;
+  const pr = el.querySelector('.pr'); if (pr && box.price) pr.textContent = 'From ' + rands(box.price);
+  if (box.image_url) { el.classList.add('img'); el.style.backgroundImage = `url('${box.image_url}')`; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
+  el.dataset.boxId = box.id;
+}
+
+async function loadBox() {
+  const mode = await loadSettings();
+  const cta = document.getElementById('box-cta');
+  const note = document.getElementById('box-cta-note');
+  const ht = document.getElementById('box-ht');
+  if (mode === 'live') {
+    cta.textContent = 'Reserve — collect in store';
+    cta.dataset.act = 'reserve-box';
+    note.textContent = 'Reserve now and collect at Beacon Isle.';
+    ht.textContent = 'THIS MONTH’S BOX · AVAILABLE NOW';
+  } else {
+    cta.textContent = 'Join the priority list';
+    cta.dataset.act = 'join-waitlist';
+    note.textContent = 'Subscriptions open September — you’ll be first to know.';
+    ht.textContent = 'THIS MONTH’S BOX · SHIPS SEPTEMBER';
+  }
+  try {
+    const { data } = await sb.from('discovery_boxes').select('*').neq('status', 'past').order('created_at', { ascending: false }).limit(1);
+    if (data && data[0]) {
+      applyBoxHero(document.getElementById('box-hero'), data[0], false);
+      const inc = Array.isArray(data[0].included) ? data[0].included : [];
+      if (inc.length) document.getElementById('box-included').innerHTML = inc.map((i) => '&bull; ' + esc(i)).join('<br>');
+    }
+    const { data: past } = await sb.from('discovery_boxes').select('title,month').eq('status', 'past').order('created_at', { ascending: false });
+    if (past && past.length) {
+      document.getElementById('box-previous').innerHTML = past.map((b) => `<div style="padding:10px 0;border-bottom:1px solid var(--cardbd)">${esc(b.title)} <span class="muted">· ${esc(b.month || '')}</span></div>`).join('');
+    }
+  } catch {}
+}
+
+async function loadSpecials() {
+  try {
+    const { data } = await sb.from('specials').select('*').eq('status', 'published').order('created_at', { ascending: false });
+    if (!data || !data.length) return; // keep seed
+    document.getElementById('specials-list').innerHTML = data.map((s) => `
+      <div class="spcard">
+        <span class="cat">${esc((s.category || 'SPECIAL').toUpperCase())}</span>
+        <div class="mb2${s.image_url ? ' img' : ''}"${s.image_url ? ` style="background-image:url('${esc(s.image_url)}')"` : ''}><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
+        <div class="spinfo"><h4>${esc(s.title)}</h4>
+          <div class="sm">${s.valid_until ? 'Until ' + new Date(s.valid_until).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : 'Member price'}</div>
+          <div class="prc"><span class="now">${rands(s.member_price)}</span>${s.normal_price ? `<span class="was">${rands(s.normal_price)}</span>` : ''}</div>
+        </div>
+      </div>`).join('');
+  } catch {}
+}
+
+async function loadEvents() {
+  try {
+    const { data } = await sb.from('events').select('*').gte('datetime', new Date(Date.now() - 864e5).toISOString()).order('datetime', { ascending: true });
+    if (!data || !data.length) return;
+    document.getElementById('events-list').innerHTML = data.map((ev) => {
+      const d = new Date(ev.datetime);
+      const mo = d.toLocaleDateString('en-ZA', { month: 'short' });
+      const dy = d.getDate();
+      const tm = d.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false });
+      return `<div class="ev" data-event="${esc(ev.id)}">
+        <div class="cal"><div class="mo">${mo}</div><div class="dy">${dy}</div><div class="tm">${tm}</div></div>
+        <div class="ei"><h4>${esc(ev.title)}</h4><div class="lo">${esc(ev.location || '')}</div>
+        ${ev.capacity ? `<div class="seats">${ev.capacity} seats</div>` : ''}
+        <span class="rsvp" data-act="rsvp" data-event="${esc(ev.id)}">RSVP</span></div>
+      </div>`;
+    }).join('');
+  } catch {}
+}
+
+let WINES = [];
+async function loadWines() {
+  try {
+    const { data } = await sb.from('wines').select('*').order('avg_rating', { ascending: false });
+    if (!data || !data.length) return;
+    WINES = data;
+    renderWineList(data);
+  } catch {}
+}
+function starStr(r) { const f = Math.round(r || 0); return '★★★★★☆☆☆☆☆'.slice(5 - f, 10 - f); }
+function renderWineList(list) {
+  document.getElementById('wine-list').innerHTML = list.map((w) => `
+    <div class="lrow" data-go="wine" data-wine="${esc(w.id)}">
+      <div class="mb${w.image_url ? ' img' : ''}"${w.image_url ? ` style="background-image:url('${esc(w.image_url)}')"` : ''}><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
+      <div class="li"><h4>${esc(w.name)}</h4><div class="sm">${esc([w.producer, w.region].filter(Boolean).join(' · '))}</div>
+      <div class="stars">${starStr(w.avg_rating)} ${(w.avg_rating || 0).toFixed(1)}</div></div>
+    </div>`).join('');
+}
+
+function renderWineDetail(w) {
+  const big = document.getElementById('wine-big');
+  if (w.image_url) { big.classList.add('img'); big.style.backgroundImage = `url('${w.image_url}')`; }
+  else { big.classList.remove('img'); big.style.backgroundImage = ''; }
+  document.getElementById('wine-body').innerHTML = `
+    <div class="te">${esc((w.producer || '').toUpperCase())}</div>
+    <h1>${esc(w.name)}</h1>
+    <div class="rg">${esc([w.region, w.varietal, w.country].filter(Boolean).join(' · '))}</div>
+    <div class="specs">
+      <div class="spec"><div class="k">Region</div><div class="v">${esc(w.region || '—')}</div></div>
+      <div class="spec"><div class="k">Serve at</div><div class="v">${esc(w.serving_temp || '—')}</div></div>
+      <div class="spec"><div class="k">Pairing</div><div class="v">${esc(w.food_pairings || '—')}</div></div>
+      <div class="spec"><div class="k">Rating</div><div class="v">★ ${(w.avg_rating || 0).toFixed(1)}</div></div>
+    </div>
+    ${w.story ? `<div class="ptext">${esc(w.story)}</div>` : ''}
+    ${w.awards ? `<div class="ptext"><b>Awards:</b> ${esc(w.awards)}</div>` : ''}
+    <div style="margin-top:18px;display:flex;gap:10px"><button class="btn" style="flex:1" data-act="rate-wine">Add my rating</button><button class="btn ghost" data-act="note-wine">My notes</button></div>`;
+}
+
+async function loadNotifications() {
+  try {
+    const { data } = await sb.from('notifications').select('*').order('sent_at', { ascending: false }).limit(40);
+    const host = document.getElementById('notif-list');
+    if (!data || !data.length) { host.innerHTML = '<div class="empty">Your member alerts will appear here.</div>'; updateBell(0); return; }
+    const lastSeen = Number(localStorage.getItem('cellar.notifSeen') || 0);
+    let unread = 0;
+    host.innerHTML = data.map((n) => {
+      const isUnread = new Date(n.sent_at).getTime() > lastSeen;
+      if (isUnread) unread++;
+      return `<div class="nrow${isUnread ? ' unread' : ''}">
+        <div class="ni">${n.image_url ? '🖼' : '🍷'}</div>
+        <div class="nt"><h4>${esc(n.title)}</h4>${n.body ? `<p>${esc(n.body)}</p>` : ''}<div class="tm">${timeAgo(n.sent_at)}</div></div>
+      </div>`;
+    }).join('');
+    updateBell(unread);
+  } catch {}
+}
+function updateBell(unread) {
+  const bell = document.getElementById('home-bell');
+  if (bell) bell.classList.toggle('has', unread > 0);
+}
+function markNotificationsSeen() {
+  localStorage.setItem('cellar.notifSeen', String(Date.now()));
+  updateBell(0);
+}
+
+/* ============================================================= *
+ * 11. MEMBERSHIP CARD (real QR)
+ * ============================================================= */
+let qrRendered = false;
+async function renderCard() {
+  const m = getMember();
+  if (!m) return;
+  document.getElementById('card-name').textContent = `${m.first_name || ''} ${m.surname || ''}`.trim() || 'Cellar Member';
+  document.getElementById('card-no').textContent = 'MEMBER NO. ' + (m.membership_number || '----');
+  const since = m.created_at ? new Date(m.created_at).toLocaleDateString('en-ZA', { month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-ZA', { month: 'short', year: 'numeric' });
+  document.getElementById('card-tier').innerHTML = `Member since ${esc(since)} &middot; <b>Founding Member</b>`;
+  if (qrRendered || !m.qr_token) return;
+  try {
+    const { default: QRCode } = await import('https://esm.sh/qrcode@1.5.4');
+    const canvas = document.createElement('canvas');
+    const value = `CELLAR:${m.membership_number || ''}:${m.qr_token}`;
+    await QRCode.toCanvas(canvas, value, { width: 280, margin: 0, color: { dark: '#100f12', light: '#f7f4ee' } });
+    const host = document.getElementById('card-qr');
+    host.innerHTML = ''; host.appendChild(canvas);
+    qrRendered = true;
+  } catch { /* keep the placeholder SVG */ }
+}
+
+/* ============================================================= *
+ * 12. RE-ENGAGEMENT (notifications later disabled)
+ * ============================================================= */
+function checkReengagement() {
+  const m = getMember();
+  const slot = document.getElementById('reengage-slot');
+  if (!m || !('Notification' in window)) { slot.innerHTML = ''; return; }
+  if (Notification.permission === 'denied' || Notification.permission === 'default') {
+    slot.innerHTML = `<div class="reengage"><div class="tx"><b>Your alerts are off.</b> Turn them back on so you don’t miss your Discovery Box, events and member-only pricing.</div><button class="btn" data-act="reenable">Re-enable</button></div>`;
+  } else {
+    slot.innerHTML = '';
+  }
+}
+
+/* ============================================================= *
+ * 13. GLOBAL EVENT DELEGATION
+ * ============================================================= */
+function wireDelegation() {
+  document.getElementById('app').addEventListener('click', async (e) => {
+    const goEl = e.target.closest('[data-go]');
+    const actEl = e.target.closest('[data-act]');
+
+    if (actEl) {
+      const act = actEl.dataset.act;
+      if (act === 'android-install') { await triggerAndroidInstall(); return; }
+      if (act === 'enable-alerts') { await onEnableAlerts(actEl); return; }
+      if (act === 'skip-alerts') { go('home', 'home'); return; }
+      if (act === 'reenable') { await onEnableAlerts(actEl); checkReengagement(); return; }
+      if (act === 'join-waitlist') { await onJoinWaitlist(actEl); return; }
+      if (act === 'reserve-box') { await onJoinWaitlist(actEl, true); return; }
+      if (act === 'rsvp') { e.stopPropagation(); await onRsvp(actEl); return; }
+      if (act === 'toggle-fav') { onToggleFav(actEl); return; }
+      if (act === 'rate-wine') { toast('Ratings open in Phase 2 — coming soon.'); return; }
+      if (act === 'note-wine') { toast('Tasting notes open in Phase 2 — coming soon.'); return; }
+    }
+
+    if (goEl) {
+      if (goEl.hasAttribute('data-stop')) e.stopPropagation();
+      const target = goEl.dataset.go;
+      if (target === 'wine' && goEl.dataset.wine) openWine(goEl.dataset.wine);
+      go(target, goEl.dataset.nav);
+    }
+  });
+
+  // wine search
+  const search = document.getElementById('wine-search');
+  if (search) search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    if (!WINES.length) return;
+    renderWineList(!q ? WINES : WINES.filter((w) => [w.name, w.producer, w.region, w.varietal].filter(Boolean).join(' ').toLowerCase().includes(q)));
+  });
+}
+
+function openWine(id) {
+  if (id.startsWith('seed-')) return; // seed rows keep their static markup
+  const w = WINES.find((x) => x.id === id);
+  if (w) renderWineDetail(w);
+}
+
+async function onEnableAlerts(btn) {
+  const m = getMember();
+  if (!m) { go('register'); return; }
+  btn.disabled = true; const label = btn.textContent; btn.textContent = 'Enabling…';
+  try {
+    const r = await enablePush(m.id);
+    if (r.granted) { setMember({ ...m, notif_permission_granted: true }); toast('Alerts enabled. Welcome to the Club.'); go('home', 'home'); }
+    else { toast('Alerts are off — you can enable them anytime from Home.'); go('home', 'home'); }
+  } catch (err) {
+    toast(err.message || 'Could not enable alerts.');
+  } finally { btn.disabled = false; btn.textContent = label; }
+}
+
+async function onJoinWaitlist(btn, reserve) {
+  const m = getMember();
+  if (!m) { go('register'); return; }
+  const boxId = document.getElementById('box-hero')?.dataset.boxId || null;
+  btn.disabled = true;
+  try {
+    await memberApi('join-waitlist', { member_id: m.id, box_id: boxId, reserve: !!reserve });
+    btn.textContent = reserve ? 'Reserved ✓' : 'You’re on the list ✓';
+    toast(reserve ? 'Reserved — collect in store.' : 'Added to the Discovery Box priority list.');
+  } catch (err) { toast(err.message || 'Could not add you to the list.'); btn.disabled = false; }
+}
+
+async function onRsvp(el) {
+  const m = getMember();
+  if (!m) { go('register'); return; }
+  const eventId = el.dataset.event;
+  try {
+    await memberApi('rsvp', { member_id: m.id, event_id: eventId });
+    el.textContent = 'Going ✓'; el.classList.add('going');
+    toast('You’re booked. See you there.');
+  } catch (err) { toast(err.message || 'Could not RSVP.'); }
+}
+
+function onToggleFav(el) {
+  el.classList.toggle('on');
+  el.innerHTML = el.classList.contains('on') ? '&#9829;' : '&#9825;';
+  toast(el.classList.contains('on') ? 'Saved to favourites (synced in Phase 2).' : 'Removed from favourites.');
+}
+
+/* ============================================================= *
+ * 14. BOOT
+ * ============================================================= */
 export async function boot() {
   await registerSW();
-  if (!isInstalled()) {
-    // show the install-gate screen (port markup from the prototype `#gate`)
-    return { stage: 'gate', platform: platform() };
-  }
-  return { stage: 'register' };
+  const member = getMember();
+  if (!isInstalled()) return { stage: 'gate', platform: platform() };
+  if (!member) return { stage: 'register' };
+  if (!member.notif_permission_granted && ('Notification' in window) && Notification.permission !== 'granted') return { stage: 'alerts' };
+  return { stage: 'home' };
 }
+
+async function start() {
+  wireRegister();
+  wireDelegation();
+  renderGate();
+
+  const state = await boot();
+  // reveal app, hide splash
+  document.getElementById('app').hidden = false;
+  document.getElementById('boot').classList.add('gone');
+
+  if (state.stage === 'gate') { go('gate'); }
+  else if (state.stage === 'register') { go('register'); }
+  else if (state.stage === 'alerts') { go('alerts'); }
+  else { go('home', 'home'); }
+
+  // background data load for the in-app screens
+  loadHome(); loadBox(); loadSpecials(); loadEvents(); loadWines(); loadNotifications();
+  checkReengagement();
+
+  // deep link from a tapped notification (?link=/specials etc.)
+  const link = new URLSearchParams(location.search).get('link');
+  if (link && state.stage === 'home') { const id = link.replace(/^\//, ''); if (document.getElementById(id)) go(id); }
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
