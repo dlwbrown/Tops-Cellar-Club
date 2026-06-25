@@ -4,6 +4,7 @@
    Colour/type tokens live in css/tokens.css (LOCKED) — do not redefine them here. */
 
 /* ---------- app shell ---------- */
+[hidden]{display:none!important}
 html,body{height:100%}
 body{
   background:radial-gradient(circle at 50% 0%,#17171b,#0a0a0c 70%);
@@ -70,7 +71,7 @@ body{
 .pill{font-size:11px;padding:8px 12px;border-radius:30px;border:1px solid var(--cardbd);background:var(--surface);color:var(--muted);cursor:pointer;user-select:none}
 .pill.on{border-color:var(--gold);color:#241a08;background:linear-gradient(180deg,var(--gold-br),var(--gold));font-weight:600}
 .consent{display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:11px;color:var(--muted);line-height:1.5;cursor:pointer}
-.ck{width:18px;height:18px;border-radius:5px;border:1px solid var(--gold);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:11px;background:transparent}
+.ck{width:18px;height:18px;border-radius:5px;border:1px solid var(--gold);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:transparent;font-size:11px;background:transparent}
 .ck.on{background:linear-gradient(180deg,var(--gold-br),var(--gold));color:#241a08}
 
 /* ===== ALERTS ===== */

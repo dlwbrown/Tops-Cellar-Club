@@ -8,12 +8,25 @@
 // push subscription, RSVP, waitlist, rating) goes through the `member-api` Edge
 // Function, which runs server-side with the service-role key.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Supabase JS is loaded lazily (dynamic import) so a CDN hiccup can never brick
+// the app: the gate, registration and card render without it, and catalogue reads
+// degrade gracefully to the built-in seed content. Member writes use fetch() to the
+// member-api Edge Function and never depend on this library.
 
 const CFG = window.CONFIG || {};
-const sb = createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
 const FN = `${CFG.SUPABASE_URL}/functions/v1`;
 const LS_KEY = 'cellar.member';
+
+let sb = null;
+async function getSb() {
+  if (sb) return sb;
+  if (!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY) return null;
+  try {
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    sb = createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+    return sb;
+  } catch { return null; }
+}
 
 /* ============================================================= *
  * 1. PLATFORM / INSTALL DETECTION
@@ -239,6 +252,7 @@ function wireRegister() {
  * ============================================================= */
 async function loadSettings() {
   try {
+    const sb = await getSb(); if (!sb) return 'waitlist';
     const { data } = await sb.from('settings').select('value').eq('key', 'discovery_box_mode').single();
     return (data?.value || 'waitlist').toString().replace(/"/g, '');
   } catch { return 'waitlist'; }
@@ -255,6 +269,7 @@ async function loadHome() {
     if (m.preferred_store) bits.push(esc(m.preferred_store));
     document.getElementById('home-meta').textContent = bits.join(' · ') || 'Cellar Selection Club';
   }
+  const sb = await getSb(); if (!sb) return;
   // current discovery box hero
   try {
     const { data } = await sb.from('discovery_boxes').select('*').neq('status', 'past').order('created_at', { ascending: false }).limit(1);
@@ -302,6 +317,7 @@ async function loadBox() {
     note.textContent = 'Subscriptions open September — you’ll be first to know.';
     ht.textContent = 'THIS MONTH’S BOX · SHIPS SEPTEMBER';
   }
+  const sb = await getSb(); if (!sb) return;
   try {
     const { data } = await sb.from('discovery_boxes').select('*').neq('status', 'past').order('created_at', { ascending: false }).limit(1);
     if (data && data[0]) {
@@ -318,6 +334,7 @@ async function loadBox() {
 
 async function loadSpecials() {
   try {
+    const sb = await getSb(); if (!sb) return;
     const { data } = await sb.from('specials').select('*').eq('status', 'published').order('created_at', { ascending: false });
     if (!data || !data.length) return; // keep seed
     document.getElementById('specials-list').innerHTML = data.map((s) => `
@@ -334,6 +351,7 @@ async function loadSpecials() {
 
 async function loadEvents() {
   try {
+    const sb = await getSb(); if (!sb) return;
     const { data } = await sb.from('events').select('*').gte('datetime', new Date(Date.now() - 864e5).toISOString()).order('datetime', { ascending: true });
     if (!data || !data.length) return;
     document.getElementById('events-list').innerHTML = data.map((ev) => {
@@ -354,6 +372,7 @@ async function loadEvents() {
 let WINES = [];
 async function loadWines() {
   try {
+    const sb = await getSb(); if (!sb) return;
     const { data } = await sb.from('wines').select('*').order('avg_rating', { ascending: false });
     if (!data || !data.length) return;
     WINES = data;
@@ -391,6 +410,7 @@ function renderWineDetail(w) {
 
 async function loadNotifications() {
   try {
+    const sb = await getSb(); if (!sb) return;
     const { data } = await sb.from('notifications').select('*').order('sent_at', { ascending: false }).limit(40);
     const host = document.getElementById('notif-list');
     if (!data || !data.length) { host.innerHTML = '<div class="empty">Your member alerts will appear here.</div>'; updateBell(0); return; }

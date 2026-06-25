@@ -297,6 +297,13 @@
     <div class="toast" id="toast"></div>
   </div>
 
+  <!-- Splash safety net: reveal the app even if the module is slow to start. -->
+  <script>
+    setTimeout(function () {
+      var b = document.getElementById('boot'), a = document.getElementById('app');
+      if (b && !b.classList.contains('gone')) { b.classList.add('gone'); if (a) a.hidden = false; }
+    }, 6000);
+  </script>
   <script src="/js/config.js"></script>
   <script type="module" src="/js/app.js"></script>
 </body>
