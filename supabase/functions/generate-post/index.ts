@@ -14,13 +14,17 @@
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-token',
 };
 
 const MODEL = 'claude-sonnet-4-6'; // vision-capable; swap to haiku for lower cost if quality allows
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+
+  // Admin-only: protects the Anthropic key from public use.
+  const expected = Deno.env.get('ADMIN_TOKEN');
+  if (!expected || req.headers.get('x-admin-token') !== expected) return json({ error: 'Unauthorised' }, 401);
 
   try {
     const { postType = 'Member Special', photoBase64, photoMediaType = 'image/jpeg', rawText = '' } =

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#100f12" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Cellar Club — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="/css/tokens.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body>
+  <noscript>The Cellar Club admin needs JavaScript enabled.</noscript>
+  <div id="admin">
+    <div class="vp" id="vp">
+
+      <!-- LOGIN -->
+      <section class="view on" id="login">
+        <div class="login">
+          <div class="crest">&#128272;</div>
+          <h1>Cellar Club<br>Admin</h1>
+          <div class="sub">Beacon Isle &middot; Manager sign-in</div>
+          <form class="pf" id="loginform">
+            <input id="passphrase" type="password" inputmode="text" autocomplete="current-password" placeholder="Manager passphrase" />
+            <div class="err" id="login-err"></div>
+            <div class="cta"><button class="btn block" type="submit">Sign in</button></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- DASHBOARD -->
+      <section class="view" id="dash">
+        <div class="dtop"><div class="who">Beacon Isle &middot; Manager</div><h1 id="dash-greeting">Good morning</h1></div>
+        <button class="createbtn" data-go="create" data-nav="create">
+          <div class="ic">&#10024;</div>
+          <div class="tx"><b>Create a post</b><span>Snap a photo &mdash; we write &amp; design it.</span></div>
+        </button>
+        <div class="stats" id="dash-stats">
+          <div class="stat"><div class="k">Members</div><div class="v" id="st-members">&mdash;<small> / 500</small></div><div class="delta" id="st-members-d">August target</div></div>
+          <div class="stat"><div class="k">Waiting list</div><div class="v" id="st-waitlist">&mdash;</div><div class="delta">Discovery Box</div></div>
+          <div class="stat"><div class="k">Push open rate</div><div class="v" id="st-open">&mdash;</div><div class="delta">last broadcast</div></div>
+          <div class="stat"><div class="k">Prize entrants</div><div class="v" id="st-entrants">&mdash;</div><div class="delta">this month</div></div>
+        </div>
+        <div class="label"><span>Jump to</span><div class="ln"></div></div>
+        <div class="jump">
+          <div class="jrow" data-go="broadcast" data-nav="broadcast"><div class="ji">&#128226;</div><div class="jt"><h4>Send a broadcast</h4><p>Push a message to members</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="draw"><div class="ji">&#127942;</div><div class="jt"><h4>Monthly prize draw</h4><p>Draw this month&rsquo;s winner</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="staff"><div class="ji">&#11088;</div><div class="jt"><h4>Staff Champions</h4><p>Signups by team member</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="suppliers"><div class="ji">&#129309;</div><div class="jt"><h4>Suppliers</h4><p>Partner tiers &amp; features</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="settings-view"><div class="ji">&#9881;</div><div class="jt"><h4>Discovery Box mode</h4><p id="dbmode-sub">Waiting list &middot; flip in September</p></div><div class="ch">&#8250;</div></div>
+        </div>
+        <div class="sp"></div>
+      </section>
+
+      <!-- CREATE (AI post) -->
+      <section class="view" id="create">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">New post</div></div>
+        <div class="body">
+          <div class="flabel">1 &middot; What kind of post?</div>
+          <div class="chips" id="post-types">
+            <span class="chip on" data-val="Member Special">Member Special</span>
+            <span class="chip" data-val="New Arrival">New Arrival</span>
+            <span class="chip" data-val="Event">Event</span>
+            <span class="chip" data-val="Competition">Competition</span>
+            <span class="chip" data-val="Discovery Box">Box</span>
+          </div>
+          <div class="flabel">2 &middot; Add a photo</div>
+          <label class="photo" id="photo-drop">
+            <img id="photo-preview" hidden alt="Product photo" />
+            <span class="cap" id="photo-cap">&#128247; Tap to snap or upload</span>
+            <input type="file" id="photo-input" accept="image/*" capture="environment" />
+          </label>
+          <div class="flabel">3 &middot; Add a line (optional)</div>
+          <textarea class="tinput" id="raw-line" placeholder="e.g. nederburg heritage R89.99 fri–sun"></textarea>
+          <div class="hint">Or leave blank &mdash; the photo is enough. Tip: include the price so we never have to guess it.</div>
+          <button class="gen" id="btn-generate"><span>&#10024;</span> <span id="gen-label">Generate post</span></button>
+        </div>
+      </section>
+
+      <!-- RESULT -->
+      <section class="view" id="result">
+        <div class="bhead"><div class="bk" data-go="create" data-nav="create">&#8249;</div><div class="ti">Ready to send</div></div>
+        <div class="body">
+          <div class="post" id="post-card">
+            <div class="ribbon" id="post-ribbon">MEMBER SPECIAL</div>
+            <div class="pbadge" id="post-badge"><div class="c">ONLY</div><div class="v" id="post-price">R&mdash;</div></div>
+            <div class="clean" id="post-image"><div class="cbottle"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div></div>
+            <div class="pe" id="post-kicker">THIS WEEKEND ONLY</div>
+            <h2 id="post-headline">Your headline</h2>
+            <div class="bt" id="post-body">Your post copy will appear here.</div>
+          </div>
+          <div class="okchip" id="post-okchip" hidden>&#10003; Price confirmed</div>
+          <div class="warnbox" id="post-warnbox" hidden>
+            <div class="wh">&#9888; Add a price before sending</div>
+            <input class="wi" id="post-price-input" inputmode="decimal" placeholder="e.g. 89.99" />
+          </div>
+          <div class="flabel">Edit copy</div>
+          <input class="tinput" id="edit-headline" placeholder="Headline" />
+          <input class="tinput" id="edit-kicker" placeholder="Kicker (e.g. This weekend only)" style="margin-top:8px" />
+          <textarea class="tinput" id="edit-body" placeholder="Body" style="margin-top:8px"></textarea>
+          <div class="flabel">Send to</div>
+          <div class="toggles" id="post-channels">
+            <span class="tog on" data-ch="push"><span class="dot"></span> Push</span>
+            <span class="tog on" data-ch="in_app"><span class="dot"></span> In-app</span>
+            <span class="tog" data-ch="email"><span class="dot"></span> Email</span>
+            <span class="tog" data-ch="web"><span class="dot"></span> Website</span>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:18px">
+            <button class="btn" style="flex:1" id="btn-approve">Approve &amp; send</button>
+            <button class="btn ghost" data-act="download-card">Save card</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- BROADCAST -->
+      <section class="view" id="broadcast">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Send a broadcast</div></div>
+        <div class="body">
+          <div class="flabel">Title</div>
+          <input class="tinput" id="bc-title" placeholder="e.g. Weekend offers are live" />
+          <div class="flabel">Message</div>
+          <textarea class="tinput" id="bc-body" placeholder="Member-only prices on wine, whisky and gin — this weekend only at Beacon Isle."></textarea>
+          <div class="flabel">Optional deep link</div>
+          <input class="tinput" id="bc-link" placeholder="/specials, /box, /events…" />
+          <div class="flabel">Who gets it?</div>
+          <div class="audience" id="bc-audience">
+            <div class="aud on" data-aud="all"><div class="rd"></div><div class="opt"><div>All members</div><div class="sm" id="aud-all-count">Everyone</div></div></div>
+            <div class="aud" data-aud="store"><div class="rd"></div><div class="opt"><div>By preferred store</div><div class="sm">Beacon Isle only</div></div></div>
+            <div class="aud" data-aud="taste"><div class="rd"></div><div class="opt"><div>By taste</div><div class="sm">e.g. whisky lovers</div></div></div>
+          </div>
+          <div class="tasteopts" id="taste-opts" hidden>
+            <select class="tinput" id="bc-taste">
+              <option value="Red blends">Red blends</option>
+              <option value="Chenin">Chenin</option>
+              <option value="Bubbly">Bubbly</option>
+              <option value="Whisky">Whisky</option>
+              <option value="Gin">Gin</option>
+            </select>
+          </div>
+          <div class="flabel">Channels</div>
+          <div class="toggles" id="bc-channels">
+            <span class="tog on" data-ch="push"><span class="dot"></span> Push</span>
+            <span class="tog on" data-ch="in_app"><span class="dot"></span> In-app</span>
+            <span class="tog" data-ch="email"><span class="dot"></span> Email</span>
+          </div>
+          <button class="btn block" style="margin-top:18px" id="btn-broadcast">Send broadcast</button>
+        </div>
+      </section>
+
+      <!-- PRIZE DRAW -->
+      <section class="view" id="draw">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Prize Draw</div></div>
+        <div class="drawcard">
+          <div class="tr">&#127942;</div>
+          <h2 id="draw-month">This month&rsquo;s Draw</h2>
+          <div class="pz">1st prize &middot; R3,000 drinks hamper</div>
+          <div class="en" id="draw-entrants">Every signup auto-entered</div>
+          <div class="winner" id="draw-winner" hidden><div class="wl">Winner</div><div class="wn" id="draw-winner-name">&mdash;</div><div class="wm" id="draw-winner-meta"></div></div>
+        </div>
+        <div style="padding:18px 20px 0"><button class="btn block" id="btn-draw">Draw a winner</button></div>
+        <div class="label"><span>Past winners</span><div class="ln"></div></div>
+        <div class="pastw" id="past-winners"><div class="empty">No past winners yet.</div></div>
+      </section>
+
+      <!-- STAFF CHAMPIONS -->
+      <section class="view" id="staff">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Staff Champions</div></div>
+        <div class="lead">
+          <div style="font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;font-weight:600;margin:6px 0 4px" id="staff-month">This month &middot; signups by staff</div>
+          <div id="staff-list"><div class="empty">Add staff members and codes to start tracking.</div></div>
+          <div style="margin-top:16px;font-size:11px;color:var(--muted);font-style:italic;font-family:var(--disp)">This month&rsquo;s champion wins the R500 voucher.</div>
+          <button class="btn block ghost" style="margin-top:14px" data-act="add-staff">&#43; Add a staff member</button>
+        </div>
+      </section>
+
+      <!-- SUPPLIERS -->
+      <section class="view" id="suppliers">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Suppliers</div></div>
+        <button class="btn block ghost" style="margin:8px 20px 0;width:calc(100% - 40px)" data-act="add-supplier">&#43; Add a supplier</button>
+        <div id="suppliers-list" style="margin-top:12px"><div class="empty">No suppliers yet.</div></div>
+      </section>
+
+      <!-- INSIGHTS -->
+      <section class="view" id="insights">
+        <div class="bhead"><div class="ti">Insights</div></div>
+        <div class="ins">
+          <div class="prog"><div class="k">Members vs August target</div><div class="v" id="ins-members">&mdash;<small> / 500</small></div><div class="bar"><i id="ins-bar" style="width:0%"></i></div></div>
+          <div class="label" style="padding:18px 0 6px"><span>Signups by zone</span><div class="ln"></div></div>
+          <div class="zones" id="ins-zones"><div class="empty">No signups yet.</div></div>
+          <div class="kpi" style="margin-top:18px">
+            <div class="b"><div class="k">Push open</div><div class="v" id="ins-push">&mdash;</div></div>
+            <div class="b"><div class="k">Email open</div><div class="v" id="ins-email">&mdash;</div></div>
+            <div class="b"><div class="k">Fully enabled</div><div class="v" id="ins-enabled">&mdash;</div></div>
+            <div class="b"><div class="k">Waiting list</div><div class="v" id="ins-waitlist">&mdash;</div></div>
+          </div>
+          <button class="btn block ghost" style="margin-top:18px" data-act="export-csv">Export member list (CSV)</button>
+        </div>
+      </section>
+
+      <!-- MEMBERS -->
+      <section class="view" id="members">
+        <div class="bhead"><div class="ti">Members</div></div>
+        <div style="padding:0 20px"><input class="tinput" id="member-search" placeholder="&#128269;  Search members" /></div>
+        <div id="members-list" style="margin-top:10px"><div class="empty">No members yet.</div></div>
+        <div class="sp"></div>
+      </section>
+
+      <!-- SETTINGS (Discovery Box mode) -->
+      <section class="view" id="settings-view">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Discovery Box mode</div></div>
+        <div class="body">
+          <p class="muted" style="font-size:12.5px;line-height:1.6">Controls what members see on the Discovery Box screen. Keep it on <b>Waiting list</b> until boxes ship in September, then switch to <b>Live ordering</b>.</p>
+          <div class="audience" id="dbmode" style="margin-top:16px">
+            <div class="aud" data-mode="waitlist"><div class="rd"></div><div class="opt"><div>Waiting list (pre-September)</div><div class="sm">&ldquo;Join the priority list&rdquo; — capture interest, no orders</div></div></div>
+            <div class="aud" data-mode="live"><div class="rd"></div><div class="opt"><div>Live ordering</div><div class="sm">&ldquo;Reserve — collect in store&rdquo;</div></div></div>
+          </div>
+          <button class="btn block" style="margin-top:18px" id="btn-save-mode">Save</button>
+        </div>
+      </section>
+
+    </div>
+
+    <nav class="nav hidden" id="nav">
+      <div class="ni2 on" data-nav="dash" data-go="dash"><div class="g">&#9737;</div>Dashboard</div>
+      <div class="ni2" data-nav="create" data-go="create"><div class="g">&#10024;</div>Create</div>
+      <div class="ni2" data-nav="broadcast" data-go="broadcast"><div class="g">&#128226;</div>Broadcast</div>
+      <div class="ni2" data-nav="insights" data-go="insights"><div class="g">&#9783;</div>Insights</div>
+      <div class="ni2" data-nav="members" data-go="members"><div class="g">&#128101;</div>Members</div>
+    </nav>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

@@ -13,11 +13,15 @@ import webpush from 'npm:web-push@3.6.7';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-token',
 };
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+
+  // Admin-only: must carry the ADMIN_TOKEN. The front end can't send push securely.
+  const expected = Deno.env.get('ADMIN_TOKEN');
+  if (!expected || req.headers.get('x-admin-token') !== expected) return json({ error: 'Unauthorised' }, 401);
 
   try {
     const { title, body, image, link, audience = { type: 'all' }, channels = ['push', 'in_app'], sent_by } =
