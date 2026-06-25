@@ -1,0 +1,21 @@
+# Netlify configuration for the Cellar Club PWA
+
+[build]
+  publish = "."          # static site; no build step unless you add a bundler
+
+# The service worker and manifest must never be cached, or members get stuck on old versions.
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# SPA fallback so deep links resolve to the app shell.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,37 @@
+/* TOPS Cellar Selection Club — "Hushed Luxury" design system (LOCKED)
+   Single source of truth for colour, type and core components.
+   Port screen markup from the approved prototypes; keep these tokens. */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  /* colour */
+  --bg:#100f12; --surface:#1a1a1e; --surface2:#222227;
+  --paper:#f7f4ee; --muted:#8a857c;
+  --gold:#c2a25a; --gold-br:#d8bd7e;
+  --wine:#5e1a27; --wine2:#3d121b;
+  --hair:rgba(194,162,90,.26); --cardbd:rgba(255,255,255,.06);
+  --amber:#e0a93b; --green:#8fc97f;
+  /* type */
+  --disp:'Cormorant Garamond', serif;
+  --body:'Inter', sans-serif;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--paper);font-family:var(--body);-webkit-font-smoothing:antialiased}
+
+.disp{font-family:var(--disp)}
+.eyebrow{font-size:8px;letter-spacing:2.4px;color:var(--gold);font-weight:700;text-transform:uppercase}
+
+.btn{border:none;padding:13px 18px;border-radius:30px;cursor:pointer;font-size:13px;font-weight:700;
+  letter-spacing:.2px;background:linear-gradient(180deg,var(--gold-br),var(--gold));color:#241a08}
+.btn--block{width:100%;padding:15px;font-size:14px}
+.btn--ghost{background:transparent;border:1px solid var(--hair);color:var(--gold-br);font-weight:600}
+
+.card{background:var(--surface);border:1px solid var(--cardbd);border-radius:16px}
+.hairline{height:1px;background:var(--hair)}
+
+.field-label{font-size:10px;letter-spacing:1.4px;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:7px}
+.field-input{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:13px 14px;
+  font-size:13px;color:var(--paper);width:100%;font-family:var(--body)}
+.field-input::placeholder{color:var(--muted)}

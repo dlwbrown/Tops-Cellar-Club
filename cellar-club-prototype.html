@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cellar Selection Club — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#100f12;--surface:#1a1a1e;--surface2:#222227;--paper:#f7f4ee;--muted:#8a857c;
+    --gold:#c2a25a;--gold-br:#d8bd7e;--wine:#5e1a27;--wine2:#3d121b;
+    --hair:rgba(194,162,90,.26);--cardbd:rgba(255,255,255,.06);
+    --disp:'Cormorant Garamond',serif;--body:'Inter',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--body);background:radial-gradient(circle at 50% 0%,#17171b,#0a0a0c 70%);
+    min-height:100vh;color:#e8e6e0;padding:22px 12px 40px;display:flex;flex-direction:column;align-items:center}
+  .ptag{font-size:11px;color:#7d7a73;letter-spacing:.4px;margin-bottom:14px;text-align:center}
+  .ptag b{color:var(--gold-br)}
+
+  .phone{width:390px;max-width:96vw;background:#000;border-radius:46px;padding:11px;
+    box-shadow:0 36px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)}
+  .screen{border-radius:36px;overflow:hidden;position:relative;background:var(--bg);color:var(--paper);
+    height:min(780px,84vh);display:flex;flex-direction:column}
+
+  .vp{flex:1;overflow-y:auto;scrollbar-width:none}
+  .vp::-webkit-scrollbar{display:none}
+  .view{display:none}
+  .view.on{display:block}
+
+  .status{display:flex;justify-content:space-between;align-items:center;padding:13px 22px 4px;font-size:11.5px;font-weight:600;flex-shrink:0}
+  .status .r{display:flex;gap:5px;align-items:center;opacity:.85;font-size:10.5px}
+
+  /* shared bits */
+  .eyebrow{font-size:8px;letter-spacing:2.4px;color:var(--gold);font-weight:700}
+  .label{display:flex;align-items:center;gap:11px;padding:22px 22px 12px}
+  .label span{font-size:9px;letter-spacing:2.4px;color:var(--gold);font-weight:700;text-transform:uppercase}
+  .label .ln{flex:1;height:1px;background:var(--hair)}
+  .btn{border:none;padding:13px 18px;border-radius:30px;cursor:pointer;font-size:13px;font-weight:700;
+    background:linear-gradient(180deg,var(--gold-br),var(--gold));color:#241a08;letter-spacing:.2px}
+  .btn.block{width:100%;padding:15px;font-size:14px}
+  .ghost{background:transparent;border:1px solid var(--hair);color:var(--gold-br);font-weight:600}
+  .bhead{display:flex;align-items:center;gap:13px;padding:14px 20px 6px}
+  .bhead .bk{width:34px;height:34px;border-radius:50%;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:16px;cursor:pointer}
+  .bhead .ti{font-family:var(--disp);font-size:22px;font-weight:600;color:var(--paper)}
+
+  /* ===== GATE ===== */
+  .gate{padding:26px 26px 30px;min-height:100%;display:flex;flex-direction:column}
+  .gate .crest{width:64px;height:64px;border-radius:50%;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;margin:18px auto 0;color:var(--gold-br);font-size:26px}
+  .gate .eb{text-align:center;margin-top:20px}
+  .gate h1{font-family:var(--disp);font-weight:600;font-size:34px;text-align:center;line-height:1.04;margin-top:8px;color:var(--paper)}
+  .gate .sub{text-align:center;font-size:13px;color:var(--muted);line-height:1.6;margin-top:14px;padding:0 6px}
+  .steps{margin-top:24px;display:flex;flex-direction:column;gap:13px}
+  .stp{display:flex;gap:13px;align-items:flex-start;background:var(--surface);border:1px solid var(--cardbd);border-radius:15px;padding:14px}
+  .stp .nm{width:24px;height:24px;border-radius:50%;background:var(--gold);color:#241a08;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--body)}
+  .stp .tx{font-size:12.5px;line-height:1.45;color:var(--paper)}
+  .stp .tx b{color:var(--gold-br)}
+  .gate .cta{margin-top:auto;padding-top:24px}
+  .gate .note{text-align:center;font-size:10.5px;color:var(--muted);margin-top:12px}
+
+  /* ===== REGISTER ===== */
+  .reg{padding:6px 22px 26px}
+  .field{margin-top:14px}
+  .field .fl{font-size:10px;letter-spacing:1.4px;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:7px}
+  .field .fi{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:13px 14px;font-size:13px;color:var(--paper)}
+  .field .fi.ph{color:var(--muted)}
+  .pillrow{display:flex;gap:7px;flex-wrap:wrap}
+  .pill{font-size:11px;padding:8px 12px;border-radius:30px;border:1px solid var(--cardbd);background:var(--surface);color:var(--muted)}
+  .pill.on{border-color:var(--gold);color:#241a08;background:linear-gradient(180deg,var(--gold-br),var(--gold));font-weight:600}
+  .consent{display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:11px;color:var(--muted);line-height:1.5}
+  .ck{width:18px;height:18px;border-radius:5px;border:1px solid var(--gold);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:11px}
+
+  /* ===== ALERTS ===== */
+  .alerts{padding:26px;min-height:100%;display:flex;flex-direction:column;text-align:center}
+  .alerts .bigbell{font-size:42px;margin:36px auto 0}
+  .alerts h1{font-family:var(--disp);font-size:30px;font-weight:600;margin-top:18px;line-height:1.1}
+  .alerts p{font-size:13px;color:var(--muted);line-height:1.6;margin-top:14px;padding:0 8px}
+  .alerts .cta{margin-top:auto;padding-top:24px}
+
+  /* ===== HOME ===== */
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding:8px 22px 14px}
+  .wm{font-family:var(--disp);font-size:19px;font-weight:600;color:var(--paper);line-height:1}
+  .bell{width:36px;height:36px;border-radius:50%;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--gold-br);position:relative;font-size:15px;cursor:pointer}
+  .bell::after{content:"";position:absolute;top:8px;right:9px;width:6px;height:6px;border-radius:50%;background:var(--wine);box-shadow:0 0 0 2px var(--bg)}
+  .greeting{padding:2px 22px 14px}
+  .hi{font-family:var(--disp);font-size:29px;font-weight:500;color:var(--paper);line-height:1.05}
+  .hi em{font-style:italic;color:var(--gold-br)}
+  .meta{margin-top:7px;font-size:10px;letter-spacing:1.3px;color:var(--muted);text-transform:uppercase;font-weight:600}
+  .prize{margin:0 18px 4px;display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(194,162,90,.1),transparent);border:1px solid rgba(194,162,90,.25)}
+  .prize .ic{font-size:17px}.prize .tx{font-size:10.5px;line-height:1.35}.prize .tx b{color:var(--gold-br)}
+  .hero{margin:14px 18px 0;border-radius:20px;overflow:hidden;position:relative;min-height:206px;padding:18px;display:flex;flex-direction:column;justify-content:flex-end;cursor:pointer;
+    background:radial-gradient(120% 90% at 80% 0%,rgba(194,162,90,.2),transparent 55%),linear-gradient(160deg,var(--wine),var(--wine2) 55%,#240a10);border:1px solid rgba(194,162,90,.3)}
+  .hero::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 2px,transparent 2px 9px)}
+  .hero .ht{position:absolute;top:16px;left:18px;font-size:8.5px;letter-spacing:2.2px;color:var(--gold-br);font-weight:700}
+  .hero .hn{position:absolute;top:14px;right:18px;font-family:var(--disp);font-size:13px;color:rgba(255,255,255,.6)}
+  .hero h2{font-family:var(--disp);font-size:25px;font-weight:600;position:relative;line-height:1.04}
+  .hero p{margin-top:7px;font-size:11.5px;color:rgba(255,255,255,.78);max-width:215px;position:relative;line-height:1.5}
+  .hero .hr{margin-top:14px;display:flex;align-items:center;justify-content:space-between;position:relative;gap:10px}
+  .hero .pr{font-family:var(--disp);font-size:15px;color:var(--gold-br)}
+  .quick{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 18px}
+  .qa{background:var(--surface);border:1px solid var(--cardbd);border-radius:15px;padding:14px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer}
+  .qa .ic{font-size:18px;color:var(--gold-br)}.qa .t{font-size:10px;color:var(--paper);opacity:.9;font-weight:500}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:0 18px}
+  .mini{border-radius:16px;border:1px solid var(--cardbd);min-height:150px;padding:15px;display:flex;flex-direction:column;justify-content:space-between;background:var(--surface);cursor:pointer}
+  .mini .te{font-size:8px;letter-spacing:1.8px;color:var(--gold);font-weight:700}
+  .mini h3{font-family:var(--disp);font-size:18px;font-weight:600;margin-top:auto;line-height:1.08}
+  .mini .s{font-size:10px;color:var(--muted);margin-top:4px}.mini .c{margin-top:11px;font-size:10px;font-weight:700;color:var(--gold-br)}
+  .mini .dt{font-family:var(--disp);font-size:14px;color:var(--gold-br)}
+
+  /* wine card / list */
+  .wine{margin:0 18px;background:var(--surface);border:1px solid rgba(194,162,90,.18);border-radius:18px;padding:18px;display:flex;gap:16px;align-items:center;cursor:pointer}
+  .bottle{width:42px;height:140px;flex-shrink:0;position:relative;filter:drop-shadow(0 9px 12px rgba(0,0,0,.5))}
+  .bottle .nk{position:absolute;top:0;left:50%;transform:translateX(-50%);width:14px;height:31px;background:linear-gradient(90deg,#0c0c0e,#2a2a30,#0c0c0e);border-radius:5px 5px 0 0}
+  .bottle .bd{position:absolute;bottom:0;width:42px;height:113px;background:linear-gradient(90deg,#08080a,#33333c 45%,#0c0c0e);border-radius:7px 7px 6px 6px}
+  .bottle .lb{position:absolute;bottom:24px;left:5px;width:32px;height:50px;background:linear-gradient(180deg,#efe9dc,#cfc6b2);border-radius:2px}
+  .bottle .lb::before{content:"";position:absolute;top:8px;left:5px;right:5px;height:1px;background:var(--wine)}
+  .bottle .lb::after{content:"";position:absolute;top:12px;left:5px;right:5px;height:1px;background:var(--gold)}
+  .winfo{flex:1;min-width:0}
+  .winfo .te{font-size:8px;letter-spacing:2px;color:var(--gold);font-weight:700}
+  .winfo h3{font-family:var(--disp);font-size:20px;font-weight:600;margin-top:5px;line-height:1.06}
+  .winfo .rg{font-size:10px;color:var(--muted);margin-top:3px}
+  .winfo .nt{font-size:10.5px;color:rgba(247,244,238,.6);margin-top:8px;line-height:1.4;font-style:italic;font-family:var(--disp)}
+  .winfo .st{margin-top:9px;display:flex;align-items:center;gap:7px}.winfo .st .s{color:var(--gold-br);font-size:11px;letter-spacing:2px}.winfo .st .r{font-size:9.5px;color:var(--muted)}
+
+  /* list rows */
+  .lrow{display:flex;gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--cardbd);cursor:pointer}
+  .lrow .mb{width:26px;height:88px;position:relative;flex-shrink:0;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))}
+  .lrow .mb .bd{position:absolute;bottom:0;width:26px;height:72px;background:linear-gradient(90deg,#08080a,#33333c 45%,#0c0c0e);border-radius:5px}
+  .lrow .mb .nk{position:absolute;top:0;left:50%;transform:translateX(-50%);width:9px;height:20px;background:#1c1c20;border-radius:3px 3px 0 0}
+  .lrow .mb .lb{position:absolute;bottom:16px;left:3px;width:20px;height:30px;background:#e8e1d2;border-radius:1px}
+  .lrow .li h4{font-family:var(--disp);font-size:17px;font-weight:600;line-height:1.1}
+  .lrow .li .sm{font-size:10px;color:var(--muted);margin-top:3px}
+  .lrow .li .stars{color:var(--gold-br);font-size:10px;letter-spacing:1.5px;margin-top:5px}
+
+  /* wine detail */
+  .wdhero{height:230px;position:relative;background:radial-gradient(120% 90% at 50% 10%,rgba(194,162,90,.18),transparent 60%),linear-gradient(180deg,#1a1a1e,#100f12);display:flex;align-items:center;justify-content:center}
+  .wdhero .big{width:58px;height:190px;position:relative;filter:drop-shadow(0 16px 22px rgba(0,0,0,.6))}
+  .wdhero .big .nk{position:absolute;top:0;left:50%;transform:translateX(-50%);width:19px;height:42px;background:linear-gradient(90deg,#0c0c0e,#2c2c33,#0c0c0e);border-radius:6px 6px 0 0}
+  .wdhero .big .bd{position:absolute;bottom:0;width:58px;height:155px;background:linear-gradient(90deg,#07070a,#3a3a44 45%,#0d0d10);border-radius:10px}
+  .wdhero .big .lb{position:absolute;bottom:34px;left:8px;width:42px;height:66px;background:linear-gradient(180deg,#efe9dc,#cfc6b2);border-radius:2px}
+  .wdhero .big .lb::before{content:"";position:absolute;top:11px;left:7px;right:7px;height:1px;background:var(--wine)}
+  .wdhero .fav{position:absolute;top:16px;right:18px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.35);border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:16px}
+  .wdhero .bk2{position:absolute;top:16px;left:18px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.35);border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:16px;cursor:pointer}
+  .wbody{padding:18px 22px 24px}
+  .wbody .te{font-size:8.5px;letter-spacing:2.2px;color:var(--gold);font-weight:700}
+  .wbody h1{font-family:var(--disp);font-size:30px;font-weight:600;line-height:1.04;margin-top:6px}
+  .wbody .rg{font-size:11px;color:var(--muted);margin-top:5px}
+  .specs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+  .spec{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:12px}
+  .spec .k{font-size:8.5px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;font-weight:600}
+  .spec .v{font-size:12px;color:var(--paper);margin-top:5px;line-height:1.4}
+  .ptext{font-size:12.5px;line-height:1.65;color:rgba(247,244,238,.78);margin-top:16px}
+
+  /* specials */
+  .spgrid{padding:4px 18px 20px;display:flex;flex-direction:column;gap:12px}
+  .spcard{border-radius:16px;border:1px solid var(--cardbd);background:var(--surface);overflow:hidden;display:flex;align-items:center;gap:14px;padding:14px;position:relative}
+  .spcard .cat{position:absolute;top:10px;right:12px;font-size:7.5px;letter-spacing:1.5px;color:#241a08;background:var(--gold-br);padding:3px 8px;border-radius:20px;font-weight:700}
+  .spcard .mb2{width:30px;height:96px;position:relative;flex-shrink:0;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))}
+  .spcard .mb2 .bd{position:absolute;bottom:0;width:30px;height:80px;background:linear-gradient(90deg,#08080a,#33333c 45%,#0c0c0e);border-radius:5px}
+  .spcard .mb2 .nk{position:absolute;top:0;left:50%;transform:translateX(-50%);width:10px;height:22px;background:#1c1c20;border-radius:3px}
+  .spcard .mb2 .lb{position:absolute;bottom:18px;left:3px;width:24px;height:34px;background:#e8e1d2;border-radius:1px}
+  .spinfo h4{font-family:var(--disp);font-size:18px;font-weight:600;line-height:1.1}
+  .spinfo .sm{font-size:10px;color:var(--muted);margin-top:4px}
+  .spinfo .prc{margin-top:8px;display:flex;align-items:baseline;gap:8px}
+  .spinfo .now{font-family:var(--disp);font-size:20px;color:var(--gold-br)}
+  .spinfo .was{font-size:11px;color:var(--muted);text-decoration:line-through}
+
+  /* events */
+  .evlist{padding:4px 18px 20px;display:flex;flex-direction:column;gap:12px}
+  .ev{border-radius:16px;border:1px solid var(--cardbd);background:var(--surface);padding:16px;display:flex;gap:14px}
+  .ev .cal{width:54px;flex-shrink:0;text-align:center;border-right:1px solid var(--hair);padding-right:12px}
+  .ev .cal .mo{font-size:9px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;font-weight:700}
+  .ev .cal .dy{font-family:var(--disp);font-size:30px;color:var(--paper);line-height:1}
+  .ev .cal .tm{font-size:9px;color:var(--muted);margin-top:3px}
+  .ev .ei h4{font-family:var(--disp);font-size:18px;font-weight:600;line-height:1.1}
+  .ev .ei .lo{font-size:10px;color:var(--muted);margin-top:4px}
+  .ev .ei .seats{font-size:10px;color:var(--gold-br);margin-top:6px}
+  .ev .ei .rsvp{margin-top:10px;font-size:11px;font-weight:700;color:#241a08;background:linear-gradient(180deg,var(--gold-br),var(--gold));display:inline-block;padding:7px 14px;border-radius:20px}
+
+  /* card */
+  .cardview{padding:8px 22px 26px;text-align:center}
+  .memcard{margin-top:8px;border-radius:22px;padding:24px 22px;background:linear-gradient(160deg,#1d1d22,#100f12);border:1px solid rgba(194,162,90,.3);position:relative;overflow:hidden}
+  .memcard::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 70% at 80% 0%,rgba(194,162,90,.16),transparent 55%)}
+  .memcard .eb{position:relative}
+  .memcard .nm{position:relative;font-family:var(--disp);font-size:26px;font-weight:600;margin-top:6px}
+  .memcard .no{position:relative;font-size:11px;letter-spacing:2px;color:var(--gold-br);margin-top:4px}
+  .qr{position:relative;width:150px;height:150px;background:#f7f4ee;border-radius:14px;margin:20px auto 0;padding:12px}
+  .qr svg{width:100%;height:100%;display:block}
+  .memcard .scan{position:relative;font-size:10.5px;color:var(--muted);margin-top:14px;letter-spacing:.5px}
+  .cardview .tier{margin-top:18px;font-size:11px;color:var(--muted)}
+  .cardview .tier b{color:var(--gold-br)}
+
+  /* notifications */
+  .nlist{padding:4px 0 20px}
+  .nrow{display:flex;gap:13px;padding:15px 22px;border-bottom:1px solid var(--cardbd);align-items:flex-start}
+  .nrow .ni{width:34px;height:34px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;color:var(--gold-br)}
+  .nrow .nt h4{font-size:13px;font-weight:600;color:var(--paper)}
+  .nrow .nt p{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45}
+  .nrow .nt .tm{font-size:9px;color:#5f5c55;margin-top:5px;letter-spacing:.5px;text-transform:uppercase}
+  .nrow.unread .ni{background:var(--wine)}
+
+  /* generic placeholder (cellar/sommelier) */
+  .ph-screen{padding:40px 26px;text-align:center;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ph-screen .ic{font-size:40px;color:var(--gold-br)}
+  .ph-screen h1{font-family:var(--disp);font-size:28px;font-weight:600;margin-top:16px}
+  .ph-screen p{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:12px}
+  .soon{margin-top:14px;font-size:9px;letter-spacing:2px;color:var(--gold);border:1px solid var(--hair);padding:6px 12px;border-radius:20px;text-transform:uppercase}
+
+  .sp{height:22px}
+
+  /* nav */
+  .nav{display:flex;justify-content:space-around;padding:11px 6px 16px;background:rgba(16,15,18,.94);border-top:1px solid var(--hair);flex-shrink:0}
+  .nav.hidden{display:none}
+  .ni2{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:8.5px;letter-spacing:.5px;color:var(--muted);font-weight:600;cursor:pointer}
+  .ni2 .g{font-size:16px}
+  .ni2.on{color:var(--gold-br)}
+</style>
+</head>
+<body>
+  <div class="ptag">Tappable preview &mdash; <b>scan-to-join → register → explore</b>. Static mockup, no live data.</div>
+  <div class="phone"><div class="screen">
+
+    <div class="status"><span id="clk">09:41</span><div class="r"><span>5G</span><span>&#9679;&#9679;&#9679;</span><span>92%</span></div></div>
+
+    <div class="vp" id="vp">
+
+      <!-- ============ GATE ============ -->
+      <div class="view on" id="gate">
+        <div class="gate">
+          <div class="crest">&#127863;</div>
+          <div class="eb" style="text-align:center"><span class="eyebrow">TOPS CELLAR SELECTION CLUB</span></div>
+          <h1>Welcome to<br>the Club</h1>
+          <div class="sub">Add the club to your Home Screen to unlock your membership card, Discovery Box alerts and member-only specials.</div>
+          <div class="steps">
+            <div class="stp"><div class="nm">1</div><div class="tx">Tap the <b>Share</b> icon below.</div></div>
+            <div class="stp"><div class="nm">2</div><div class="tx">Choose <b>Add to Home Screen</b>.</div></div>
+            <div class="stp"><div class="nm">3</div><div class="tx">Open the <b>Cellar Club</b> from your Home Screen.</div></div>
+          </div>
+          <div class="cta"><button class="btn block" onclick="go('register')">I&rsquo;ve added it &mdash; continue</button>
+          <div class="note">Membership is free. You must be 18+ to join.</div></div>
+        </div>
+      </div>
+
+      <!-- ============ REGISTER ============ -->
+      <div class="view" id="register">
+        <div class="bhead"><div class="ti" style="font-size:26px">Create your<br>membership</div></div>
+        <div class="reg">
+          <div class="field"><div class="fl">First name</div><div class="fi">Ashley</div></div>
+          <div class="field"><div class="fl">Surname</div><div class="fi">Brown</div></div>
+          <div class="field"><div class="fl">Mobile</div><div class="fi">082 555 0142</div></div>
+          <div class="field"><div class="fl">Email</div><div class="fi">ashley@example.co.za</div></div>
+          <div class="field"><div class="fl">Date of birth</div><div class="fi">14 / 03 / 1987</div></div>
+          <div class="field"><div class="fl">Favourite wine styles</div>
+            <div class="pillrow"><span class="pill on">Red blends</span><span class="pill on">Chenin</span><span class="pill">Bubbly</span><span class="pill">Rosé</span></div>
+          </div>
+          <div class="consent"><div class="ck">&#10003;</div><div>Yes, send me member specials, events and Discovery Box news. I can opt out anytime.</div></div>
+          <div style="margin-top:20px"><button class="btn block" onclick="go('alerts')">Become a member</button></div>
+        </div>
+      </div>
+
+      <!-- ============ ALERTS ============ -->
+      <div class="view" id="alerts">
+        <div class="alerts">
+          <div class="bigbell">&#128276;</div>
+          <h1>Switch on<br>your alerts</h1>
+          <p>We&rsquo;ll let you know the moment your Discovery Box is ready, when new member specials drop, and when tasting tickets go live.</p>
+          <div class="cta"><button class="btn block" onclick="go('home');setNav('home')">Enable my member alerts</button>
+          <div style="margin-top:12px"><button class="btn block ghost" onclick="go('home');setNav('home')">Maybe later</button></div></div>
+        </div>
+      </div>
+
+      <!-- ============ HOME ============ -->
+      <div class="view" id="home">
+        <div class="topbar"><div><div class="eyebrow">TOPS CELLAR SELECTION CLUB</div><div class="wm">The Cellar</div></div><div class="bell" onclick="go('notifications')">&#128276;</div></div>
+        <div class="greeting"><div class="hi">Good morning,<br><em>Ashley</em></div><div class="meta">Member No. 0042 &middot; Beacon Isle</div></div>
+        <div class="prize"><span class="ic">&#127942;</span><div class="tx">You&rsquo;re entered in this month&rsquo;s draw &mdash; <b>R3,000 drinks hamper</b></div></div>
+        <div class="hero" onclick="go('box')">
+          <div class="ht">THIS MONTH&rsquo;S DISCOVERY BOX</div><div class="hn">No.&nbsp;01</div>
+          <h2>The Cape<br>Winelands Edition</h2><p>Six bottles, hand-picked by Duncan. First boxes ship September.</p>
+          <div class="hr"><div class="pr">From R649</div><button class="btn" onclick="event.stopPropagation();go('box')">Join the list</button></div>
+        </div>
+        <div class="label"><span>Quick actions</span><div class="ln"></div></div>
+        <div class="quick">
+          <div class="qa" onclick="go('box')"><div class="ic">&#127863;</div><div class="t">Discovery Box</div></div>
+          <div class="qa" onclick="go('cellar');setNav('cellar')"><div class="ic">&#128214;</div><div class="t">Magazine</div></div>
+          <div class="qa" onclick="go('events')"><div class="ic">&#127863;</div><div class="t">Events</div></div>
+          <div class="qa" onclick="go('specials')"><div class="ic">&#127991;</div><div class="t">Specials</div></div>
+          <div class="qa" onclick="go('discover');setNav('discover')"><div class="ic">&#11088;</div><div class="t">Rate wines</div></div>
+          <div class="qa" onclick="go('card');setNav('card')"><div class="ic">&#127183;</div><div class="t">My card</div></div>
+        </div>
+        <div class="label"><span>This week</span><div class="ln"></div></div>
+        <div class="split">
+          <div class="mini" onclick="go('cellar');setNav('cellar')"><div class="te">ISSUE 01 &middot; AUG</div><h3>Meet the Winemaker</h3><div class="s">Eben Sadie, Swartland</div><div class="c">Read this issue &rarr;</div></div>
+          <div class="mini" onclick="go('events')"><div class="dt">Thu 27 &middot; 18:30</div><h3>Chenin &amp; Charcuterie</h3><div class="s">8 seats remaining</div><div class="c">RSVP &rarr;</div></div>
+        </div>
+        <div class="label"><span>Featured wine</span><div class="ln"></div></div>
+        <div class="wine" onclick="go('wine')">
+          <div class="bottle"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
+          <div class="winfo"><div class="te">SADIE FAMILY WINES</div><h3>Palladius 2022</h3><div class="rg">Swartland &middot; White blend</div><div class="nt">&ldquo;Stone fruit, dried pear and a long saline finish.&rdquo;</div><div class="st"><span class="s">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="r">4.8 &middot; 126 members</span></div></div>
+        </div>
+        <div class="sp"></div>
+      </div>
+
+      <!-- ============ BOX ============ -->
+      <div class="view" id="box">
+        <div class="bhead"><div class="bk" onclick="go('home')">&#8249;</div><div class="ti">Discovery Box</div></div>
+        <div class="hero" style="margin:14px 22px 0;cursor:default">
+          <div class="ht">THIS MONTH&rsquo;S BOX &middot; SHIPS SEPTEMBER</div><div class="hn">No.&nbsp;01</div>
+          <h2>The Cape<br>Winelands Edition</h2><p>Six bottles, hand-picked by Duncan, with tasting notes &amp; pairings.</p>
+          <div class="hr"><div class="pr">From R649</div></div>
+        </div>
+        <div class="label"><span>What&rsquo;s inside</span><div class="ln"></div></div>
+        <div style="padding:0 22px;font-size:12.5px;line-height:1.9;color:rgba(247,244,238,.82)">
+          &bull; 6 curated wines, spirits &amp; craft beers<br>&bull; Detailed tasting notes<br>&bull; Food pairing guide<br>&bull; The Cellar Selection magazine
+        </div>
+        <div style="padding:22px"><button class="btn block" onclick="go('home')">Join the priority list</button>
+          <div style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:12px">Subscriptions open September &mdash; you&rsquo;ll be first to know.</div>
+        </div>
+        <div class="label"><span>Previous boxes</span><div class="ln"></div></div>
+        <div style="padding:0 22px 24px;font-size:12px;color:var(--muted);font-style:italic;font-family:var(--disp)">Your past boxes will appear here once the first ships.</div>
+      </div>
+
+      <!-- ============ DISCOVER (wine list) ============ -->
+      <div class="view" id="discover">
+        <div class="bhead"><div class="ti">Wine Library</div></div>
+        <div style="padding:0 22px"><div class="fi" style="background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:11px 14px;font-size:12px;color:var(--muted)">&#128269; Search wines, regions, producers</div></div>
+        <div style="margin-top:8px">
+          <div class="lrow" onclick="go('wine')"><div class="mb"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="li"><h4>Palladius 2022</h4><div class="sm">Sadie Family &middot; Swartland</div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733; 4.8</div></div></div>
+          <div class="lrow" onclick="go('wine')"><div class="mb"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="li"><h4>Heritage Heroes</h4><div class="sm">Nederburg &middot; Western Cape</div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734; 4.2</div></div></div>
+          <div class="lrow" onclick="go('wine')"><div class="mb"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="li"><h4>Kleine Zalze Chenin</h4><div class="sm">Kleine Zalze &middot; Stellenbosch</div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734; 4.5</div></div></div>
+          <div class="lrow" onclick="go('wine')"><div class="mb"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="li"><h4>Six Dogs Blue Gin</h4><div class="sm">Six Dogs &middot; Wellington</div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733; 4.7</div></div></div>
+        </div>
+        <div class="sp"></div>
+      </div>
+
+      <!-- ============ WINE DETAIL ============ -->
+      <div class="view" id="wine">
+        <div class="wdhero">
+          <div class="bk2" onclick="go('discover');setNav('discover')">&#8249;</div>
+          <div class="fav">&#9825;</div>
+          <div class="big"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
+        </div>
+        <div class="wbody">
+          <div class="te">SADIE FAMILY WINES</div>
+          <h1>Palladius 2022</h1>
+          <div class="rg">Swartland &middot; White blend &middot; 13.5%</div>
+          <div class="specs">
+            <div class="spec"><div class="k">Region</div><div class="v">Swartland</div></div>
+            <div class="spec"><div class="k">Serve at</div><div class="v">10&ndash;12&deg;C</div></div>
+            <div class="spec"><div class="k">Pairing</div><div class="v">Roast chicken, aged cheese</div></div>
+            <div class="spec"><div class="k">Rating</div><div class="v">&#9733; 4.8 &middot; 126 members</div></div>
+          </div>
+          <div class="ptext">A benchmark Cape white from eleven varieties, old vines and dry-grown bush. Stone fruit and dried pear give way to a saline, mineral length that rewards patience. One of the most collected whites in the country.</div>
+          <div style="margin-top:18px;display:flex;gap:10px"><button class="btn" style="flex:1" >Add my rating</button><button class="btn ghost">My notes</button></div>
+        </div>
+      </div>
+
+      <!-- ============ SPECIALS ============ -->
+      <div class="view" id="specials">
+        <div class="bhead"><div class="bk" onclick="go('home')">&#8249;</div><div class="ti">Member Specials</div></div>
+        <div class="spgrid">
+          <div class="spcard"><span class="cat">WINE</span><div class="mb2"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="spinfo"><h4>Nederburg Heritage</h4><div class="sm">This weekend only &middot; Fri&ndash;Sun</div><div class="prc"><span class="now">R89.99</span><span class="was">R119.99</span></div></div></div>
+          <div class="spcard"><span class="cat">WHISKY</span><div class="mb2"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="spinfo"><h4>Bain&rsquo;s Cape Mountain</h4><div class="sm">Member price</div><div class="prc"><span class="now">R249</span><span class="was">R319</span></div></div></div>
+          <div class="spcard"><span class="cat">GIN</span><div class="mb2"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="spinfo"><h4>Six Dogs Blue</h4><div class="sm">While stocks last</div><div class="prc"><span class="now">R329</span><span class="was">R399</span></div></div></div>
+        </div>
+      </div>
+
+      <!-- ============ EVENTS ============ -->
+      <div class="view" id="events">
+        <div class="bhead"><div class="bk" onclick="go('home')">&#8249;</div><div class="ti">Events</div></div>
+        <div class="evlist">
+          <div class="ev"><div class="cal"><div class="mo">Aug</div><div class="dy">27</div><div class="tm">18:30</div></div><div class="ei"><h4>Chenin &amp; Charcuterie</h4><div class="lo">Beacon Isle &middot; Tasting Room</div><div class="seats">8 seats remaining</div><div class="rsvp">RSVP</div></div></div>
+          <div class="ev"><div class="cal"><div class="mo">Sep</div><div class="dy">05</div><div class="tm">19:00</div></div><div class="ei"><h4>Swartland Masterclass</h4><div class="lo">With Eben Sadie</div><div class="seats">12 seats remaining</div><div class="rsvp">RSVP</div></div></div>
+          <div class="ev"><div class="cal"><div class="mo">Sep</div><div class="dy">20</div><div class="tm">18:00</div></div><div class="ei"><h4>Whisky &amp; Chocolate</h4><div class="lo">Brand ambassador evening</div><div class="seats">Limited seats</div><div class="rsvp">RSVP</div></div></div>
+        </div>
+      </div>
+
+      <!-- ============ CARD ============ -->
+      <div class="view" id="card">
+        <div class="bhead"><div class="ti">Membership</div></div>
+        <div class="cardview">
+          <div class="memcard">
+            <div class="eb"><span class="eyebrow">TOPS CELLAR SELECTION CLUB</span></div>
+            <div class="nm">Ashley Brown</div>
+            <div class="no">MEMBER NO. 0042</div>
+            <div class="qr">
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100" height="100" fill="#f7f4ee"/>
+                <defs><pattern id="m" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#100f12"/><rect x="4" y="4" width="4" height="4" fill="#100f12"/></pattern></defs>
+                <rect x="14" y="14" width="72" height="72" fill="url(#m)"/>
+                <rect x="6" y="6" width="22" height="22" fill="#100f12"/><rect x="10" y="10" width="14" height="14" fill="#f7f4ee"/><rect x="13" y="13" width="8" height="8" fill="#100f12"/>
+                <rect x="72" y="6" width="22" height="22" fill="#100f12"/><rect x="76" y="10" width="14" height="14" fill="#f7f4ee"/><rect x="79" y="13" width="8" height="8" fill="#100f12"/>
+                <rect x="6" y="72" width="22" height="22" fill="#100f12"/><rect x="10" y="76" width="14" height="14" fill="#f7f4ee"/><rect x="13" y="79" width="8" height="8" fill="#100f12"/>
+              </svg>
+            </div>
+            <div class="scan">Scan in store to identify yourself</div>
+          </div>
+          <div class="tier">Member since Aug 2026 &middot; <b>Founding Member</b></div>
+        </div>
+      </div>
+
+      <!-- ============ NOTIFICATIONS ============ -->
+      <div class="view" id="notifications">
+        <div class="bhead"><div class="bk" onclick="go('home')">&#8249;</div><div class="ti">Notifications</div></div>
+        <div class="nlist">
+          <div class="nrow unread"><div class="ni">&#127863;</div><div class="nt"><h4>New member specials have arrived</h4><p>Nederburg Heritage Heroes at R89.99 this weekend only.</p><div class="tm">2h ago</div></div></div>
+          <div class="nrow unread"><div class="ni">&#127942;</div><div class="nt"><h4>You&rsquo;re entered in this month&rsquo;s draw</h4><p>Win a R3,000 drinks hamper. Winner announced 31 Aug.</p><div class="tm">1d ago</div></div></div>
+          <div class="nrow"><div class="ni">&#127865;</div><div class="nt"><h4>Tickets available: Chenin &amp; Charcuterie</h4><p>Thursday 27 Aug, 18:30. 8 seats left.</p><div class="tm">2d ago</div></div></div>
+          <div class="nrow"><div class="ni">&#128214;</div><div class="nt"><h4>Your magazine is now available</h4><p>Issue 01 — Meet the Winemaker: Eben Sadie.</p><div class="tm">3d ago</div></div></div>
+        </div>
+      </div>
+
+      <!-- ============ CELLAR (placeholder) ============ -->
+      <div class="view" id="cellar">
+        <div class="ph-screen"><div class="ic">&#128214;</div><h1>My Cellar &amp;<br>Magazine</h1><p>Your ratings, tasting notes, favourites and the digital magazine live here.</p><div class="soon">Phase 2</div></div>
+      </div>
+
+      <!-- ============ SOMMELIER (placeholder) ============ -->
+      <div class="view" id="sommelier">
+        <div class="ph-screen"><div class="ic">&#9678;</div><h1>AI Sommelier</h1><p>&ldquo;I&rsquo;ve got steak tonight&rdquo; &mdash; ask, and get the perfect bottle. Your personal wine guide.</p><div class="soon">Phase 3</div></div>
+      </div>
+
+    </div>
+
+    <!-- NAV -->
+    <div class="nav" id="nav">
+      <div class="ni2 on" data-n="home" onclick="go('home');setNav('home')"><div class="g">&#9737;</div>Home</div>
+      <div class="ni2" data-n="discover" onclick="go('discover');setNav('discover')"><div class="g">&#9672;</div>Discover</div>
+      <div class="ni2" data-n="cellar" onclick="go('cellar');setNav('cellar')"><div class="g">&#9783;</div>Cellar</div>
+      <div class="ni2" data-n="card" onclick="go('card');setNav('card')"><div class="g">&#127183;</div>Card</div>
+      <div class="ni2" data-n="sommelier" onclick="go('sommelier');setNav('sommelier')"><div class="g">&#9678;</div>Sommelier</div>
+    </div>
+
+  </div></div>
+
+<script>
+  var onboarding = ['gate','register','alerts'];
+  function go(id){
+    document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on')});
+    document.getElementById(id).classList.add('on');
+    document.getElementById('vp').scrollTop = 0;
+    var nav = document.getElementById('nav');
+    if(onboarding.indexOf(id) > -1){ nav.classList.add('hidden'); } else { nav.classList.remove('hidden'); }
+  }
+  function setNav(n){
+    document.querySelectorAll('.ni2').forEach(function(x){x.classList.toggle('on', x.getAttribute('data-n')===n)});
+  }
+  // live clock
+  function tick(){var d=new Date();document.getElementById('clk').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+  tick(); setInterval(tick,10000);
+</script>
+</body>
+</html>

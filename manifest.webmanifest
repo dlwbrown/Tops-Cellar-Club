@@ -1,0 +1,17 @@
+{
+  "name": "TOPS Cellar Selection Club",
+  "short_name": "Cellar Club",
+  "description": "Wine discovery, member specials and exclusive experiences from TOPS at SPAR Beacon Isle.",
+  "start_url": "/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#100f12",
+  "theme_color": "#100f12",
+  "categories": ["lifestyle", "shopping", "food"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
