@@ -404,9 +404,9 @@ async function onBroadcast() {
   if (!channels.length) { toast('Pick at least one channel.'); return; }
   const btn = $('btn-broadcast'); btn.disabled = true; btn.textContent = 'Sending…';
   try {
-    const r = await fn('send-push', { title, body: $('bc-body').value.trim(), link: $('bc-link').value.trim() || undefined, audience, channels, sent_by: 'admin' });
+    const r = await fn('send-push', { title, body: $('bc-body').value.trim(), image: $('bc-image').value.trim() || undefined, link: $('bc-link').value.trim() || undefined, audience, channels, sent_by: 'admin' });
     toast(`Sent. ${r.pushed != null ? r.pushed + ' devices reached.' : ''}`);
-    $('bc-title').value = ''; $('bc-body').value = ''; $('bc-link').value = '';
+    $('bc-title').value = ''; $('bc-body').value = ''; $('bc-image').value = ''; $('bc-link').value = '';
     go('dash', 'dash');
   } catch (err) { toast(err.message || 'Broadcast failed.'); }
   finally { btn.disabled = false; btn.textContent = 'Send broadcast'; }

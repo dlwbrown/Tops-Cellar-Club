@@ -419,8 +419,8 @@ async function loadNotifications() {
     host.innerHTML = data.map((n) => {
       const isUnread = new Date(n.sent_at).getTime() > lastSeen;
       if (isUnread) unread++;
-      return `<div class="nrow${isUnread ? ' unread' : ''}">
-        <div class="ni">${n.image_url ? '🖼' : '🍷'}</div>
+      return `<div class="nrow${isUnread ? ' unread' : ''}${n.image_url ? ' has-img' : ''}">
+        <div class="ni">${n.image_url ? `<img src="${esc(n.image_url)}" alt="" loading="lazy">` : '🍷'}</div>
         <div class="nt"><h4>${esc(n.title)}</h4>${n.body ? `<p>${esc(n.body)}</p>` : ''}<div class="tm">${timeAgo(n.sent_at)}</div></div>
       </div>`;
     }).join('');
