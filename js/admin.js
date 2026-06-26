@@ -423,6 +423,21 @@ async function onBroadcast() {
   finally { btn.disabled = false; btn.textContent = 'Send broadcast'; }
 }
 
+/* ---------------- RESET TEST DATA ---------------- */
+async function onResetTestData() {
+  const email = prompt('Enter your email address to keep your account.\nAll other members, notifications and prize draws will be deleted.');
+  if (!email) return;
+  if (!confirm(`This will permanently delete all members except "${email}" and clear all notifications.\n\nType OK to continue.`)) return;
+  const btn = $('btn-reset'); btn.disabled = true; btn.textContent = 'Resetting…';
+  try {
+    const r = await adminApi('reset-test-data', { keep_email: email.trim().toLowerCase() });
+    if (r.error) throw new Error(r.error);
+    toast(`Done. Kept ${r.kept} account(s). Reload the page to see updated stats.`);
+    loadStats();
+  } catch (err) { toast(err.message || 'Reset failed.'); }
+  finally { btn.disabled = false; btn.textContent = '🚫 Reset test data'; }
+}
+
 /* ---------------- DRAW / STAFF / SUPPLIERS / MODE / CSV ---------------- */
 async function onDraw() {
   const btn = $('btn-draw'); btn.disabled = true; btn.textContent = 'Drawing…';
@@ -494,6 +509,7 @@ function wireDelegation() {
     if (goEl) go(goEl.dataset.go, goEl.dataset.nav);
   });
   $('btn-draw').addEventListener('click', onDraw);
+  $('btn-reset').addEventListener('click', onResetTestData);
   $('member-search').addEventListener('input', () => {
     const q = $('member-search').value.trim().toLowerCase();
     renderMembers(!q ? MEMBERS : MEMBERS.filter((m) => `${m.first_name} ${m.surname} ${m.membership_number} ${m.email}`.toLowerCase().includes(q)));

@@ -197,6 +197,36 @@ Deno.serve(async (req) => {
         return json({ ok: true, id: data.id });
       }
 
+      /* ---------------- RESET TEST DATA ---------------- */
+      case 'reset-test-data': {
+        const { keep_email } = payload;
+        if (!keep_email) return json({ error: 'keep_email required' }, 400);
+
+        // Find the account(s) to preserve
+        const { data: keep } = await supabase.from('members').select('id').ilike('email', keep_email.trim());
+        const keepIds: string[] = (keep || []).map((m: any) => m.id);
+
+        // Delete all other members (cascades to push_subscriptions, favourites, reviews, tasting_notes, waitlist, rsvps)
+        if (keepIds.length > 0) {
+          await supabase.from('members').delete().not('id', 'in', `(${keepIds.join(',')})`);
+        } else {
+          await supabase.from('members').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        }
+
+        // Clear all notifications and prize draws
+        await supabase.from('notifications').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('prize_draws').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+        // Re-open prize draw for current month
+        const month = new Date().toISOString().slice(0, 7);
+        await supabase.from('prize_draws').upsert(
+          { month, status: 'open', prize: '1st: R3,000 drinks hamper' },
+          { onConflict: 'month', ignoreDuplicates: true }
+        );
+
+        return json({ ok: true, kept: keepIds.length });
+      }
+
       default: return json({ error: 'Unknown action: ' + action }, 400);
     }
   } catch (e) {
