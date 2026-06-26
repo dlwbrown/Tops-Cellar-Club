@@ -408,6 +408,7 @@ function renderWineDetail(w) {
     <div style="margin-top:18px;display:flex;gap:10px"><button class="btn" style="flex:1" data-act="rate-wine">Add my rating</button><button class="btn ghost" data-act="note-wine">My notes</button></div>`;
 }
 
+const NOTIF_MAP = new Map();
 async function loadNotifications() {
   try {
     const sb = await getSb(); if (!sb) return;
@@ -416,10 +417,12 @@ async function loadNotifications() {
     if (!data || !data.length) { host.innerHTML = '<div class="empty">Your member alerts will appear here.</div>'; updateBell(0); return; }
     const lastSeen = Number(localStorage.getItem('cellar.notifSeen') || 0);
     let unread = 0;
-    host.innerHTML = data.map((n) => {
+    NOTIF_MAP.clear();
+    host.innerHTML = data.map((n, i) => {
+      NOTIF_MAP.set(String(i), n);
       const isUnread = new Date(n.sent_at).getTime() > lastSeen;
       if (isUnread) unread++;
-      return `<div class="nrow${isUnread ? ' unread' : ''}${n.image_url ? ' has-img' : ''}" data-notif='${JSON.stringify({id:n.id,title:n.title,body:n.body||'',image_url:n.image_url||'',link:n.link||'',sent_at:n.sent_at})}'>
+      return `<div class="nrow${isUnread ? ' unread' : ''}${n.image_url ? ' has-img' : ''}" data-notif-idx="${i}">
         <div class="ni">${n.image_url ? `<img src="${esc(n.image_url)}" alt="" loading="lazy">` : '🍷'}</div>
         <div class="nt"><h4>${esc(n.title)}</h4>${n.body ? `<p>${esc(n.body)}</p>` : ''}<div class="tm">${timeAgo(n.sent_at)}</div></div>
         <div class="nchev">›</div>
@@ -512,8 +515,8 @@ function wireDelegation() {
       if (act === 'note-wine') { toast('Tasting notes open in Phase 2 — coming soon.'); return; }
     }
 
-    const notifRow = e.target.closest('.nrow[data-notif]');
-    if (notifRow) { try { openNotif(JSON.parse(notifRow.dataset.notif)); } catch {} return; }
+    const notifRow = e.target.closest('.nrow[data-notif-idx]');
+    if (notifRow) { const n = NOTIF_MAP.get(notifRow.dataset.notifIdx); if (n) openNotif(n); return; }
 
     if (goEl) {
       if (goEl.hasAttribute('data-stop')) e.stopPropagation();
