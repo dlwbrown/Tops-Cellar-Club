@@ -6,6 +6,6 @@
 window.CONFIG = {
   SUPABASE_URL: 'https://wwwrrtmuisdgkkwxyjdo.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3d3JydG11aXNkZ2trd3h5amRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MTUxOTgsImV4cCI6MjA5Nzk5MTE5OH0.I6AKhjhEqapl9PtgqTvj-XADkyrgQnJAKSxjOHlJJ4g',
-  // Generate at your computer with: npx web-push generate-vapid-keys
-  VAPID_PUBLIC_KEY: 'YOUR-VAPID-PUBLIC-KEY',
+  // VAPID public key (safe to expose). Private key goes ONLY in Supabase secrets.
+  VAPID_PUBLIC_KEY: 'BA-TCBsMrx_18puG3bSvwjKEuFgiiHo6V5VOOKulxTvyspslCXLxoiUDqO-vIBL7drw-c8almOhYnTfgMuULuVs',
 };
