@@ -203,7 +203,7 @@ body{
 .memcard .eb{position:relative}
 .memcard .nm{position:relative;font-family:var(--disp);font-size:26px;font-weight:600;margin-top:6px}
 .memcard .no{position:relative;font-size:11px;letter-spacing:2px;color:var(--gold-br);margin-top:4px}
-.qr{position:relative;width:150px;height:150px;background:#f7f4ee;border-radius:14px;margin:20px auto 0;padding:12px}
+.qr{position:relative;width:150px;height:150px;background:#f7f4ee;border-radius:14px;margin:20px auto 0;padding:12px;overflow:hidden}
 .qr svg,.qr canvas,.qr img{width:100%;height:100%;display:block}
 .memcard .scan{position:relative;font-size:10.5px;color:var(--muted);margin-top:14px;letter-spacing:.5px}
 .cardview .tier{margin-top:18px;font-size:11px;color:var(--muted)}

@@ -478,6 +478,7 @@ async function renderCard() {
     const canvas = document.createElement('canvas');
     const value = `CELLAR:${m.membership_number || ''}:${m.qr_token}`;
     await QRCode.toCanvas(canvas, value, { width: 280, margin: 0, color: { dark: '#100f12', light: '#f7f4ee' } });
+    canvas.style.cssText = 'width:100%;height:100%;display:block';
     const host = document.getElementById('card-qr');
     host.innerHTML = ''; host.appendChild(canvas);
     qrRendered = true;
