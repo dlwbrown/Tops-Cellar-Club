@@ -405,7 +405,7 @@ function renderWineDetail(w) {
     </div>
     ${w.story ? `<div class="ptext">${esc(w.story)}</div>` : ''}
     ${w.awards ? `<div class="ptext"><b>Awards:</b> ${esc(w.awards)}</div>` : ''}
-    <div style="margin-top:18px;display:flex;gap:10px"><button class="btn" style="flex:1" data-act="rate-wine">Add my rating</button><button class="btn ghost" data-act="note-wine">My notes</button></div>`;
+    <div style="margin-top:18px;display:flex;gap:10px"><button class="btn" style="flex:1" data-act="rate-wine" data-wine="${esc(w.id)}" data-wname="${esc(w.name)}">Add my rating</button><button class="btn ghost" data-act="note-wine">My notes</button></div>`;
 }
 
 const NOTIF_MAP = new Map();
@@ -501,6 +501,9 @@ function wireDelegation() {
     const goEl = e.target.closest('[data-go]');
     const actEl = e.target.closest('[data-act]');
 
+    const starEl = e.target.closest('#rm-stars [data-star]');
+    if (starEl) { highlightStars(parseInt(starEl.dataset.star || '0')); return; }
+
     if (actEl) {
       const act = actEl.dataset.act;
       if (act === 'android-install') { await triggerAndroidInstall(); return; }
@@ -511,8 +514,10 @@ function wireDelegation() {
       if (act === 'reserve-box') { await onJoinWaitlist(actEl, true); return; }
       if (act === 'rsvp') { e.stopPropagation(); await onRsvp(actEl); return; }
       if (act === 'toggle-fav') { onToggleFav(actEl); return; }
-      if (act === 'rate-wine') { toast('Ratings open in Phase 2 — coming soon.'); return; }
-      if (act === 'note-wine') { toast('Tasting notes open in Phase 2 — coming soon.'); return; }
+      if (act === 'rate-wine') { openRateModal(actEl.dataset.wine, actEl.dataset.wname); return; }
+      if (act === 'close-rate') { document.getElementById('rate-modal').hidden = true; return; }
+      if (act === 'save-rating') { saveRating(); return; }
+      if (act === 'note-wine') { toast('Tasting notes coming soon.'); return; }
     }
 
     const notifRow = e.target.closest('.nrow[data-notif-idx]');
@@ -577,10 +582,144 @@ async function onRsvp(el) {
   } catch (err) { toast(err.message || 'Could not RSVP.'); }
 }
 
-function onToggleFav(el) {
+async function onToggleFav(el) {
+  const m = getMember(); if (!m) return;
+  const wineEl = el.closest('[data-wine]');
+  const wine_id = wineEl?.dataset.wine;
+  if (!wine_id || wine_id.startsWith('seed-')) { toast('Sign in to save favourites.'); return; }
   el.classList.toggle('on');
   el.innerHTML = el.classList.contains('on') ? '&#9829;' : '&#9825;';
-  toast(el.classList.contains('on') ? 'Saved to favourites (synced in Phase 2).' : 'Removed from favourites.');
+  try {
+    await memberApi('toggle-fav', { member_id: m.id, wine_id });
+    toast(el.classList.contains('on') ? 'Added to favourites.' : 'Removed from favourites.');
+  } catch { el.classList.toggle('on'); el.innerHTML = el.classList.contains('on') ? '&#9829;' : '&#9825;'; }
+}
+
+/* ============================================================= *
+ * 13b. CELLAR
+ * ============================================================= */
+let CELLAR = { favourites: [], ratings: [] };
+
+async function loadCellar() {
+  const m = getMember(); if (!m) return;
+  try {
+    const data = await memberApi('get-cellar', { member_id: m.id });
+    CELLAR = data;
+    renderFavs(); renderRatings();
+  } catch {}
+  loadMagazine();
+}
+
+function wineCard(w, extra = '') {
+  const img = w.image_url ? `style="background-image:url('${esc(w.image_url)}')"` : '';
+  return `<div class="wine ${w.image_url ? 'img' : ''}" data-go="wine" data-wine="${esc(w.id)}" ${img}>
+    <div class="bottle"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
+    <div class="winfo"><div class="te">${esc((w.producer||'').toUpperCase())}</div><h3>${esc(w.name)}</h3>
+    <div class="rg">${esc([w.region,w.varietal].filter(Boolean).join(' · '))}</div>${extra}</div></div>`;
+}
+
+function renderFavs() {
+  const host = document.getElementById('fav-list');
+  if (!CELLAR.favourites.length) { host.innerHTML = '<div class="empty">Heart a wine to save it here.</div>'; return; }
+  host.innerHTML = `<div class="wine-grid">${CELLAR.favourites.map(w => wineCard(w, `<div class="st"><span class="s">★★★★★</span></div>`)).join('')}</div>`;
+}
+
+function renderRatings() {
+  const host = document.getElementById('rating-list');
+  if (!CELLAR.ratings.length) { host.innerHTML = '<div class="empty">Rate wines from the Discover tab.</div>'; return; }
+  host.innerHTML = CELLAR.ratings.map(w => `
+    <div class="rrow" data-go="wine" data-wine="${esc(w.id)}">
+      <div class="rri">${w.image_url ? `<img src="${esc(w.image_url)}" alt="">` : '🍷'}</div>
+      <div class="rrt"><h4>${esc(w.name)}</h4><div class="rrs">${'★'.repeat(w.rating)}${'☆'.repeat(5-w.rating)}</div>${w.note ? `<p>${esc(w.note)}</p>` : ''}</div>
+    </div>`).join('');
+}
+
+async function loadMagazine() {
+  try {
+    const sb = await getSb(); if (!sb) return;
+    const { data } = await sb.from('magazines').select('*').order('issue_date', { ascending: false }).limit(12);
+    const host = document.getElementById('mag-list');
+    if (!data || !data.length) { host.innerHTML = '<div class="empty">First issue coming soon.</div>'; return; }
+    host.innerHTML = data.map(m => `<div class="magrow">
+      ${m.cover_url ? `<div class="magcov" style="background-image:url('${esc(m.cover_url)}')"></div>` : '<div class="magcov"></div>'}
+      <div class="magt"><div class="te">${esc(m.issue_date ? new Date(m.issue_date).toLocaleDateString('en-ZA',{month:'long',year:'numeric'}) : '')}</div>
+      <h3>${esc(m.title||'')}</h3></div></div>`).join('');
+  } catch {}
+}
+
+function wireCellar() {
+  document.getElementById('cellar').addEventListener('click', e => {
+    const tab = e.target.closest('.ctab');
+    if (tab) {
+      document.querySelectorAll('.ctab').forEach(t => t.classList.remove('on'));
+      document.querySelectorAll('.cpanel').forEach(p => p.classList.remove('on'));
+      tab.classList.add('on');
+      document.getElementById('cpanel-' + tab.dataset.tab)?.classList.add('on');
+    }
+  });
+}
+
+/* ============================================================= *
+ * 13c. RATING MODAL
+ * ============================================================= */
+let ratingState = { wine_id: null, stars: 0 };
+
+function openRateModal(wine_id, name) {
+  ratingState = { wine_id, stars: 0 };
+  document.getElementById('rm-wine-name').textContent = name || 'Rate this wine';
+  document.getElementById('rm-note').value = '';
+  highlightStars(0);
+  document.getElementById('rate-modal').hidden = false;
+}
+
+function highlightStars(n) {
+  ratingState.stars = n;
+  document.querySelectorAll('#rm-stars span').forEach((s, i) => s.classList.toggle('on', i < n));
+}
+
+async function saveRating() {
+  const m = getMember(); if (!m) return;
+  if (!ratingState.stars) { toast('Tap a star first.'); return; }
+  const btn = document.getElementById('rm-save'); btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    await memberApi('add-rating', { member_id: m.id, wine_id: ratingState.wine_id, rating: ratingState.stars, note: document.getElementById('rm-note').value.trim() || null });
+    document.getElementById('rate-modal').hidden = true;
+    toast('Rating saved!');
+    loadCellar();
+  } catch (err) { toast(err.message || 'Could not save.'); }
+  finally { btn.disabled = false; btn.textContent = 'Save rating'; }
+}
+
+/* ============================================================= *
+ * 13d. SOMMELIER
+ * ============================================================= */
+function wireSommelier() {
+  const send = document.getElementById('som-send');
+  const input = document.getElementById('som-q');
+  send.addEventListener('click', doAsk);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doAsk(); } });
+  document.getElementById('sommelier').addEventListener('click', e => {
+    const chip = e.target.closest('.schip');
+    if (chip) { input.value = chip.dataset.q; doAsk(); }
+  });
+}
+
+async function doAsk() {
+  const m = getMember(); if (!m) { toast('Sign in first.'); return; }
+  const input = document.getElementById('som-q');
+  const q = input.value.trim(); if (!q) return;
+  input.value = '';
+  document.getElementById('som-intro').hidden = true;
+  const thread = document.getElementById('som-messages');
+  const vp = document.querySelector('.vp');
+  thread.insertAdjacentHTML('beforeend', `<div class="smsg sme">${esc(q)}</div>`);
+  const thinking = document.createElement('div'); thinking.className = 'smsg sma sthink'; thinking.textContent = '…'; thread.appendChild(thinking);
+  if (vp) vp.scrollTop = vp.scrollHeight;
+  try {
+    const r = await memberApi('ask-sommelier', { member_id: m.id, question: q });
+    thinking.classList.remove('sthink'); thinking.textContent = r.answer || 'I couldn\'t answer that just now.';
+  } catch { thinking.classList.remove('sthink'); thinking.textContent = 'Sorry, I\'m unavailable right now.'; }
+  if (vp) vp.scrollTop = vp.scrollHeight;
 }
 
 /* ============================================================= *
@@ -598,6 +737,8 @@ export async function boot() {
 async function start() {
   wireRegister();
   wireDelegation();
+  wireCellar();
+  wireSommelier();
   renderGate();
 
   const state = await boot();
@@ -611,7 +752,7 @@ async function start() {
   else { go('home', 'home'); }
 
   // background data load for the in-app screens
-  loadHome(); loadBox(); loadSpecials(); loadEvents(); loadWines(); loadNotifications();
+  loadHome(); loadBox(); loadSpecials(); loadEvents(); loadWines(); loadNotifications(); loadCellar();
   checkReengagement();
 
   // deep link from a tapped notification (?link=/specials etc.)

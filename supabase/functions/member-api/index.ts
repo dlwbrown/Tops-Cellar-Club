@@ -148,6 +148,70 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
 
+      /* ---------------- CELLAR (favourites + ratings) ---------------- */
+      case 'get-cellar': {
+        const { member_id } = payload;
+        if (!member_id) return json({ error: 'member_id required' }, 400);
+        const [{ data: favRows }, { data: ratingRows }] = await Promise.all([
+          supabase.from('favourites').select('wine_id, wines(*)').eq('member_id', member_id),
+          supabase.from('reviews').select('rating, note, created_at, wines(*)').eq('member_id', member_id).order('created_at', { ascending: false }),
+        ]);
+        const favourites = (favRows || []).map((f: any) => ({ ...f.wines, wine_id: f.wine_id }));
+        const ratings = (ratingRows || []).map((r: any) => ({ ...r.wines, rating: r.rating, note: r.note, rated_at: r.created_at }));
+        return json({ favourites, ratings });
+      }
+
+      case 'toggle-fav': {
+        const { member_id, wine_id } = payload;
+        if (!member_id || !wine_id) return json({ error: 'member_id and wine_id required' }, 400);
+        const { data: existing } = await supabase.from('favourites').select('wine_id').eq('member_id', member_id).eq('wine_id', wine_id).maybeSingle();
+        if (existing) {
+          await supabase.from('favourites').delete().eq('member_id', member_id).eq('wine_id', wine_id);
+          return json({ favourited: false });
+        } else {
+          await supabase.from('favourites').insert({ member_id, wine_id });
+          return json({ favourited: true });
+        }
+      }
+
+      case 'add-rating': {
+        const { member_id, wine_id, rating, note } = payload;
+        if (!member_id || !wine_id || !rating) return json({ error: 'member_id, wine_id and rating required' }, 400);
+        if (rating < 1 || rating > 5) return json({ error: 'rating must be 1–5' }, 400);
+        await supabase.from('reviews').upsert({ member_id, wine_id, rating, note: note || null }, { onConflict: 'member_id,wine_id' });
+        const { data: allRatings } = await supabase.from('reviews').select('rating').eq('wine_id', wine_id);
+        if (allRatings && allRatings.length) {
+          const avg = allRatings.reduce((s: number, r: any) => s + r.rating, 0) / allRatings.length;
+          await supabase.from('wines').update({ avg_rating: Math.round(avg * 10) / 10 }).eq('id', wine_id);
+        }
+        return json({ ok: true });
+      }
+
+      /* ---------------- AI SOMMELIER ---------------- */
+      case 'ask-sommelier': {
+        const { member_id, question } = payload;
+        if (!member_id || !question) return json({ error: 'member_id and question required' }, 400);
+        const { data: member } = await supabase.from('members').select('id, fav_wine_styles, fav_spirits').eq('id', member_id).maybeSingle();
+        if (!member) return json({ error: 'Member not found' }, 404);
+        const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+        if (!apiKey) return json({ error: 'ANTHROPIC_API_KEY not configured' }, 500);
+        const prefs = [...(member.fav_wine_styles || []), ...(member.fav_spirits || [])].filter(Boolean).join(', ');
+        const sys = [
+          'You are the TOPS Cellar Selection Club Sommelier — elegant, knowledgeable, warm.',
+          'Voice: confident, approachable. South African English. Rand prices as "R89.99".',
+          'Keep answers concise: 2–4 sentences. Recommend specific wines or styles with brief reasoning.',
+          prefs ? `This member's preferences: ${prefs}.` : '',
+        ].filter(Boolean).join('\n');
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, system: sys, messages: [{ role: 'user', content: question }] }),
+        });
+        const data = await res.json();
+        const answer = (data.content ?? []).filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+        return json({ answer });
+      }
+
       default:
         return json({ error: 'Unknown action: ' + action }, 400);
     }
