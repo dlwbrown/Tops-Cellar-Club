@@ -72,6 +72,12 @@
             <span class="cap" id="photo-cap">&#128247; Tap to snap or upload</span>
             <input type="file" id="photo-input" accept="image/*" capture="environment" />
           </label>
+          <button class="gen" id="btn-enhance" hidden><span>&#127775;</span> <span id="enhance-label">Enhance photo with AI scene</span></button>
+          <div class="chips" id="enhance-styles" hidden>
+            <span class="chip on" data-val="">Luxury</span>
+            <span class="chip" data-val="cellar">Wine cellar</span>
+            <span class="chip" data-val="marble">Marble</span>
+          </div>
           <div class="flabel">3 &middot; Add a line (optional)</div>
           <textarea class="tinput" id="raw-line" placeholder="e.g. nederburg heritage R89.99 fri–sun"></textarea>
           <div class="hint">Or leave blank &mdash; the photo is enough. Tip: include the price so we never have to guess it.</div>

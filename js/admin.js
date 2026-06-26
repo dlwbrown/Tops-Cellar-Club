@@ -200,6 +200,14 @@ function wireCreate() {
     post.photoBase64 = dataUrl.split(',')[1];
     const img = $('photo-preview'); img.src = dataUrl; img.hidden = false;
     $('photo-cap').textContent = '📷 Tap to change photo';
+    $('btn-enhance').hidden = false;
+    $('enhance-styles').hidden = false;
+  });
+  $('btn-enhance').addEventListener('click', onEnhance);
+  $('enhance-styles').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip'); if (!chip) return;
+    document.querySelectorAll('#enhance-styles .chip').forEach((c) => c.classList.remove('on'));
+    chip.classList.add('on');
   });
   $('btn-generate').addEventListener('click', onGenerate);
 }
@@ -208,6 +216,28 @@ function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file);
   });
+}
+
+async function onEnhance() {
+  if (!post.photoBase64) { toast('Add a photo first.'); return; }
+  const btn = $('btn-enhance'); btn.disabled = true; $('enhance-label').textContent = 'Creating scene…';
+  try {
+    const style = document.querySelector('#enhance-styles .chip.on')?.dataset.val || '';
+    const r = await fn('enhance-photo', {
+      imageBase64: post.photoBase64,
+      imageMediaType: post.photoMediaType,
+      style,
+    });
+    if (r.error) throw new Error(r.error);
+    const dataUrl = `data:image/png;base64,${r.enhancedImageBase64}`;
+    post.photoBase64 = r.enhancedImageBase64;
+    post.photoMediaType = 'image/png';
+    post.photoDataUrl = dataUrl;
+    const img = $('photo-preview'); img.src = dataUrl;
+    toast('Photo enhanced! Now generate your post.');
+  } catch (err) {
+    toast(err.message || 'Could not enhance the photo.');
+  } finally { btn.disabled = false; $('enhance-label').textContent = 'Enhance photo with AI scene'; }
 }
 
 async function onGenerate() {
