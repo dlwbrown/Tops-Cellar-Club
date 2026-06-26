@@ -5,6 +5,7 @@
 
 /* ---------- app shell ---------- */
 [hidden]{display:none!important}
+button,a,[data-go],[data-act],[data-nav],.chip,.tog,.aud,.qa,.nrow,.ni2,.bell{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{
   background:radial-gradient(circle at 50% 0%,#17171b,#0a0a0c 70%);
