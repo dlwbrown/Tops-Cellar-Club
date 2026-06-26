@@ -419,13 +419,30 @@ async function loadNotifications() {
     host.innerHTML = data.map((n) => {
       const isUnread = new Date(n.sent_at).getTime() > lastSeen;
       if (isUnread) unread++;
-      return `<div class="nrow${isUnread ? ' unread' : ''}${n.image_url ? ' has-img' : ''}">
+      return `<div class="nrow${isUnread ? ' unread' : ''}${n.image_url ? ' has-img' : ''}" data-notif='${JSON.stringify({id:n.id,title:n.title,body:n.body||'',image_url:n.image_url||'',link:n.link||'',sent_at:n.sent_at})}'>
         <div class="ni">${n.image_url ? `<img src="${esc(n.image_url)}" alt="" loading="lazy">` : '🍷'}</div>
         <div class="nt"><h4>${esc(n.title)}</h4>${n.body ? `<p>${esc(n.body)}</p>` : ''}<div class="tm">${timeAgo(n.sent_at)}</div></div>
+        <div class="nchev">›</div>
       </div>`;
     }).join('');
     updateBell(unread);
   } catch {}
+}
+function openNotif(n) {
+  const imgEl = document.getElementById('nd-img');
+  if (n.image_url) {
+    imgEl.style.backgroundImage = `url('${esc(n.image_url)}')`;
+    imgEl.hidden = false;
+  } else {
+    imgEl.hidden = true;
+  }
+  document.getElementById('nd-body').innerHTML = `
+    <h1 class="nd-title">${esc(n.title)}</h1>
+    ${n.body ? `<p class="nd-body">${esc(n.body)}</p>` : ''}
+    <div class="nd-tm">${timeAgo(n.sent_at)}</div>
+    ${n.link ? `<a class="btn nd-btn" href="${esc(n.link)}">View →</a>` : ''}
+  `;
+  go('notif-detail', 'notifications');
 }
 function updateBell(unread) {
   const bell = document.getElementById('home-bell');
@@ -494,6 +511,9 @@ function wireDelegation() {
       if (act === 'rate-wine') { toast('Ratings open in Phase 2 — coming soon.'); return; }
       if (act === 'note-wine') { toast('Tasting notes open in Phase 2 — coming soon.'); return; }
     }
+
+    const notifRow = e.target.closest('.nrow[data-notif]');
+    if (notifRow) { try { openNotif(JSON.parse(notifRow.dataset.notif)); } catch {} return; }
 
     if (goEl) {
       if (goEl.hasAttribute('data-stop')) e.stopPropagation();
