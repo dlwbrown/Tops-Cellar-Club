@@ -15,8 +15,9 @@ exports.handler = async (event) => {
   const { question, prefs } = body;
   if (!question) return { statusCode: 400, headers, body: JSON.stringify({ error: 'question required' }) };
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim();
   if (!apiKey) return { statusCode: 500, headers, body: JSON.stringify({ answer: 'API key not configured in Netlify environment variables.' }) };
+  if (!apiKey.startsWith('sk-ant-')) return { statusCode: 200, headers, body: JSON.stringify({ answer: `Key format wrong — starts with: ${apiKey.slice(0, 10)}` }) };
 
   const sys = [
     'You are the TOPS Cellar Selection Club Sommelier — elegant, knowledgeable, warm.',
