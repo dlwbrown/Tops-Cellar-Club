@@ -546,9 +546,13 @@ function wireDelegation() {
 }
 
 function openWine(id) {
-  if (id.startsWith('seed-')) return; // seed rows keep their static markup
+  if (id.startsWith('seed-')) return;
   const w = WINES.find((x) => x.id === id);
-  if (w) renderWineDetail(w);
+  if (!w) return;
+  renderWineDetail(w);
+  const isFav = CELLAR.favourites.some((f) => f.wine_id === id);
+  const fav = document.getElementById('wine-fav');
+  if (isFav) { fav.classList.add('on'); fav.innerHTML = '&#9829;'; }
 }
 
 async function onEnableAlerts(btn) {
