@@ -3,6 +3,12 @@
 [build]
   publish = "."          # static site; no build step unless you add a bundler
 
+[functions]
+  node_bundler = "esbuild"
+
+[build.environment]
+  NODE_VERSION = "18"
+
 # The service worker and manifest must never be cached, or members get stuck on old versions.
 [[headers]]
   for = "/service-worker.js"

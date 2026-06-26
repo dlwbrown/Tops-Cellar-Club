@@ -9,11 +9,14 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'POST only' }) };
 
-  const { question, prefs } = JSON.parse(event.body || '{}');
+  let body;
+  try { body = JSON.parse(event.body || '{}'); } catch { return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+
+  const { question, prefs } = body;
   if (!question) return { statusCode: 400, headers, body: JSON.stringify({ error: 'question required' }) };
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { statusCode: 500, headers, body: JSON.stringify({ error: 'not configured' }) };
+  if (!apiKey) return { statusCode: 500, headers, body: JSON.stringify({ answer: 'API key not configured in Netlify environment variables.' }) };
 
   const sys = [
     'You are the TOPS Cellar Selection Club Sommelier — elegant, knowledgeable, warm.',
@@ -22,18 +25,27 @@ exports.handler = async (event) => {
     prefs ? `This member's preferences: ${prefs}.` : '',
   ].filter(Boolean).join('\n');
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 300,
-      system: sys,
-      messages: [{ role: 'user', content: question }],
-    }),
-  });
+  let res, data;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        system: sys,
+        messages: [{ role: 'user', content: question }],
+      }),
+    });
+    data = await res.json();
+  } catch (e) {
+    return { statusCode: 500, headers, body: JSON.stringify({ answer: `Network error calling Anthropic: ${e.message}` }) };
+  }
 
-  const data = await res.json();
+  if (data.type === 'error') {
+    return { statusCode: 200, headers, body: JSON.stringify({ answer: `Anthropic error: ${data.error?.message || JSON.stringify(data.error)}` }) };
+  }
+
   const answer = (data.content ?? []).filter(b => b.type === 'text').map(b => b.text).join('');
-  return { statusCode: 200, headers, body: JSON.stringify({ answer: answer || 'I couldn\'t answer that just now.' }) };
+  return { statusCode: 200, headers, body: JSON.stringify({ answer: answer || 'No response from Anthropic.' }) };
 };
