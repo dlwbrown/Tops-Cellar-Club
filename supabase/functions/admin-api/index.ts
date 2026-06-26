@@ -168,9 +168,22 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
 
+      /* ---------------- IMAGE UPLOAD ---------------- */
+      case 'upload-image': {
+        const { imageBase64, imageMediaType = 'image/jpeg' } = payload;
+        if (!imageBase64) return json({ error: 'imageBase64 required' }, 400);
+        const ext = (imageMediaType.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+        const name = `post-${Date.now()}.${ext}`;
+        const bytes = Uint8Array.from(atob(imageBase64), (c) => c.charCodeAt(0));
+        const { error } = await supabase.storage.from('post-images').upload(name, bytes, { contentType: imageMediaType, upsert: true });
+        if (error) return json({ error: error.message }, 400);
+        const { data: { publicUrl } } = supabase.storage.from('post-images').getPublicUrl(name);
+        return json({ url: publicUrl });
+      }
+
       /* ---------------- CREATE POST (audited draft→published special) ---------------- */
       case 'create-post': {
-        const { postType, title, body, price, kicker, source_photo } = payload;
+        const { postType, title, body, price, kicker, source_photo, image_url } = payload;
         const category = ({ 'Member Special': 'Wine', 'New Arrival': 'Wine', 'Discovery Box': 'Box' } as any)[postType] || postType;
         const { data, error } = await supabase.from('specials').insert({
           category, title: title || 'Member Special',
@@ -178,7 +191,7 @@ Deno.serve(async (req) => {
           link: kicker || null,
           status: 'published',
           ai_generated: true,
-          source_photo_url: source_photo ? 'uploaded' : null,
+          source_photo_url: image_url || (source_photo ? 'uploaded' : null),
         }).select('id').single();
         if (error) return json({ error: error.message }, 400);
         return json({ ok: true, id: data.id });

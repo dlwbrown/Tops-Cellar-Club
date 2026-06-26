@@ -184,7 +184,7 @@ async function loadMode() {
 }
 
 /* ---------------- CREATE: AI post ---------------- */
-const post = { type: 'Member Special', photoBase64: null, photoMediaType: null, photoDataUrl: null, price: null, price_found: false, channels: ['push', 'in_app'] };
+const post = { type: 'Member Special', photoBase64: null, photoMediaType: null, photoDataUrl: null, photoUrl: null, price: null, price_found: false, channels: ['push', 'in_app'] };
 
 function wireCreate() {
   $('post-types').addEventListener('click', (e) => {
@@ -202,6 +202,7 @@ function wireCreate() {
     $('photo-cap').textContent = '📷 Tap to change photo';
     $('btn-enhance').hidden = false;
     $('enhance-styles').hidden = false;
+    uploadPhoto();
   });
   $('btn-enhance').addEventListener('click', onEnhance);
   $('enhance-styles').addEventListener('click', (e) => {
@@ -216,6 +217,13 @@ function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file);
   });
+}
+async function uploadPhoto() {
+  if (!post.photoBase64) return;
+  try {
+    const r = await adminApi('upload-image', { imageBase64: post.photoBase64, imageMediaType: post.photoMediaType });
+    if (r.url) post.photoUrl = r.url;
+  } catch {}
 }
 
 async function onEnhance() {
@@ -233,7 +241,9 @@ async function onEnhance() {
     post.photoBase64 = r.enhancedImageBase64;
     post.photoMediaType = 'image/png';
     post.photoDataUrl = dataUrl;
+    post.photoUrl = null;
     const img = $('photo-preview'); img.src = dataUrl;
+    uploadPhoto();
     toast('Photo enhanced! Now generate your post.');
   } catch (err) {
     toast(err.message || 'Could not enhance the photo.');
@@ -314,11 +324,12 @@ async function onApproveSend() {
       price: formatPrice(post.price).replace('R', ''),
       kicker: $('edit-kicker').value.trim(),
       source_photo: post.photoDataUrl ? true : false,
+      image_url: post.photoUrl || undefined,
     }).catch(() => {});
     // 2) broadcast it (push/in-app/email) via the send engine
     const pushChannels = channels.filter((c) => c !== 'web');
     if (pushChannels.length) {
-      await fn('send-push', { title: headline, body, audience: { type: 'all' }, channels: pushChannels, sent_by: 'admin' });
+      await fn('send-push', { title: headline, body, image: post.photoUrl || undefined, audience: { type: 'all' }, channels: pushChannels, sent_by: 'admin' });
     }
     toast('Post approved & sent.');
     go('dash', 'dash');
