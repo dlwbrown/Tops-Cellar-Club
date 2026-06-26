@@ -161,6 +161,7 @@ function go(id, nav) {
   if (nav) setNav(nav);
   if (id === 'card') renderCard();
   if (id === 'notifications') markNotificationsSeen();
+  if (id === 'cellar') loadCellar();
 }
 function setNav(n) {
   document.querySelectorAll('.ni2').forEach((x) => x.classList.toggle('on', x.getAttribute('data-nav') === n));
@@ -393,6 +394,10 @@ function renderWineDetail(w) {
   const big = document.getElementById('wine-big');
   if (w.image_url) { big.classList.add('img'); big.style.backgroundImage = `url('${w.image_url}')`; }
   else { big.classList.remove('img'); big.style.backgroundImage = ''; }
+  const fav = document.getElementById('wine-fav');
+  fav.dataset.wine = w.id;
+  fav.classList.remove('on');
+  fav.innerHTML = '&#9825;';
   document.getElementById('wine-body').innerHTML = `
     <div class="te">${esc((w.producer || '').toUpperCase())}</div>
     <h1>${esc(w.name)}</h1>

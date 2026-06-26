@@ -5,7 +5,8 @@
 
 /* ---------- app shell ---------- */
 [hidden]{display:none!important}
-button,a,[data-go],[data-act],[data-nav],.chip,.tog,.aud,.qa,.nrow,.ni2,.bell{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button,a,[data-go],[data-act],[data-nav],.chip,.tog,.aud,.qa,.nrow,.ni2,.bell,.ctab,.schip,.rrow{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:active,.btn:active,[data-go]:active,[data-act]:active,[data-nav]:active,.ctab:active,.schip:active,.ni2:active{opacity:.7}
 html,body{height:100%}
 body{
   background:radial-gradient(circle at 50% 0%,#17171b,#0a0a0c 70%);
@@ -267,7 +268,7 @@ body{
 .rmcard{position:relative;width:100%;background:var(--surface2);border-radius:22px 22px 0 0;padding:28px 24px calc(34px + env(safe-area-inset-bottom))}
 .rmtitle{font-family:var(--disp);font-size:21px;font-weight:600;margin-bottom:18px;text-align:center}
 .rmstars{display:flex;justify-content:center;gap:10px;font-size:38px;cursor:pointer;touch-action:manipulation}
-.rmstars span{color:var(--hair);transition:color .12s}
+.rmstars span{color:var(--hair);transition:color .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;padding:4px}
 .rmstars span.on{color:var(--gold-br)}
 
 /* sommelier */
