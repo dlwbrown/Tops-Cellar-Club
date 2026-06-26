@@ -143,7 +143,7 @@ export async function registerMember(form) {
     install_completed: isInstalled(),
     marketing_consent: !!form.marketing_consent,
   });
-  setMember(member);
+  setMember({ ...member, fav_wine_styles: form.fav_wine_styles || [], fav_spirits: form.fav_spirits || [] });
   return member;
 }
 
@@ -726,7 +726,13 @@ async function doAsk() {
   const thinking = document.createElement('div'); thinking.className = 'smsg sma sthink'; thinking.textContent = '…'; thread.appendChild(thinking);
   if (vp) vp.scrollTop = vp.scrollHeight;
   try {
-    const r = await memberApi('ask-sommelier', { member_id: m.id, question: q });
+    const prefs = [...(m.fav_wine_styles || []), ...(m.fav_spirits || [])].filter(Boolean).join(', ');
+    const res = await fetch('/.netlify/functions/ask-sommelier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, prefs }),
+    });
+    const r = await res.json();
     thinking.classList.remove('sthink'); thinking.textContent = r.answer || 'I couldn\'t answer that just now.';
   } catch { thinking.classList.remove('sthink'); thinking.textContent = 'Sorry, I\'m unavailable right now.'; }
   if (vp) vp.scrollTop = vp.scrollHeight;
