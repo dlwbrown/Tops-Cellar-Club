@@ -7,20 +7,6 @@ exports.handler = async (event) => {
   };
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-  if (event.httpMethod === 'GET') {
-    const k = (process.env.ANTHROPIC_API_KEY || '').trim();
-    let live = 'not tested';
-    try {
-      const t = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 16, messages: [{ role: 'user', content: 'hi' }] }),
-      });
-      const td = await t.json();
-      live = td.type === 'error' ? `FAIL: ${td.error?.message}` : 'OK — key works!';
-    } catch (e) { live = `network error: ${e.message}`; }
-    return { statusCode: 200, headers, body: JSON.stringify({ keyLength: k.length, keyStart: k.slice(0, 14), keyEnd: k.slice(-4), liveTest: live }) };
-  }
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'POST only' }) };
 
   let body;
