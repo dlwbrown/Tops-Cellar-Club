@@ -49,6 +49,7 @@
           <div class="jrow" data-go="broadcast" data-nav="broadcast"><div class="ji">&#128226;</div><div class="jt"><h4>Send a broadcast</h4><p>Push a message to members</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="draw"><div class="ji">&#127942;</div><div class="jt"><h4>Monthly prize draw</h4><p>Draw this month&rsquo;s winner</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="staff"><div class="ji">&#11088;</div><div class="jt"><h4>Staff Champions</h4><p>Signups by team member</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="manage"><div class="ji">&#127863;</div><div class="jt"><h4>Manage catalogue</h4><p>Wines, events &amp; Discovery Boxes</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="suppliers"><div class="ji">&#129309;</div><div class="jt"><h4>Suppliers</h4><p>Partner tiers &amp; features</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="settings-view"><div class="ji">&#9881;</div><div class="jt"><h4>Discovery Box mode</h4><p id="dbmode-sub">Waiting list &middot; flip in September</p></div><div class="ch">&#8250;</div></div>
         </div>
@@ -231,6 +232,118 @@
             <div class="aud" data-mode="live"><div class="rd"></div><div class="opt"><div>Live ordering</div><div class="sm">&ldquo;Reserve — collect in store&rdquo;</div></div></div>
           </div>
           <button class="btn block" style="margin-top:18px" id="btn-save-mode">Save</button>
+        </div>
+      </section>
+
+      <!-- MANAGE HUB -->
+      <section class="view" id="manage">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Manage catalogue</div></div>
+        <div class="jump" style="margin-top:8px">
+          <div class="jrow" data-go="m-wines"><div class="ji">&#127863;</div><div class="jt"><h4>Wines</h4><p>Add, edit &amp; remove wines</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="m-events"><div class="ji">&#127881;</div><div class="jt"><h4>Events</h4><p>Tastings, dinners &amp; more</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="m-boxes"><div class="ji">&#128230;</div><div class="jt"><h4>Discovery Boxes</h4><p>Monthly box contents</p></div><div class="ch">&#8250;</div></div>
+        </div>
+      </section>
+
+      <!-- MANAGE: WINES -->
+      <section class="view" id="m-wines">
+        <div class="bhead"><div class="bk" data-go="manage">&#8249;</div><div class="ti">Wines</div></div>
+        <div class="body">
+          <button class="btn block" id="wine-add">&#43; Add a wine</button>
+          <div id="wine-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
+          <div id="wine-form" class="cform" hidden>
+            <div class="flabel">Name *</div>
+            <input class="tinput" id="wf-name" placeholder="e.g. Palladius 2022" />
+            <div class="frow">
+              <div><div class="flabel">Producer</div><input class="tinput" id="wf-producer" placeholder="Sadie Family" /></div>
+              <div><div class="flabel">Varietal</div><input class="tinput" id="wf-varietal" placeholder="White Blend" /></div>
+            </div>
+            <div class="frow">
+              <div><div class="flabel">Region</div><input class="tinput" id="wf-region" placeholder="Swartland" /></div>
+              <div><div class="flabel">Country</div><input class="tinput" id="wf-country" placeholder="South Africa" /></div>
+            </div>
+            <div class="frow">
+              <div><div class="flabel">Serve at</div><input class="tinput" id="wf-serving_temp" placeholder="12–14°C" /></div>
+              <div><div class="flabel">Rating (0–5)</div><input class="tinput" id="wf-avg_rating" inputmode="decimal" placeholder="4.8" /></div>
+            </div>
+            <div class="flabel">Food pairing</div>
+            <input class="tinput" id="wf-food_pairings" placeholder="Roast chicken, line-fish" />
+            <div class="flabel">Story</div>
+            <textarea class="tinput" id="wf-story" placeholder="A legendary white blend…"></textarea>
+            <div class="flabel">Tasting notes</div>
+            <textarea class="tinput" id="wf-tasting_notes" placeholder="Stone fruit, fynbos, saline finish"></textarea>
+            <div class="flabel">Awards</div>
+            <input class="tinput" id="wf-awards" placeholder="Tim Atkin 97pts" />
+            <div class="flabel">Image URL (optional)</div>
+            <input class="tinput" id="wf-image_url" placeholder="https://…" />
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn" style="flex:1" id="wf-save">Save wine</button>
+              <button class="btn ghost" id="wf-cancel">Cancel</button>
+            </div>
+            <button class="btn block ghost danger" id="wf-delete" style="margin-top:10px" hidden>Delete wine</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- MANAGE: EVENTS -->
+      <section class="view" id="m-events">
+        <div class="bhead"><div class="bk" data-go="manage">&#8249;</div><div class="ti">Events</div></div>
+        <div class="body">
+          <button class="btn block" id="event-add">&#43; Add an event</button>
+          <div id="event-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
+          <div id="event-form" class="cform" hidden>
+            <div class="flabel">Title *</div>
+            <input class="tinput" id="ef-title" placeholder="e.g. Swartland Tasting Evening" />
+            <div class="flabel">Date &amp; time *</div>
+            <input class="tinput" id="ef-datetime" type="datetime-local" />
+            <div class="frow">
+              <div><div class="flabel">Location</div><input class="tinput" id="ef-location" placeholder="Beacon Isle" /></div>
+              <div><div class="flabel">Capacity</div><input class="tinput" id="ef-capacity" inputmode="numeric" placeholder="40" /></div>
+            </div>
+            <div class="flabel">Description</div>
+            <textarea class="tinput" id="ef-description" placeholder="An evening of Swartland's finest…"></textarea>
+            <div class="flabel">Image URL (optional)</div>
+            <input class="tinput" id="ef-image_url" placeholder="https://…" />
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn" style="flex:1" id="ef-save">Save event</button>
+              <button class="btn ghost" id="ef-cancel">Cancel</button>
+            </div>
+            <button class="btn block ghost danger" id="ef-delete" style="margin-top:10px" hidden>Delete event</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- MANAGE: DISCOVERY BOXES -->
+      <section class="view" id="m-boxes">
+        <div class="bhead"><div class="bk" data-go="manage">&#8249;</div><div class="ti">Discovery Boxes</div></div>
+        <div class="body">
+          <button class="btn block" id="box-add">&#43; Add a box</button>
+          <div id="box-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
+          <div id="box-form" class="cform" hidden>
+            <div class="flabel">Title *</div>
+            <input class="tinput" id="bf-title" placeholder="e.g. September Discovery Box" />
+            <div class="frow">
+              <div><div class="flabel">Month</div><input class="tinput" id="bf-month" placeholder="2026-09" /></div>
+              <div><div class="flabel">Price (R)</div><input class="tinput" id="bf-price" inputmode="decimal" placeholder="499" /></div>
+            </div>
+            <div class="flabel">What's inside (one item per line)</div>
+            <textarea class="tinput" id="bf-included" placeholder="Palladius 2022&#10;The Chocolate Block 2022&#10;Tasting notes booklet"></textarea>
+            <div class="flabel">Availability note</div>
+            <input class="tinput" id="bf-availability" placeholder="Limited to 50 boxes" />
+            <div class="flabel">Status</div>
+            <select class="tinput" id="bf-status">
+              <option value="waitlist">Waiting list</option>
+              <option value="live">Live</option>
+              <option value="past">Past</option>
+            </select>
+            <div class="flabel">Image URL (optional)</div>
+            <input class="tinput" id="bf-image_url" placeholder="https://…" />
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn" style="flex:1" id="bf-save">Save box</button>
+              <button class="btn ghost" id="bf-cancel">Cancel</button>
+            </div>
+            <button class="btn block ghost danger" id="bf-delete" style="margin-top:10px" hidden>Delete box</button>
+          </div>
         </div>
       </section>
 

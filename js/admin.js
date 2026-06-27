@@ -85,6 +85,9 @@ function loadFor(id) {
   if (id === 'insights') loadInsights();
   if (id === 'members') loadMembers();
   if (id === 'settings-view') loadMode();
+  if (id === 'm-wines') loadManage('wine');
+  if (id === 'm-events') loadManage('event');
+  if (id === 'm-boxes') loadManage('box');
 }
 
 let STATS = null;
@@ -516,9 +519,101 @@ function wireDelegation() {
   });
 }
 
+/* ---------------- MANAGE CATALOGUE (wines / events / boxes) ---------------- */
+// Talks to the Netlify admin-content function (auto-deploys; uses service-role key).
+async function contentApi(action, payload = {}) {
+  const res = await fetch('/.netlify/functions/admin-content', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) throw new Error('Add your admin passphrase as ADMIN_TOKEN in Netlify to manage content.');
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+function toLocalInput(iso) { if (!iso) return ''; const d = new Date(iso); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+
+function fillWine(w) { w = w || {}; $('wf-name').value = w.name || ''; $('wf-producer').value = w.producer || ''; $('wf-varietal').value = w.varietal || ''; $('wf-region').value = w.region || ''; $('wf-country').value = w.country || ''; $('wf-serving_temp').value = w.serving_temp || ''; $('wf-avg_rating').value = w.avg_rating != null ? w.avg_rating : ''; $('wf-food_pairings').value = w.food_pairings || ''; $('wf-story').value = w.story || ''; $('wf-tasting_notes').value = w.tasting_notes || ''; $('wf-awards').value = w.awards || ''; $('wf-image_url').value = w.image_url || ''; }
+function readWine() { return { name: $('wf-name').value.trim(), producer: $('wf-producer').value.trim(), varietal: $('wf-varietal').value.trim(), region: $('wf-region').value.trim(), country: $('wf-country').value.trim(), serving_temp: $('wf-serving_temp').value.trim(), avg_rating: $('wf-avg_rating').value.trim(), food_pairings: $('wf-food_pairings').value.trim(), story: $('wf-story').value.trim(), tasting_notes: $('wf-tasting_notes').value.trim(), awards: $('wf-awards').value.trim(), image_url: $('wf-image_url').value.trim() }; }
+
+function fillEvent(e) { e = e || {}; $('ef-title').value = e.title || ''; $('ef-datetime').value = toLocalInput(e.datetime); $('ef-location').value = e.location || ''; $('ef-capacity').value = e.capacity != null ? e.capacity : ''; $('ef-description').value = e.description || ''; $('ef-image_url').value = e.image_url || ''; }
+function readEvent() { const dt = $('ef-datetime').value; return { title: $('ef-title').value.trim(), datetime: dt ? new Date(dt).toISOString() : null, location: $('ef-location').value.trim(), capacity: $('ef-capacity').value.trim(), description: $('ef-description').value.trim(), image_url: $('ef-image_url').value.trim(), status: 'confirmed' }; }
+
+function fillBox(b) { b = b || {}; $('bf-title').value = b.title || ''; $('bf-month').value = b.month || ''; $('bf-price').value = b.price != null ? b.price : ''; $('bf-included').value = Array.isArray(b.included) ? b.included.join('\n') : ''; $('bf-availability').value = b.availability || ''; $('bf-status').value = b.status || 'waitlist'; $('bf-image_url').value = b.image_url || ''; }
+function readBox() { return { title: $('bf-title').value.trim(), month: $('bf-month').value.trim(), price: $('bf-price').value.trim(), included: $('bf-included').value.split('\n').map((s) => s.trim()).filter(Boolean), availability: $('bf-availability').value.trim(), status: $('bf-status').value, image_url: $('bf-image_url').value.trim() }; }
+
+const MGR = {
+  wine: { p: 'wine', f: 'wf', list: 'list-wines', save: 'save-wine', del: 'delete-wine', fill: fillWine, read: readWine, row: (w) => ({ t: w.name, s: [w.producer, w.region].filter(Boolean).join(' · ') }) },
+  event: { p: 'event', f: 'ef', list: 'list-events', save: 'save-event', del: 'delete-event', fill: fillEvent, read: readEvent, row: (e) => ({ t: e.title, s: e.datetime ? new Date(e.datetime).toLocaleString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '' }) },
+  box: { p: 'box', f: 'bf', list: 'list-boxes', save: 'save-box', del: 'delete-box', fill: fillBox, read: readBox, row: (b) => ({ t: b.title, s: [b.month, b.status].filter(Boolean).join(' · ') }) },
+};
+let MITEMS = { wine: [], event: [], box: [] };
+let EDITING = { wine: null, event: null, box: null };
+
+function mgrShowForm(p) { $(`${p}-list`).hidden = true; $(`${p}-add`).hidden = true; $(`${p}-form`).hidden = false; $('vp').scrollTop = 0; }
+function mgrShowList(p) { $(`${p}-list`).hidden = false; $(`${p}-add`).hidden = false; $(`${p}-form`).hidden = true; }
+
+async function loadManage(key) {
+  const m = MGR[key];
+  mgrShowList(m.p);
+  $(`${m.p}-list`).innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const r = await contentApi(m.list);
+    MITEMS[key] = r.items || [];
+    renderManage(key);
+  } catch (err) { $(`${m.p}-list`).innerHTML = `<div class="empty">${esc(err.message)}</div>`; }
+}
+function renderManage(key) {
+  const m = MGR[key]; const items = MITEMS[key];
+  $(`${m.p}-list`).innerHTML = items.length
+    ? items.map((it, i) => { const r = m.row(it); return `<div class="crow" data-midx="${i}"><div class="ci"><h4>${esc(r.t || '—')}</h4><p>${esc(r.s || '')}</p></div><div class="ch">›</div></div>`; }).join('')
+    : '<div class="empty">None yet. Tap “Add” to create one.</div>';
+}
+function openMForm(key, item) {
+  const m = MGR[key]; EDITING[key] = item ? item.id : null;
+  m.fill(item);
+  $(`${m.f}-delete`).hidden = !item;
+  mgrShowForm(m.p);
+}
+async function saveMForm(key) {
+  const m = MGR[key]; const body = m.read();
+  if (key === 'wine' && !body.name) { toast('Name is required.'); return; }
+  if (key === 'event' && (!body.title || !body.datetime)) { toast('Title and date are required.'); return; }
+  if (key === 'box' && !body.title) { toast('Title is required.'); return; }
+  const btn = $(`${m.f}-save`); btn.disabled = true; const label = btn.textContent; btn.textContent = 'Saving…';
+  try {
+    await contentApi(m.save, { id: EDITING[key] || undefined, ...body });
+    toast('Saved.');
+    await loadManage(key);
+  } catch (err) { toast(err.message || 'Save failed.'); }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+async function delMForm(key) {
+  const m = MGR[key]; if (!EDITING[key]) { mgrShowList(m.p); return; }
+  if (!confirm('Delete this permanently?')) return;
+  try { await contentApi(m.del, { id: EDITING[key] }); toast('Deleted.'); await loadManage(key); }
+  catch (err) { toast(err.message || 'Delete failed.'); }
+}
+function wireManage() {
+  ['wine', 'event', 'box'].forEach((key) => {
+    const m = MGR[key];
+    $(`${m.p}-add`).addEventListener('click', () => openMForm(key, null));
+    $(`${m.f}-save`).addEventListener('click', () => saveMForm(key));
+    $(`${m.f}-cancel`).addEventListener('click', () => mgrShowList(m.p));
+    $(`${m.f}-delete`).addEventListener('click', () => delMForm(key));
+    $(`${m.p}-list`).addEventListener('click', (e) => {
+      const row = e.target.closest('.crow'); if (!row) return;
+      openMForm(key, MITEMS[key][parseInt(row.dataset.midx, 10)]);
+    });
+  });
+}
+
 /* ---------------- boot ---------------- */
 function start() {
-  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation();
+  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage();
   if (TOKEN) {
     const hr = new Date().getHours();
     $('dash-greeting').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Ashley';
