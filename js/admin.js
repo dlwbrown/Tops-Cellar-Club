@@ -257,7 +257,7 @@ async function onGenerate() {
   if (!post.photoBase64 && !$('raw-line').value.trim()) { toast('Add a photo or a line of text first.'); return; }
   const btn = $('btn-generate'); btn.disabled = true; $('gen-label').textContent = 'Writing your post…';
   try {
-    const r = await fn('generate-post', {
+    const r = await contentFn('generate-post', {
       postType: post.type,
       photoBase64: post.photoBase64,
       photoMediaType: post.photoMediaType,
@@ -529,6 +529,19 @@ async function contentApi(action, payload = {}) {
   });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) throw new Error('Add your admin passphrase as ADMIN_TOKEN in Netlify to manage content.');
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+// Generic caller for any Netlify function that expects the admin token.
+async function contentFn(name, payload = {}) {
+  const res = await fetch(`/.netlify/functions/${name}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) throw new Error('Add your admin passphrase as ADMIN_TOKEN in Netlify.');
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
   return data;
 }
