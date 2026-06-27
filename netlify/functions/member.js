@@ -42,6 +42,18 @@ exports.handler = async (event) => {
 
   try {
     switch (action) {
+      case 'save-subscription': {
+        // One push subscription per member — deletes any previous ones first so a
+        // re-installed app doesn't leave a stale subscription that double-notifies.
+        const { member_id, endpoint, p256dh, auth, device_type } = payload;
+        if (!member_id || !endpoint || !p256dh || !auth) return json({ error: 'Missing subscription fields.' }, 400);
+        await rest(`push_subscriptions?member_id=eq.${member_id}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+        const ins = await rest('push_subscriptions', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ member_id, endpoint, p256dh, auth, device_type: device_type || null }) });
+        if (!ins.ok) return json({ error: await ins.text() }, 400);
+        await rest(`members?id=eq.${member_id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ notif_permission_granted: true }) });
+        return json({ ok: true });
+      }
+
       case 'get-cellar': {
         const { member_id } = payload;
         if (!member_id) return json({ error: 'member_id required' }, 400);

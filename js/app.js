@@ -78,7 +78,7 @@ function setMember(m) { localStorage.setItem(LS_KEY, JSON.stringify(m)); }
 
 /* Actions served by the Netlify function (auto-deploys with the site) instead of
    the Supabase member-api. These need the service-role key, which lives in Netlify. */
-const NETLIFY_ACTIONS = new Set(['get-cellar', 'toggle-fav', 'add-rating', 'rsvp']);
+const NETLIFY_ACTIONS = new Set(['get-cellar', 'toggle-fav', 'add-rating', 'rsvp', 'save-subscription']);
 
 /* Edge Function helpers (anon JWT satisfies default verify_jwt; service role is internal). */
 async function memberApi(action, payload = {}) {
