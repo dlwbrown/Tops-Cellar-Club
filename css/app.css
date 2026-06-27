@@ -5,9 +5,12 @@
 
 /* ---------- app shell ---------- */
 [hidden]{display:none!important}
+*,*::before,*::after{box-sizing:border-box}
+/* iOS Safari zooms in (and stays zoomed) when focusing inputs under 16px — keep form controls at 16px. */
+input,textarea,select{font-size:16px}
 button,a,[data-go],[data-act],[data-nav],.chip,.tog,.aud,.qa,.nrow,.ni2,.bell,.ctab,.schip,.rrow{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 button:active,.btn:active,[data-go]:active,[data-act]:active,[data-nav]:active,.ctab:active,.schip:active,.ni2:active{opacity:.7}
-html,body{height:100%}
+html,body{height:100%;max-width:100%;overflow-x:hidden}
 body{
   background:radial-gradient(circle at 50% 0%,#17171b,#0a0a0c 70%);
   min-height:100%;color:var(--paper);
@@ -63,7 +66,7 @@ body{
 .reg{padding:6px 22px 26px}
 .field{margin-top:14px}
 .field .fl{font-size:10px;letter-spacing:1.4px;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:7px}
-.field .fi{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:13px 14px;font-size:13px;color:var(--paper);width:100%;font-family:var(--body)}
+.field .fi{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:13px 14px;font-size:16px;color:var(--paper);width:100%;font-family:var(--body)}
 .field .fi::placeholder{color:var(--muted)}
 .field select.fi{appearance:none;-webkit-appearance:none}
 .field .err{color:#e98a8a;font-size:10.5px;margin-top:6px;display:none}
@@ -284,7 +287,7 @@ body{
 .sma{background:var(--surface2);color:var(--paper);align-self:flex-start;border-radius:18px 18px 18px 4px}
 .sthink{color:var(--muted)!important;font-style:italic}
 .som-bar{position:sticky;bottom:0;display:flex;align-items:center;gap:10px;padding:10px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--hair);background:rgba(16,15,18,.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.som-input{flex:1;background:var(--surface);border:1px solid var(--hair);border-radius:20px;padding:10px 16px;font-size:13px;color:var(--paper);resize:none;line-height:1.4;font-family:inherit;max-height:100px;overflow-y:auto}
+.som-input{flex:1;background:var(--surface);border:1px solid var(--hair);border-radius:20px;padding:10px 16px;font-size:16px;color:var(--paper);resize:none;line-height:1.4;font-family:inherit;max-height:100px;overflow-y:auto}
 .som-input::placeholder{color:var(--muted)}
 .som-input:focus{outline:none;border-color:rgba(194,162,90,.4)}
 .som-send{width:40px;height:40px;border-radius:50%;background:linear-gradient(180deg,var(--gold-br),var(--gold));border:none;color:#241a08;font-size:16px;cursor:pointer;flex-shrink:0;touch-action:manipulation}

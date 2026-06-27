@@ -3,7 +3,10 @@
    removed. Colour/type tokens come from css/tokens.css (LOCKED). */
 
 [hidden]{display:none!important}
-html,body{height:100%}
+*,*::before,*::after{box-sizing:border-box}
+/* iOS Safari zooms in (and stays zoomed) when focusing inputs under 16px — keep form controls at 16px. */
+input,textarea,select{font-size:16px}
+html,body{height:100%;max-width:100%;overflow-x:hidden}
 body{background:radial-gradient(circle at 50% 0%,#17171b,#0a0a0c 70%);min-height:100%;color:var(--paper);overscroll-behavior-y:none}
 #admin{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:520px;margin:0 auto;background:var(--bg);position:relative}
 .vp{flex:1;overflow-y:auto;scrollbar-width:none;padding-top:env(safe-area-inset-top)}
@@ -30,7 +33,7 @@ body{background:radial-gradient(circle at 50% 0%,#17171b,#0a0a0c 70%);min-height
 .login h1{font-family:var(--disp);font-size:30px;font-weight:600;margin-top:18px;line-height:1.05}
 .login .sub{font-size:12px;color:var(--muted);margin-top:10px}
 .login .pf{margin-top:28px}
-.login input{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:14px 16px;font-size:15px;color:var(--paper);width:100%;text-align:center;letter-spacing:2px;font-family:var(--body)}
+.login input{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:14px 16px;font-size:16px;color:var(--paper);width:100%;text-align:center;letter-spacing:2px;font-family:var(--body)}
 .login .err{color:#e98a8a;font-size:11px;margin-top:10px;min-height:14px}
 .login .cta{margin-top:auto;padding-top:30px}
 
@@ -64,7 +67,7 @@ body{background:radial-gradient(circle at 50% 0%,#17171b,#0a0a0c 70%);min-height
 .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .photo .cap{position:relative;z-index:2;font-size:11px;color:rgba(247,244,238,.85);background:rgba(0,0,0,.4);padding:6px 12px;border-radius:20px}
 .photo input[type=file]{display:none}
-.tinput{margin-top:10px;background:var(--surface);border:1px solid var(--cardbd);border-radius:14px;padding:13px 14px;font-size:13px;color:var(--paper);width:100%;font-family:var(--body)}
+.tinput{margin-top:10px;background:var(--surface);border:1px solid var(--cardbd);border-radius:14px;padding:13px 14px;font-size:16px;color:var(--paper);width:100%;font-family:var(--body)}
 textarea.tinput{min-height:64px;resize:vertical}
 .hint{font-size:10px;color:var(--muted);margin-top:6px;font-style:italic;font-family:var(--disp)}
 .gen{margin-top:16px;width:100%;border:none;padding:15px;border-radius:30px;cursor:pointer;background:linear-gradient(180deg,var(--gold-br),var(--gold));color:#241a08;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:9px}
@@ -89,7 +92,7 @@ textarea.tinput{min-height:64px;resize:vertical}
 .okchip{display:flex;align-items:center;gap:6px;margin:13px auto 0;font-size:10px;color:var(--green);background:rgba(120,190,110,.1);border:1px solid rgba(120,190,110,.3);padding:6px 11px;border-radius:20px;width:fit-content}
 .warnbox{margin:13px 4px 0;background:rgba(224,169,59,.1);border:1px solid rgba(224,169,59,.4);border-radius:12px;padding:12px 14px}
 .warnbox .wh{font-size:11px;color:var(--amber);font-weight:600;display:flex;align-items:center;gap:7px}
-.warnbox .wi{margin-top:8px;background:var(--bg);border:1px solid var(--hair);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--paper);width:100%}
+.warnbox .wi{margin-top:8px;background:var(--bg);border:1px solid var(--hair);border-radius:10px;padding:10px 12px;font-size:16px;color:var(--paper);width:100%}
 
 /* broadcast */
 .audience{display:flex;flex-direction:column;gap:8px}
