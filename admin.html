@@ -106,13 +106,15 @@
           </div>
           <div class="okchip" id="post-okchip" hidden>&#10003; Price confirmed</div>
           <div class="warnbox" id="post-warnbox" hidden>
-            <div class="wh">&#9888; Add a price before sending</div>
-            <input class="wi" id="post-price-input" inputmode="decimal" placeholder="e.g. 89.99" />
+            <div class="wh">Add a price <span style="opacity:.7;font-weight:400">(optional)</span></div>
+            <input class="wi" id="post-price-input" inputmode="decimal" placeholder="e.g. 89.99 — leave blank for no price" />
           </div>
           <div class="flabel">Edit copy</div>
           <input class="tinput" id="edit-headline" placeholder="Headline" />
           <input class="tinput" id="edit-kicker" placeholder="Kicker (e.g. This weekend only)" style="margin-top:8px" />
           <textarea class="tinput" id="edit-body" placeholder="Body" style="margin-top:8px"></textarea>
+          <div class="flabel">Picture</div>
+          <div class="toggles"><span class="tog on" id="tog-image"><span class="dot"></span> Include a picture</span></div>
           <div class="flabel">Send to</div>
           <div class="toggles" id="post-channels">
             <span class="tog on" data-ch="push"><span class="dot"></span> Push</span>

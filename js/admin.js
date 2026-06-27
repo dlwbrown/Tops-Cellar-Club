@@ -187,7 +187,7 @@ async function loadMode() {
 }
 
 /* ---------------- CREATE: AI post ---------------- */
-const post = { type: 'Member Special', photoBase64: null, photoMediaType: null, photoDataUrl: null, photoUrl: null, price: null, price_found: false, channels: ['push', 'in_app'] };
+const post = { type: 'Member Special', photoBase64: null, photoMediaType: null, photoDataUrl: null, photoUrl: null, price: null, price_found: false, showImage: true, channels: ['push', 'in_app'] };
 
 function wireCreate() {
   $('post-types').addEventListener('click', (e) => {
@@ -281,10 +281,10 @@ function fillResult(r) {
   $('edit-headline').value = r.headline || '';
   $('edit-kicker').value = r.subhead || '';
   $('edit-body').value = r.body || '';
-  // product image
-  const host = $('post-image');
-  if (post.photoDataUrl) host.innerHTML = `<img src="${post.photoDataUrl}" alt="product" />`;
-  else host.innerHTML = '<div class="cbottle"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>';
+  // product image (optional — managers can toggle it off for a text-only poster)
+  post.showImage = !!post.photoDataUrl;
+  $('tog-image').classList.toggle('on', post.showImage);
+  renderPostImage();
   applyPriceUi();
   // live edit bindings
   $('edit-headline').oninput = () => { $('post-headline').textContent = $('edit-headline').value; };
@@ -293,6 +293,13 @@ function fillResult(r) {
   $('post-price-input').oninput = () => { post.price = $('post-price-input').value.trim(); post.price_found = !!post.price; applyPriceBadge(); };
 }
 
+function renderPostImage() {
+  const host = $('post-image');
+  if (!post.showImage) { host.hidden = true; host.innerHTML = ''; return; }
+  host.hidden = false;
+  if (post.photoDataUrl) host.innerHTML = `<img src="${post.photoDataUrl}" alt="product" />`;
+  else host.innerHTML = '<div class="cbottle"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>';
+}
 function applyPriceUi() {
   $('post-okchip').hidden = !post.price_found;
   $('post-warnbox').hidden = post.price_found;
@@ -302,17 +309,23 @@ function applyPriceUi() {
 function formatPrice(p) { const s = String(p).replace(/[^\d.]/g, ''); return s ? 'R' + s : ''; }
 function applyPriceBadge() {
   const badge = $('post-badge'); const val = $('post-price');
-  if (post.price_found && post.price) { badge.classList.remove('warn'); val.textContent = formatPrice(post.price); }
-  else { badge.classList.add('warn'); val.textContent = '?'; }
+  // Price is optional: show the badge only when a price exists, otherwise hide it entirely.
+  if (post.price && post.price_found) { badge.hidden = false; badge.classList.remove('warn'); val.textContent = formatPrice(post.price); }
+  else { badge.hidden = true; }
 }
 
 function wireResult() {
   $('post-channels').addEventListener('click', (e) => { const t = e.target.closest('.tog'); if (t) t.classList.toggle('on'); });
+  $('tog-image').addEventListener('click', () => {
+    post.showImage = !post.showImage;
+    $('tog-image').classList.toggle('on', post.showImage);
+    renderPostImage();
+  });
   $('btn-approve').addEventListener('click', onApproveSend);
 }
 
 async function onApproveSend() {
-  if (!post.price_found || !post.price) { toast('Add a price before sending — we never guess one.'); $('post-price-input')?.focus(); return; }
+  // Price is optional — send with or without one.
   const channels = [...document.querySelectorAll('#post-channels .tog.on')].map((t) => t.dataset.ch);
   if (!channels.length) { toast('Pick at least one channel.'); return; }
   const btn = $('btn-approve'); btn.disabled = true; btn.textContent = 'Sending…';
@@ -320,19 +333,20 @@ async function onApproveSend() {
   const body = `${$('edit-kicker').value.trim()} — ${$('edit-body').value.trim()}`.replace(/^ — /, '');
   try {
     // 1) record the post as a published special (draft→published, audited)
+    const postImage = (post.showImage && post.photoUrl) || undefined;
     await adminApi('create-post', {
       postType: post.type,
       title: headline,
       body: $('edit-body').value.trim(),
       price: formatPrice(post.price).replace('R', ''),
       kicker: $('edit-kicker').value.trim(),
-      source_photo: post.photoDataUrl ? true : false,
-      image_url: post.photoUrl || undefined,
+      source_photo: post.showImage && post.photoDataUrl ? true : false,
+      image_url: postImage,
     }).catch(() => {});
     // 2) broadcast it (push/in-app/email) via the send engine
     const pushChannels = channels.filter((c) => c !== 'web');
     if (pushChannels.length) {
-      await fn('send-push', { title: headline, body, image: post.photoUrl || undefined, audience: { type: 'all' }, channels: pushChannels, sent_by: 'admin' });
+      await fn('send-push', { title: headline, body, image: postImage, audience: { type: 'all' }, channels: pushChannels, sent_by: 'admin' });
     }
     toast('Post approved & sent.');
     go('dash', 'dash');
@@ -351,8 +365,8 @@ async function downloadCard() {
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   // gold hairline frame
   x.strokeStyle = 'rgba(194,162,90,.6)'; x.lineWidth = 3; x.strokeRect(40, 40, W - 80, H - 80);
-  // product photo (centred, not restyled)
-  if (post.photoDataUrl) {
+  // product photo (centred, not restyled) — only when the image toggle is on
+  if (post.showImage && post.photoDataUrl) {
     const img = await loadImg(post.photoDataUrl);
     const maxW = W * 0.6, maxH = H * 0.42;
     const r = Math.min(maxW / img.width, maxH / img.height);
