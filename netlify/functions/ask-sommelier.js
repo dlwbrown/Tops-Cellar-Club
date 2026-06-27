@@ -7,6 +7,10 @@ exports.handler = async (event) => {
   };
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+  if (event.httpMethod === 'GET') {
+    const k = (process.env.ANTHROPIC_API_KEY || '').trim();
+    return { statusCode: 200, headers, body: JSON.stringify({ keyLength: k.length, keyStart: k.slice(0, 14), keyEnd: k.slice(-4) }) };
+  }
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'POST only' }) };
 
   let body;
