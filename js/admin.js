@@ -88,6 +88,61 @@ function loadFor(id) {
   if (id === 'm-wines') loadManage('wine');
   if (id === 'm-events') loadManage('event');
   if (id === 'm-boxes') loadManage('box');
+  if (id === 'adminguide') loadAdminGuide();
+  if (id === 'installqr') renderInstallQr();
+}
+
+/* ---------------- GUIDE + INSTALL QR ---------------- */
+function mdToHtml(md) {
+  const e = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const inline = (t) => e(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`(.+?)`/g, '<code>$1</code>');
+  let html = '', list = null;
+  const closeList = () => { if (list) { html += `</${list}>`; list = null; } };
+  for (const raw of md.split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    if (/^\s*[-*]\s+/.test(line)) { if (list !== 'ul') { closeList(); html += '<ul>'; list = 'ul'; } html += `<li>${inline(line.replace(/^\s*[-*]\s+/, ''))}</li>`; continue; }
+    if (/^\s*\d+\.\s+/.test(line)) { if (list !== 'ol') { closeList(); html += '<ol>'; list = 'ol'; } html += `<li>${inline(line.replace(/^\s*\d+\.\s+/, ''))}</li>`; continue; }
+    closeList();
+    if (/^###\s+/.test(line)) html += `<h3>${inline(line.replace(/^###\s+/, ''))}</h3>`;
+    else if (/^##\s+/.test(line)) html += `<h2>${inline(line.replace(/^##\s+/, ''))}</h2>`;
+    else if (/^#\s+/.test(line)) html += `<h1>${inline(line.replace(/^#\s+/, ''))}</h1>`;
+    else if (/^---\s*$/.test(line)) html += '<hr>';
+    else if (line.trim() === '') { /* paragraph break */ }
+    else html += `<p>${inline(line)}</p>`;
+  }
+  closeList();
+  return html;
+}
+let adminGuideLoaded = false;
+async function loadAdminGuide() {
+  if (adminGuideLoaded) return;
+  const host = $('adminguide-body');
+  try {
+    const res = await fetch('/ADMIN-GUIDE.md', { cache: 'no-cache' });
+    host.innerHTML = mdToHtml(await res.text());
+    adminGuideLoaded = true;
+  } catch { host.innerHTML = '<div class="empty">Guide unavailable. Reconnect and try again.</div>'; }
+}
+
+const INSTALL_URL = 'https://topscellarclub.co.za';
+let qrCanvas = null;
+async function renderInstallQr() {
+  if (qrCanvas) return;
+  try {
+    const { default: QRCode } = await import('https://esm.sh/qrcode@1.5.4');
+    const canvas = document.createElement('canvas');
+    await QRCode.toCanvas(canvas, INSTALL_URL, { width: 460, margin: 1, color: { dark: '#100f12', light: '#ffffff' } });
+    canvas.style.cssText = 'width:100%;height:auto;display:block;border-radius:10px';
+    const host = $('qr-canvas'); host.innerHTML = ''; host.appendChild(canvas);
+    qrCanvas = canvas;
+  } catch { $('qr-canvas').innerHTML = '<div class="empty">Could not load QR generator (needs internet).</div>'; }
+}
+function wireInstallQr() {
+  $('qr-print').addEventListener('click', () => window.print());
+  $('qr-download').addEventListener('click', () => {
+    if (!qrCanvas) { toast('QR not ready yet.'); return; }
+    const a = document.createElement('a'); a.href = qrCanvas.toDataURL('image/png'); a.download = 'cellar-club-install-qr.png'; a.click();
+  });
 }
 
 let STATS = null;
@@ -640,7 +695,7 @@ function wireManage() {
 
 /* ---------------- boot ---------------- */
 function start() {
-  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage();
+  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr();
   if (TOKEN) {
     const hr = new Date().getHours();
     $('dash-greeting').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Ashley';

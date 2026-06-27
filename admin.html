@@ -52,6 +52,8 @@
           <div class="jrow" data-go="manage"><div class="ji">&#127863;</div><div class="jt"><h4>Manage catalogue</h4><p>Wines, events &amp; Discovery Boxes</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="suppliers"><div class="ji">&#129309;</div><div class="jt"><h4>Suppliers</h4><p>Partner tiers &amp; features</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="settings-view"><div class="ji">&#9881;</div><div class="jt"><h4>Discovery Box mode</h4><p id="dbmode-sub">Waiting list &middot; flip in September</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="installqr"><div class="ji">&#128241;</div><div class="jt"><h4>Install QR poster</h4><p>Print the in-store scan code</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="adminguide"><div class="ji">&#128214;</div><div class="jt"><h4>Admin guide</h4><p>How everything works</p></div><div class="ch">&#8250;</div></div>
         </div>
         <div class="label" style="margin-top:18px"><span>Danger zone</span><div class="ln" style="background:#5a2020"></div></div>
         <div style="padding:0 20px 28px">
@@ -347,6 +349,31 @@
             <button class="btn block ghost danger" id="bf-delete" style="margin-top:10px" hidden>Delete box</button>
           </div>
         </div>
+      </section>
+
+      <!-- INSTALL QR POSTER -->
+      <section class="view" id="installqr">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Install QR poster</div></div>
+        <div class="body">
+          <p class="muted" style="font-size:12.5px;line-height:1.6">Print this and display it in store. Members scan it to install the app and join.</p>
+          <div class="qrposter" id="qr-poster">
+            <div class="qp-eb">TOPS CELLAR SELECTION CLUB</div>
+            <div class="qp-h">Scan to join<br>the Club</div>
+            <div class="qp-qr" id="qr-canvas"></div>
+            <div class="qp-url">topscellarclub.co.za</div>
+            <div class="qp-note">Free membership &middot; 18+ &middot; Beacon Isle</div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn" style="flex:1" id="qr-print">Print poster</button>
+            <button class="btn ghost" id="qr-download">Save image</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN GUIDE -->
+      <section class="view" id="adminguide">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Admin guide</div></div>
+        <div class="mdwrap" id="adminguide-body"><div class="empty">Loading…</div></div>
       </section>
 
     </div>

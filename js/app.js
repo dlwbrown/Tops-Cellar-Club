@@ -176,6 +176,7 @@ function go(id, nav) {
   if (id === 'card') renderCard();
   if (id === 'notifications') markNotificationsSeen();
   if (id === 'cellar') loadCellar();
+  if (id === 'guide') loadGuide();
 }
 function setNav(n) {
   document.querySelectorAll('.ni2').forEach((x) => x.classList.toggle('on', x.getAttribute('data-nav') === n));
@@ -362,6 +363,40 @@ async function loadSpecials() {
         </div>
       </div>`).join('');
   } catch {}
+}
+
+/* Minimal, safe Markdown → HTML for the in-app guides (headings, bold, code, lists). */
+function mdToHtml(md) {
+  const e = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const inline = (t) => e(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`(.+?)`/g, '<code>$1</code>');
+  let html = '', list = null;
+  const closeList = () => { if (list) { html += `</${list}>`; list = null; } };
+  for (const raw of md.split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    if (/^\s*[-*]\s+/.test(line)) { if (list !== 'ul') { closeList(); html += '<ul>'; list = 'ul'; } html += `<li>${inline(line.replace(/^\s*[-*]\s+/, ''))}</li>`; continue; }
+    if (/^\s*\d+\.\s+/.test(line)) { if (list !== 'ol') { closeList(); html += '<ol>'; list = 'ol'; } html += `<li>${inline(line.replace(/^\s*\d+\.\s+/, ''))}</li>`; continue; }
+    closeList();
+    if (/^###\s+/.test(line)) html += `<h3>${inline(line.replace(/^###\s+/, ''))}</h3>`;
+    else if (/^##\s+/.test(line)) html += `<h2>${inline(line.replace(/^##\s+/, ''))}</h2>`;
+    else if (/^#\s+/.test(line)) html += `<h1>${inline(line.replace(/^#\s+/, ''))}</h1>`;
+    else if (/^---\s*$/.test(line)) html += '<hr>';
+    else if (line.trim() === '') { /* paragraph break */ }
+    else html += `<p>${inline(line)}</p>`;
+  }
+  closeList();
+  return html;
+}
+
+let guideLoaded = false;
+async function loadGuide() {
+  if (guideLoaded) return;
+  const host = document.getElementById('guide-body');
+  try {
+    const res = await fetch('/USER-GUIDE.md', { cache: 'no-cache' });
+    const md = await res.text();
+    host.innerHTML = mdToHtml(md);
+    guideLoaded = true;
+  } catch { host.innerHTML = '<div class="empty">Guide unavailable offline. Reconnect and try again.</div>'; }
 }
 
 function openLightbox(src) {
