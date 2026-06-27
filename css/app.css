@@ -310,3 +310,11 @@ body{
 #boot .crest{width:60px;height:60px;border-radius:50%;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:24px}
 #boot .nm{font-family:var(--disp);font-size:22px;color:var(--paper)}
 #boot .eb{font-size:8px;letter-spacing:2.4px;color:var(--gold);font-weight:700;text-transform:uppercase}
+
+/* ---- Specials image lightbox ---- */
+.spcard .mb2.img{position:relative;cursor:zoom-in;touch-action:manipulation}
+.spcard .mb2 .zoom{position:absolute;right:8px;bottom:8px;width:26px;height:26px;border-radius:50%;background:rgba(16,15,18,.62);color:var(--gold-br);display:flex;align-items:center;justify-content:center;font-size:15px;backdrop-filter:blur(4px)}
+.lightbox{position:fixed;inset:0;z-index:120;background:rgba(8,7,9,.92);display:none;align-items:center;justify-content:center;padding:18px}
+.lightbox.on{display:flex}
+.lightbox img{max-width:100%;max-height:88vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.lightbox .lbx{position:absolute;top:16px;right:20px;color:var(--paper);font-size:34px;line-height:1;opacity:.8}

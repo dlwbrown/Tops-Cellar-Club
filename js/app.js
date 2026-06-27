@@ -76,8 +76,22 @@ function getMember() {
 }
 function setMember(m) { localStorage.setItem(LS_KEY, JSON.stringify(m)); }
 
+/* Actions served by the Netlify function (auto-deploys with the site) instead of
+   the Supabase member-api. These need the service-role key, which lives in Netlify. */
+const NETLIFY_ACTIONS = new Set(['get-cellar', 'toggle-fav', 'add-rating', 'rsvp']);
+
 /* Edge Function helpers (anon JWT satisfies default verify_jwt; service role is internal). */
 async function memberApi(action, payload = {}) {
+  if (NETLIFY_ACTIONS.has(action)) {
+    const res = await fetch('/.netlify/functions/member', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...payload }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+    return data;
+  }
   const res = await fetch(`${FN}/member-api`, {
     method: 'POST',
     headers: {
@@ -341,13 +355,28 @@ async function loadSpecials() {
     document.getElementById('specials-list').innerHTML = data.map((s) => `
       <div class="spcard">
         <span class="cat">${esc((s.category || 'SPECIAL').toUpperCase())}</span>
-        <div class="mb2${s.image_url ? ' img' : ''}"${s.image_url ? ` style="background-image:url('${esc(s.image_url)}')"` : ''}><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
+        <div class="mb2${s.image_url ? ' img' : ''}"${s.image_url ? ` style="background-image:url('${esc(s.image_url)}')" data-act="enlarge" data-img="${esc(s.image_url)}"` : ''}>${s.image_url ? '<span class="zoom">&#9974;</span>' : '<div class="nk"></div><div class="bd"></div><div class="lb"></div>'}</div>
         <div class="spinfo"><h4>${esc(s.title)}</h4>
           <div class="sm">${s.valid_until ? 'Until ' + new Date(s.valid_until).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : 'Member price'}</div>
           <div class="prc"><span class="now">${rands(s.member_price)}</span>${s.normal_price ? `<span class="was">${rands(s.normal_price)}</span>` : ''}</div>
         </div>
       </div>`).join('');
   } catch {}
+}
+
+function openLightbox(src) {
+  if (!src) return;
+  let lb = document.getElementById('lightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'lightbox';
+    lb.className = 'lightbox';
+    lb.innerHTML = '<img alt=""><span class="lbx">&times;</span>';
+    lb.addEventListener('click', () => { lb.classList.remove('on'); });
+    document.body.appendChild(lb);
+  }
+  lb.querySelector('img').src = src;
+  lb.classList.add('on');
 }
 
 async function loadEvents() {
@@ -524,6 +553,7 @@ function wireDelegation() {
       if (act === 'close-rate') { document.getElementById('rate-modal').hidden = true; return; }
       if (act === 'save-rating') { saveRating(); return; }
       if (act === 'note-wine') { toast('Tasting notes coming soon.'); return; }
+      if (act === 'enlarge') { e.stopPropagation(); openLightbox(actEl.dataset.img); return; }
     }
 
     const notifRow = e.target.closest('.nrow[data-notif-idx]');
