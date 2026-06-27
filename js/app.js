@@ -286,16 +286,42 @@ async function loadHome() {
     document.getElementById('home-meta').textContent = bits.join(' · ') || 'Cellar Selection Club';
   }
   const sb = await getSb(); if (!sb) return;
-  // current discovery box hero
+  // current discovery box hero + "This week" box card
+  let box = null;
   try {
     const { data } = await sb.from('discovery_boxes').select('*').neq('status', 'past').order('created_at', { ascending: false }).limit(1);
-    if (data && data[0]) applyBoxHero(document.getElementById('home-hero'), data[0], true);
+    if (data && data[0]) { box = data[0]; applyBoxHero(document.getElementById('home-hero'), box, true); }
   } catch {}
-  // featured wine
+  // next upcoming event for the "This week" card
+  let nextEvent = null;
+  try {
+    const { data } = await sb.from('events').select('*').gte('datetime', new Date(Date.now() - 864e5).toISOString()).order('datetime', { ascending: true }).limit(1);
+    if (data && data[0]) nextEvent = data[0];
+  } catch {}
+  renderThisWeek(box, nextEvent);
+  // featured wine (the highest-rated wine in the catalogue)
   try {
     const { data } = await sb.from('wines').select('*').order('avg_rating', { ascending: false }).limit(1);
     if (data && data[0]) renderFeaturedWine(data[0]);
   } catch {}
+}
+
+// "This week" home cards come live from the current Discovery Box and next event,
+// so managers control them by editing those in the admin panel.
+function renderThisWeek(box, ev) {
+  const host = document.getElementById('home-thisweek');
+  if (!host || (!box && !ev)) return; // keep the placeholder if there's nothing yet
+  let html = '';
+  if (box) {
+    const sub = box.price ? rands(box.price) : (box.month || 'This month');
+    html += `<div class="mini" data-go="box"><div class="te">THIS MONTH&rsquo;S BOX</div><h3>${esc(box.title || 'Discovery Box')}</h3><div class="s">${esc(sub)}</div><div class="c">View the box &rarr;</div></div>`;
+  }
+  if (ev) {
+    const d = new Date(ev.datetime);
+    const when = d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false });
+    html += `<div class="mini" data-go="events"><div class="dt">${esc(when)}</div><h3>${esc(ev.title || 'Event')}</h3><div class="s">${esc(ev.location || (ev.capacity ? ev.capacity + ' seats' : ''))}</div><div class="c">RSVP &rarr;</div></div>`;
+  }
+  host.innerHTML = html;
 }
 
 function renderFeaturedWine(w) {

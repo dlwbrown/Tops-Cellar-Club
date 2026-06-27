@@ -88,6 +88,7 @@ function loadFor(id) {
   if (id === 'm-wines') loadManage('wine');
   if (id === 'm-events') loadManage('event');
   if (id === 'm-boxes') loadManage('box');
+  if (id === 'm-mags') loadManage('mag');
   if (id === 'adminguide') loadAdminGuide();
   if (id === 'installqr') renderInstallQr();
 }
@@ -627,13 +628,17 @@ function readEvent() { const dt = $('ef-datetime').value; return { title: $('ef-
 function fillBox(b) { b = b || {}; $('bf-title').value = b.title || ''; $('bf-month').value = b.month || ''; $('bf-price').value = b.price != null ? b.price : ''; $('bf-included').value = Array.isArray(b.included) ? b.included.join('\n') : ''; $('bf-availability').value = b.availability || ''; $('bf-status').value = b.status || 'waitlist'; $('bf-image_url').value = b.image_url || ''; }
 function readBox() { return { title: $('bf-title').value.trim(), month: $('bf-month').value.trim(), price: $('bf-price').value.trim(), included: $('bf-included').value.split('\n').map((s) => s.trim()).filter(Boolean), availability: $('bf-availability').value.trim(), status: $('bf-status').value, image_url: $('bf-image_url').value.trim() }; }
 
+function fillMag(g) { g = g || {}; $('gf-title').value = g.title || ''; $('gf-issue_date').value = g.issue_date || ''; $('gf-cover_url').value = g.cover_url || ''; $('gf-content_ref').value = g.content_ref || ''; }
+function readMag() { return { title: $('gf-title').value.trim(), issue_date: $('gf-issue_date').value || null, cover_url: $('gf-cover_url').value.trim(), content_ref: $('gf-content_ref').value.trim() }; }
+
 const MGR = {
   wine: { p: 'wine', f: 'wf', list: 'list-wines', save: 'save-wine', del: 'delete-wine', fill: fillWine, read: readWine, row: (w) => ({ t: w.name, s: [w.producer, w.region].filter(Boolean).join(' · ') }) },
   event: { p: 'event', f: 'ef', list: 'list-events', save: 'save-event', del: 'delete-event', fill: fillEvent, read: readEvent, row: (e) => ({ t: e.title, s: e.datetime ? new Date(e.datetime).toLocaleString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '' }) },
   box: { p: 'box', f: 'bf', list: 'list-boxes', save: 'save-box', del: 'delete-box', fill: fillBox, read: readBox, row: (b) => ({ t: b.title, s: [b.month, b.status].filter(Boolean).join(' · ') }) },
+  mag: { p: 'mag', f: 'gf', list: 'list-mags', save: 'save-mag', del: 'delete-mag', fill: fillMag, read: readMag, row: (g) => ({ t: g.title, s: g.issue_date ? new Date(g.issue_date).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' }) : '' }) },
 };
-let MITEMS = { wine: [], event: [], box: [] };
-let EDITING = { wine: null, event: null, box: null };
+let MITEMS = { wine: [], event: [], box: [], mag: [] };
+let EDITING = { wine: null, event: null, box: null, mag: null };
 
 function mgrShowForm(p) { $(`${p}-list`).hidden = true; $(`${p}-add`).hidden = true; $(`${p}-form`).hidden = false; $('vp').scrollTop = 0; }
 function mgrShowList(p) { $(`${p}-list`).hidden = false; $(`${p}-add`).hidden = false; $(`${p}-form`).hidden = true; }
@@ -680,7 +685,7 @@ async function delMForm(key) {
   catch (err) { toast(err.message || 'Delete failed.'); }
 }
 function wireManage() {
-  ['wine', 'event', 'box'].forEach((key) => {
+  ['wine', 'event', 'box', 'mag'].forEach((key) => {
     const m = MGR[key];
     $(`${m.p}-add`).addEventListener('click', () => openMForm(key, null));
     $(`${m.f}-save`).addEventListener('click', () => saveMForm(key));

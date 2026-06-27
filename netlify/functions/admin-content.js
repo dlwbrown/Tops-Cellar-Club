@@ -26,6 +26,7 @@ const FIELDS = {
   wines: ['name', 'producer', 'region', 'country', 'varietal', 'story', 'food_pairings', 'serving_temp', 'tasting_notes', 'awards', 'facts', 'image_url', 'avg_rating'],
   events: ['type', 'title', 'description', 'datetime', 'location', 'capacity', 'image_url', 'status'],
   discovery_boxes: ['month', 'title', 'image_url', 'price', 'included', 'availability', 'status'],
+  magazines: ['title', 'issue_date', 'cover_url', 'content_ref'],
 };
 
 function pick(table, body) {
@@ -59,11 +60,12 @@ exports.handler = async (event) => {
     'list-wines': 'wines', 'save-wine': 'wines', 'delete-wine': 'wines',
     'list-events': 'events', 'save-event': 'events', 'delete-event': 'events',
     'list-boxes': 'discovery_boxes', 'save-box': 'discovery_boxes', 'delete-box': 'discovery_boxes',
+    'list-mags': 'magazines', 'save-mag': 'magazines', 'delete-mag': 'magazines',
   };
   const table = TABLE[action];
   if (!table) return json({ error: 'Unknown action: ' + action }, 400);
 
-  const order = table === 'events' ? 'datetime.asc' : table === 'discovery_boxes' ? 'created_at.desc' : 'name.asc';
+  const order = table === 'events' ? 'datetime.asc' : table === 'discovery_boxes' ? 'created_at.desc' : table === 'magazines' ? 'issue_date.desc' : 'name.asc';
 
   try {
     // LIST

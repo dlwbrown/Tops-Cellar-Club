@@ -1,14 +1,6 @@
-# TOPS Cellar Selection Club — Admin Guide
+# TOPS Cellar Selection Club — Manager Guide
 
-The manager panel runs at **topscellarclub.co.za/admin.html**. Sign in with your manager passphrase.
-
-## One-time setup (Netlify environment variables)
-
-The app's secure features run on Netlify Functions. They need three environment variables set in **Netlify → Site configuration → Environment variables**. After adding or changing any of them, you must **trigger a new deploy** (Netlify → Deploys → Trigger deploy) — variables only take effect on a fresh deploy.
-
-- **ANTHROPIC_API_KEY** — your Anthropic API key. Powers the AI Sommelier and the AI "Generate post" copywriting.
-- **SUPABASE_SERVICE_ROLE_KEY** — from Supabase → Settings → API → reveal `service_role`. Powers favourites, ratings, RSVP, the Cellar, and the catalogue manager. Keep it secret.
-- **ADMIN_TOKEN** — your admin passphrase (the one you sign in with). Authorises the admin tools (catalogue manager and AI Generate post).
+Everything you need to run the Club from your phone. Sign in to the admin panel with your manager passphrase.
 
 ## Dashboard
 
@@ -27,17 +19,57 @@ Your home base: key stats (members, waiting list, push open rate, prize entrants
 
 ## Manage catalogue
 
-Add, edit and remove content without touching the database. **Dashboard → Manage catalogue**:
+Add, edit and remove everything members see — no technical knowledge needed. **Dashboard → Manage catalogue**:
 
-- **Wines** — name, producer, region, varietal, story, pairing, tasting notes, awards, rating, image. These appear in the member app's Discover list and become favouritable/ratable.
+- **Wines** — name, producer, region, varietal, story, pairing, tasting notes, awards, rating, image. These appear in the member app's Discover list and become favouritable and ratable.
 - **Events** — title, date & time, location, capacity, description, image. These show under Events with RSVP.
 - **Discovery Boxes** — title, month, price, what's inside (one item per line), availability, status, image.
+- **Magazine** — issues members can read (see below).
 
-Tap any item to edit it; tap **+ Add** to create one. Changes appear in the member app the next time a member opens it.
+Tap any item to edit it; tap **+ Add** to create one. Tap **Delete** inside an item to remove it. Changes appear in the member app the next time a member opens it.
 
-### How the Discovery Box reaches the main screen
+## Managing the Home screen
 
-The member home screen shows the **newest box whose status is not "Past"**. To feature this month's box, edit it (or add a new one) and set its status to **Waiting list** or **Live**. Set last month's box to **Past** so only the current one shows. The button wording (priority list vs reserve) is controlled by **Discovery Box mode** below.
+The member Home screen has three live areas you control:
+
+### Discovery Box (the big hero)
+
+The hero shows the **newest box whose status is not "Past."** To feature this month's box:
+
+1. Go to **Manage catalogue → Discovery Boxes**.
+2. Edit the current box (or **+ Add** a new one) and set its **Status** to **Waiting list** or **Live**.
+3. Set last month's box to **Past** so only the current one shows.
+
+The button wording (priority list vs reserve) is set by **Discovery Box mode** further down.
+
+### This week
+
+The two "This week" cards update **automatically**:
+
+- The first card shows your **current Discovery Box**.
+- The second card shows your **next upcoming event**.
+
+So to change what appears here, simply edit your Discovery Box and add/update events in **Manage catalogue**. No separate step needed.
+
+### Featured wine
+
+The Home screen automatically features your **highest-rated wine**. To put a specific wine in that spot:
+
+1. Go to **Manage catalogue → Wines** and open the wine you want to feature.
+2. Set its **Rating** to the highest value (e.g. 4.9 or 5.0) and save.
+
+The top-rated wine is shown as the Featured wine. As members rate wines, the highest-rated one naturally takes the spot.
+
+## Magazine
+
+Give members something to read under **Cellar → Magazine**. In **Manage catalogue → Magazine**:
+
+1. Tap **+ Add an issue**.
+2. Enter the **issue title** (e.g. "Meet the Winemaker").
+3. Set the **issue date** (used for ordering — newest first).
+4. Add a **cover image URL** so it looks great in the list.
+5. Optionally add a **link to read** (a PDF or web page for the full issue).
+6. **Save**. The issue appears in the member app's Magazine tab.
 
 ## Broadcast
 
@@ -69,7 +101,7 @@ Switch the member-facing Discovery Box between **Waiting list** (pre-September: 
 
 ## Install QR poster
 
-**Dashboard → Install QR poster** shows a printable QR code that members scan in store to install the app. Print it or save the image for signage.
+**Dashboard → Install QR poster** shows a printable QR code that members scan in store to install the app. **Print** it for signage or **Save image** to use it in other designs.
 
 ## Reset test data
 
@@ -77,4 +109,4 @@ Clears all test members, notifications and prize draws (keeps the account you sp
 
 ---
 
-*Tip: after any change to environment variables, always trigger a fresh Netlify deploy.*
+*Tip: members see your changes the next time they open the app. To tell them right away, send a Broadcast.*
