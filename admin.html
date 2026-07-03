@@ -5,22 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#100f12" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Cellar Club — Admin</title>
+  <title>Tops Cellar Selection — Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/css/tokens.css" />
   <link rel="stylesheet" href="/css/admin.css" />
 </head>
 <body>
-  <noscript>The Cellar Club admin needs JavaScript enabled.</noscript>
+  <noscript>The Tops Cellar Selection admin needs JavaScript enabled.</noscript>
   <div id="admin">
     <div class="vp" id="vp">
 
       <!-- LOGIN -->
       <section class="view on" id="login">
         <div class="login">
+          <a href="/" style="display:block;font-size:11px;color:#5f5c55;text-decoration:none;margin-bottom:18px;letter-spacing:.5px">&#8592; Back to app</a>
           <div class="crest">&#128272;</div>
-          <h1>Cellar Club<br>Admin</h1>
+          <h1>Tops Cellar Selection<br>Admin</h1>
           <div class="sub">Beacon Isle &middot; Manager sign-in</div>
           <form class="pf" id="loginform">
             <input id="passphrase" type="password" inputmode="text" autocomplete="current-password" placeholder="Manager passphrase" />
@@ -46,10 +47,20 @@
         <div class="label"><span>Jump to</span><div class="ln"></div></div>
         <div class="jump">
           <div class="jrow" data-go="broadcast" data-nav="broadcast"><div class="ji">&#128226;</div><div class="jt"><h4>Send a broadcast</h4><p>Push a message to members</p></div><div class="ch">&#8250;</div></div>
-          <div class="jrow" data-go="draw"><div class="ji">&#127942;</div><div class="jt"><h4>Monthly prize draw</h4><p>Draw this month&rsquo;s winner</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="orders"><div class="ji">&#128230;</div><div class="jt"><h4>Orders</h4><p>Mystery boxes &amp; wine orders</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="prizes"><div class="ji">&#127942;</div><div class="jt"><h4>Prizes &amp; Lucky Draw</h4><p>Prizes, spinning wheel &amp; reports</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="staff"><div class="ji">&#11088;</div><div class="jt"><h4>Staff Champions</h4><p>Signups by team member</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="manage"><div class="ji">&#127863;</div><div class="jt"><h4>Manage Backend</h4><p>Wines, events &amp; Discovery Boxes</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="maint"><div class="ji">&#128295;</div><div class="jt"><h4>Maintenance</h4><p>Wine database import &amp; export</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="suppliers"><div class="ji">&#129309;</div><div class="jt"><h4>Suppliers</h4><p>Partner tiers &amp; features</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="settings-view"><div class="ji">&#9881;</div><div class="jt"><h4>Discovery Box mode</h4><p id="dbmode-sub">Waiting list &middot; flip in September</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="installqr"><div class="ji">&#128241;</div><div class="jt"><h4>Install QR poster</h4><p>Print the in-store scan code</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="adminguide"><div class="ji">&#128214;</div><div class="jt"><h4>Admin guide</h4><p>How everything works</p></div><div class="ch">&#8250;</div></div>
+        </div>
+        <div class="label" style="margin-top:18px"><span>Danger zone</span><div class="ln" style="background:#5a2020"></div></div>
+        <div style="padding:0 20px 28px">
+          <p style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">Clears all test members, notifications and prize draws. Wines, events, specials, staff and settings are untouched.</p>
+          <button class="btn block ghost" id="btn-reset" style="border-color:#5a2020;color:#c06060">&#128683; Reset test data</button>
         </div>
         <div class="sp"></div>
       </section>
@@ -66,12 +77,18 @@
             <span class="chip" data-val="Competition">Competition</span>
             <span class="chip" data-val="Discovery Box">Box</span>
           </div>
-          <div class="flabel">2 &middot; Add a photo</div>
+          <div class="flabel">2 &middot; Add a photo <span style="opacity:.6">(optional)</span></div>
           <label class="photo" id="photo-drop">
             <img id="photo-preview" hidden alt="Product photo" />
-            <span class="cap" id="photo-cap">&#128247; Tap to snap or upload</span>
-            <input type="file" id="photo-input" accept="image/*" capture="environment" />
+            <span class="cap" id="photo-cap">&#128247; Tap to choose a photo or take one</span>
+            <input type="file" id="photo-input" accept="image/*" />
           </label>
+          <button class="gen" id="btn-enhance" hidden><span>&#127775;</span> <span id="enhance-label">Enhance photo with AI scene</span></button>
+          <div class="chips" id="enhance-styles" hidden>
+            <span class="chip on" data-val="">Luxury</span>
+            <span class="chip" data-val="cellar">Wine cellar</span>
+            <span class="chip" data-val="marble">Marble</span>
+          </div>
           <div class="flabel">3 &middot; Add a line (optional)</div>
           <textarea class="tinput" id="raw-line" placeholder="e.g. nederburg heritage R89.99 fri–sun"></textarea>
           <div class="hint">Or leave blank &mdash; the photo is enough. Tip: include the price so we never have to guess it.</div>
@@ -93,13 +110,15 @@
           </div>
           <div class="okchip" id="post-okchip" hidden>&#10003; Price confirmed</div>
           <div class="warnbox" id="post-warnbox" hidden>
-            <div class="wh">&#9888; Add a price before sending</div>
-            <input class="wi" id="post-price-input" inputmode="decimal" placeholder="e.g. 89.99" />
+            <div class="wh">Add a price <span style="opacity:.7;font-weight:400">(optional)</span></div>
+            <input class="wi" id="post-price-input" inputmode="decimal" placeholder="e.g. 89.99 — leave blank for no price" />
           </div>
           <div class="flabel">Edit copy</div>
           <input class="tinput" id="edit-headline" placeholder="Headline" />
           <input class="tinput" id="edit-kicker" placeholder="Kicker (e.g. This weekend only)" style="margin-top:8px" />
           <textarea class="tinput" id="edit-body" placeholder="Body" style="margin-top:8px"></textarea>
+          <div class="flabel">Picture</div>
+          <div class="toggles"><span class="tog on" id="tog-image"><span class="dot"></span> Include a picture</span></div>
           <div class="flabel">Send to</div>
           <div class="toggles" id="post-channels">
             <span class="tog on" data-ch="push"><span class="dot"></span> Push</span>
@@ -122,13 +141,16 @@
           <input class="tinput" id="bc-title" placeholder="e.g. Weekend offers are live" />
           <div class="flabel">Message</div>
           <textarea class="tinput" id="bc-body" placeholder="Member-only prices on wine, whisky and gin — this weekend only at Beacon Isle."></textarea>
+          <div class="flabel">Optional image URL</div>
+          <input class="tinput" id="bc-image" placeholder="https://… (leave blank for no image)" />
           <div class="flabel">Optional deep link</div>
           <input class="tinput" id="bc-link" placeholder="/specials, /box, /events…" />
           <div class="flabel">Who gets it?</div>
           <div class="audience" id="bc-audience">
             <div class="aud on" data-aud="all"><div class="rd"></div><div class="opt"><div>All members</div><div class="sm" id="aud-all-count">Everyone</div></div></div>
-            <div class="aud" data-aud="store"><div class="rd"></div><div class="opt"><div>By preferred store</div><div class="sm">Beacon Isle only</div></div></div>
-            <div class="aud" data-aud="taste"><div class="rd"></div><div class="opt"><div>By taste</div><div class="sm">e.g. whisky lovers</div></div></div>
+            <div class="aud" data-aud="box"><div class="rd"></div><div class="opt"><div>Box members</div><div class="sm">Discovery Box subscribers</div></div></div>
+            <div class="aud" data-aud="wine"><div class="rd"></div><div class="opt"><div>Wine members</div><div class="sm">Wine club members</div></div></div>
+            <div class="aud" data-aud="premium"><div class="rd"></div><div class="opt"><div>Premium members</div><div class="sm">Premium tier</div></div></div>
           </div>
           <div class="tasteopts" id="taste-opts" hidden>
             <select class="tinput" id="bc-taste">
@@ -218,6 +240,365 @@
           </div>
           <button class="btn block" style="margin-top:18px" id="btn-save-mode">Save</button>
         </div>
+      </section>
+
+      <!-- MANAGE HUB -->
+      <section class="view" id="manage">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Manage Backend</div></div>
+        <div class="jump" style="margin-top:8px">
+          <div class="jrow" data-go="m-wines"><div class="ji">&#127863;</div><div class="jt"><h4>Wines</h4><p>Add, edit &amp; remove wines</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="m-events"><div class="ji">&#127881;</div><div class="jt"><h4>Events</h4><p>Tastings, dinners &amp; more</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="m-boxes"><div class="ji">&#128230;</div><div class="jt"><h4>Discovery Boxes</h4><p>Monthly box contents</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="m-mags"><div class="ji">&#128214;</div><div class="jt"><h4>Magazine</h4><p>Issues members can read</p></div><div class="ch">&#8250;</div></div>
+        </div>
+      </section>
+
+      <!-- MANAGE: WINES -->
+      <section class="view" id="m-wines">
+        <div class="bhead"><div class="bk" data-go="manage">&#8249;</div><div class="ti">Wines</div></div>
+        <div class="body">
+          <button class="btn block" id="wine-add">&#43; Add a wine</button>
+          <div id="wine-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
+          <div id="wine-form" class="cform" hidden>
+            <div class="frow">
+              <div><div class="flabel">Product code</div><input class="tinput" id="wf-product_code" placeholder="6227" /></div>
+              <div><div class="flabel">Category</div><input class="tinput" id="wf-category" placeholder="Wine / Gin / Beer" /></div>
+            </div>
+            <div class="flabel">Name / description *</div>
+            <input class="tinput" id="wf-name" placeholder="e.g. Palladius 2022" />
+            <div class="frow">
+              <div><div class="flabel">Producer</div><input class="tinput" id="wf-producer" placeholder="Sadie Family" /></div>
+              <div><div class="flabel">Variety</div><input class="tinput" id="wf-varietal" placeholder="White Blend" /></div>
+            </div>
+            <div class="frow">
+              <div><div class="flabel">Region</div><input class="tinput" id="wf-region" placeholder="Swartland" /></div>
+              <div><div class="flabel">Country</div><input class="tinput" id="wf-country" placeholder="South Africa" /></div>
+            </div>
+            <div class="frow">
+              <div><div class="flabel">Vintage</div><input class="tinput" id="wf-vintage" placeholder="2022" /></div>
+              <div><div class="flabel">Size</div><input class="tinput" id="wf-size" placeholder="750ML" /></div>
+            </div>
+            <div class="frow">
+              <div><div class="flabel">Alcohol %</div><input class="tinput" id="wf-alcohol" inputmode="decimal" placeholder="13.5" /></div>
+              <div><div class="flabel">Serve at</div><input class="tinput" id="wf-serving_temp" placeholder="12–14°C" /></div>
+            </div>
+            <div class="flabel">Selling price / Promo price / Stock</div>
+            <div class="frow">
+              <div><input class="tinput" id="wf-selling_price" inputmode="decimal" placeholder="Selling R" /></div>
+              <div><input class="tinput" id="wf-promo_price" inputmode="decimal" placeholder="Promo R" /></div>
+              <div><input class="tinput" id="wf-soh" inputmode="numeric" placeholder="Stock" /></div>
+            </div>
+            <div class="flabel">Food pairing</div>
+            <input class="tinput" id="wf-food_pairings" placeholder="Roast chicken, line-fish" />
+            <div class="flabel">Story</div>
+            <textarea class="tinput" id="wf-story" placeholder="A legendary white blend…"></textarea>
+            <div class="flabel">Tasting notes</div>
+            <textarea class="tinput" id="wf-tasting_notes" placeholder="Stone fruit, fynbos, saline finish"></textarea>
+            <div class="frow">
+              <div><div class="flabel">Cellaring potential</div><input class="tinput" id="wf-cellaring_potential" placeholder="Drink now – 2030" /></div>
+              <div><div class="flabel">Rating (0–5)</div><input class="tinput" id="wf-avg_rating" inputmode="decimal" placeholder="4.8" /></div>
+            </div>
+            <div class="flabel">Awards</div>
+            <input class="tinput" id="wf-awards" placeholder="Tim Atkin 97pts" />
+            <div class="flabel">Bottle image URL (optional)</div>
+            <input class="tinput" id="wf-image_url" placeholder="https://…" />
+            <div class="flabel">Visibility</div>
+            <select class="tinput" id="wf-active">
+              <option value="true">Active — visible to members</option>
+              <option value="false">Inactive — hidden</option>
+            </select>
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn" style="flex:1" id="wf-save">Save wine</button>
+              <button class="btn ghost" id="wf-cancel">Cancel</button>
+            </div>
+            <button class="btn block ghost danger" id="wf-delete" style="margin-top:10px" hidden>Delete wine</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- MANAGE: EVENTS -->
+      <section class="view" id="m-events">
+        <div class="bhead"><div class="bk" data-go="manage">&#8249;</div><div class="ti">Events</div></div>
+        <div class="body">
+          <button class="btn block" id="event-add">&#43; Add an event</button>
+          <div id="event-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
+          <div id="event-form" class="cform" hidden>
+            <div class="flabel">Title *</div>
+            <input class="tinput" id="ef-title" placeholder="e.g. Swartland Tasting Evening" />
+            <div class="flabel">Date &amp; time *</div>
+            <input class="tinput" id="ef-datetime" type="datetime-local" />
+            <div class="frow">
+              <div><div class="flabel">Location</div><input class="tinput" id="ef-location" placeholder="Beacon Isle" /></div>
+              <div><div class="flabel">Capacity</div><input class="tinput" id="ef-capacity" inputmode="numeric" placeholder="40" /></div>
+            </div>
+            <div class="flabel">Description</div>
+            <textarea class="tinput" id="ef-description" placeholder="An evening of Swartland's finest…"></textarea>
+            <div class="flabel">Image URL (optional)</div>
+            <input class="tinput" id="ef-image_url" placeholder="https://…" />
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn" style="flex:1" id="ef-save">Save event</button>
+              <button class="btn ghost" id="ef-cancel">Cancel</button>
+            </div>
+            <button class="btn block ghost danger" id="ef-delete" style="margin-top:10px" hidden>Delete event</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- MANAGE: DISCOVERY BOXES -->
+      <section class="view" id="m-boxes">
+        <div class="bhead"><div class="bk" data-go="manage">&#8249;</div><div class="ti">Discovery Boxes</div></div>
+        <div class="body">
+          <button class="btn block" id="box-add">&#43; Add a box</button>
+          <div id="box-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
+          <div id="box-form" class="cform" hidden>
+            <div class="flabel">Title *</div>
+            <input class="tinput" id="bf-title" placeholder="e.g. September Discovery Box" />
+            <div class="frow">
+              <div><div class="flabel">Month</div><input class="tinput" id="bf-month" placeholder="2026-09" /></div>
+              <div><div class="flabel">Price (R)</div><input class="tinput" id="bf-price" inputmode="decimal" placeholder="499" /></div>
+            </div>
+            <div class="flabel">What's inside (one item per line)</div>
+            <textarea class="tinput" id="bf-included" placeholder="Palladius 2022&#10;The Chocolate Block 2022&#10;Tasting notes booklet"></textarea>
+            <div class="flabel">Availability note</div>
+            <input class="tinput" id="bf-availability" placeholder="Limited to 50 boxes" />
+            <div class="flabel">Status</div>
+            <select class="tinput" id="bf-status">
+              <option value="waitlist">Waiting list</option>
+              <option value="live">Live</option>
+              <option value="past">Past</option>
+            </select>
+            <div class="flabel">Image URL (optional)</div>
+            <input class="tinput" id="bf-image_url" placeholder="https://…" />
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn" style="flex:1" id="bf-save">Save box</button>
+              <button class="btn ghost" id="bf-cancel">Cancel</button>
+            </div>
+            <button class="btn block ghost danger" id="bf-delete" style="margin-top:10px" hidden>Delete box</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- MANAGE: MAGAZINE -->
+      <section class="view" id="m-mags">
+        <div class="bhead"><div class="bk" data-go="manage">&#8249;</div><div class="ti">Magazine</div></div>
+        <div class="body">
+          <button class="btn block" id="mag-add">&#43; Add an issue</button>
+          <div id="mag-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
+          <div id="mag-form" class="cform" hidden>
+            <div class="flabel">Title *</div>
+            <input class="tinput" id="gf-title" placeholder="e.g. Meet the Winemaker" />
+            <div class="frow">
+              <div><div class="flabel">Category</div><select class="tinput" id="gf-category">
+                <option value="Article">Article</option><option value="Promotion">Promotion</option>
+                <option value="Wine Education">Wine Education</option><option value="News">News</option><option value="Seasonal">Seasonal</option>
+              </select></div>
+              <div><div class="flabel">Date</div><input class="tinput" id="gf-issue_date" type="date" /></div>
+            </div>
+            <div class="flabel">Short excerpt</div>
+            <input class="tinput" id="gf-excerpt" placeholder="One-line teaser shown in the list" />
+            <div class="flabel">Article body</div>
+            <textarea class="tinput" id="gf-body" placeholder="Write the article here…" style="min-height:120px"></textarea>
+            <div class="flabel">Cover image URL</div>
+            <input class="tinput" id="gf-cover_url" placeholder="https://…" />
+            <div class="flabel">External link (optional)</div>
+            <input class="tinput" id="gf-content_ref" placeholder="https://… PDF or web link" />
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn" style="flex:1" id="gf-save">Save issue</button>
+              <button class="btn ghost" id="gf-cancel">Cancel</button>
+            </div>
+            <button class="btn block ghost danger" id="gf-delete" style="margin-top:10px" hidden>Delete issue</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ORDERS -->
+      <section class="view" id="orders">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Orders</div></div>
+        <div class="body">
+          <button class="btn block" id="order-new">&#43; New order</button>
+          <div style="margin-top:12px"><input class="tinput" id="order-search" placeholder="&#128269;  Search customer, number, product…" style="margin-top:0"></div>
+          <select class="tinput" id="order-status-filter">
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option><option value="paid">Paid</option>
+            <option value="packed">Packed</option><option value="ready">Ready</option>
+            <option value="collected">Collected</option><option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button class="btn block ghost" id="orders-export" style="margin-top:10px">Export to Excel</button>
+          <div id="orders-list" style="margin-top:12px"><div class="empty">Loading&hellip;</div></div>
+        </div>
+      </section>
+
+      <!-- ORDER FORM -->
+      <section class="view" id="order-form">
+        <div class="bhead"><div class="bk" data-go="orders">&#8249;</div><div class="ti" id="of-title">New order</div></div>
+        <div class="body">
+          <div class="flabel">Customer name *</div>
+          <input class="tinput" id="of-customer_name" placeholder="Jane Smith" />
+          <div class="frow">
+            <div><div class="flabel">Member number</div><input class="tinput" id="of-member_number" placeholder="1023" /></div>
+            <div><div class="flabel">Contact</div><input class="tinput" id="of-contact" placeholder="082 555 0142" /></div>
+          </div>
+          <div class="frow">
+            <div><div class="flabel">Order type</div><select class="tinput" id="of-order_type"><option value="wine">Wine order</option><option value="mystery_box">Mystery Box</option><option value="merchandise">Merchandise</option></select></div>
+            <div><div class="flabel">Fulfilment</div><select class="tinput" id="of-fulfilment"><option value="collection">Collection</option><option value="delivery">Delivery</option></select></div>
+          </div>
+
+          <div class="flabel">Items</div>
+          <div id="of-items"></div>
+          <button class="btn block ghost" id="of-additem" style="margin-top:8px">&#43; Add item</button>
+
+          <div class="frow" style="margin-top:12px">
+            <div><div class="flabel">Discount (R)</div><input class="tinput" id="of-discount" inputmode="decimal" placeholder="0" /></div>
+            <div><div class="flabel">Total</div><input class="tinput" id="of-total" readonly style="font-weight:700" /></div>
+          </div>
+          <div class="frow">
+            <div><div class="flabel">Payment</div><select class="tinput" id="of-payment_status"><option value="unpaid">Unpaid</option><option value="paid">Paid</option></select></div>
+            <div><div class="flabel">Status</div><select class="tinput" id="of-status">
+              <option value="pending">Pending</option><option value="paid">Paid</option><option value="packed">Packed</option>
+              <option value="ready">Ready</option><option value="collected">Collected</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option>
+            </select></div>
+          </div>
+          <div class="flabel">Notes</div>
+          <textarea class="tinput" id="of-notes" placeholder="Any special instructions…"></textarea>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn" style="flex:1" id="of-save">Save order</button>
+            <button class="btn ghost" id="of-cancel">Cancel</button>
+          </div>
+          <button class="btn block ghost danger" id="of-delete" style="margin-top:10px" hidden>Delete order</button>
+        </div>
+      </section>
+
+      <!-- PRIZES HUB -->
+      <section class="view" id="prizes">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Prizes &amp; Lucky Draw</div></div>
+        <div class="jump" style="margin-top:8px">
+          <div class="jrow" data-go="luckydraw"><div class="ji">&#127920;</div><div class="jt"><h4>Run the Lucky Draw</h4><p>Spin the wheel for a winner</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="m-prizes"><div class="ji">&#127873;</div><div class="jt"><h4>Manage prizes</h4><p>Add, edit &amp; set quantities</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="prizereports"><div class="ji">&#128202;</div><div class="jt"><h4>Prize reports</h4><p>Winners &amp; export to Excel</p></div><div class="ch">&#8250;</div></div>
+        </div>
+      </section>
+
+      <!-- MANAGE PRIZES -->
+      <section class="view" id="m-prizes">
+        <div class="bhead"><div class="bk" data-go="prizes">&#8249;</div><div class="ti">Prizes</div></div>
+        <div class="body">
+          <button class="btn block" id="prize-add">&#43; Add a prize</button>
+          <div id="prize-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
+          <div id="prize-form" class="cform" hidden>
+            <div class="flabel">Prize name *</div>
+            <input class="tinput" id="pf-name" placeholder="e.g. R3,000 drinks hamper" />
+            <div class="flabel">Description</div>
+            <textarea class="tinput" id="pf-description" placeholder="What the winner receives…"></textarea>
+            <div class="frow">
+              <div><div class="flabel">Value (R)</div><input class="tinput" id="pf-value" inputmode="decimal" placeholder="3000" /></div>
+              <div><div class="flabel">Qty available</div><input class="tinput" id="pf-qty_available" inputmode="numeric" placeholder="1" /></div>
+            </div>
+            <div class="frow">
+              <div><div class="flabel">Start date</div><input class="tinput" id="pf-start_date" type="date" /></div>
+              <div><div class="flabel">End date</div><input class="tinput" id="pf-end_date" type="date" /></div>
+            </div>
+            <div class="flabel">Image URL (optional)</div>
+            <input class="tinput" id="pf-image_url" placeholder="https://…" />
+            <div class="frow">
+              <div><div class="flabel">Type</div><select class="tinput" id="pf-is_bonus"><option value="false">Standard prize</option><option value="true">Bonus prize</option></select></div>
+              <div><div class="flabel">Status</div><select class="tinput" id="pf-active"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+            </div>
+            <div class="hint" id="pf-remaining"></div>
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn" style="flex:1" id="pf-save">Save prize</button>
+              <button class="btn ghost" id="pf-cancel">Cancel</button>
+            </div>
+            <button class="btn block ghost danger" id="pf-delete" style="margin-top:10px" hidden>Delete prize</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- LUCKY DRAW (wheel) -->
+      <section class="view" id="luckydraw">
+        <div class="bhead"><div class="bk" data-go="prizes">&#8249;</div><div class="ti">Lucky Draw</div></div>
+        <div class="body">
+          <div class="flabel">Prize</div>
+          <select class="tinput" id="draw-prize"><option value="">Loading prizes…</option></select>
+          <div class="flabel">Qualifying period (members who joined between)</div>
+          <div class="frow">
+            <div><input class="tinput" id="draw-start" type="date" /></div>
+            <div><input class="tinput" id="draw-end" type="date" /></div>
+          </div>
+          <div class="hint">Leave dates blank to include all members.</div>
+
+          <div class="wheelwrap" id="wheel-wrap">
+            <div class="wheel-pointer">&#9660;</div>
+            <canvas id="wheel" width="600" height="600"></canvas>
+          </div>
+          <button class="btn block" id="draw-run" style="margin-top:16px">&#127920; Run Lucky Draw</button>
+
+          <div class="winner" id="draw-result" hidden>
+            <div class="wl">&#127881; Winner &#127881;</div>
+            <div class="wn" id="draw-winner-name">&mdash;</div>
+            <div class="wm" id="draw-winner-meta"></div>
+          </div>
+        </div>
+        <canvas id="confetti" class="confetti" hidden></canvas>
+      </section>
+
+      <!-- PRIZE REPORTS -->
+      <section class="view" id="prizereports">
+        <div class="bhead"><div class="bk" data-go="prizes">&#8249;</div><div class="ti">Prize reports</div></div>
+        <div class="body">
+          <button class="btn block ghost" id="wins-export">Export to Excel</button>
+          <div id="wins-summary" style="margin-top:14px"></div>
+          <div id="wins-list" style="margin-top:10px"><div class="empty">Loading&hellip;</div></div>
+        </div>
+      </section>
+
+      <!-- MAINTENANCE (wine database) -->
+      <section class="view" id="maint">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Maintenance</div></div>
+        <div class="body">
+          <div class="jrow" data-go="m-wines" style="margin-bottom:16px"><div class="ji">&#127863;</div><div class="jt"><h4>Wines</h4><p>Add / edit individual wines &amp; enrichment</p></div><div class="ch">&#8250;</div></div>
+
+          <div class="flabel">Import price list (XLS / XLSX)</div>
+          <p class="muted" style="font-size:12px;line-height:1.5">Spreadsheet columns: <b>Product Code, Product Description, Size, SOH, SP</b>. Existing codes are updated; new codes are added. Wines are never deleted or duplicated, and enriched data (images, tasting notes, regions) is preserved.</p>
+          <label class="btn block ghost" style="display:block;text-align:center;margin-top:10px">Choose spreadsheet&hellip;
+            <input type="file" id="wine-file" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+          </label>
+          <div id="import-preview" style="margin-top:14px"></div>
+          <button class="btn block" id="import-commit" hidden style="margin-top:12px">Commit import</button>
+
+          <div class="flabel" style="margin-top:24px">Export</div>
+          <p class="muted" style="font-size:12px;line-height:1.5">Download the full wine database in the same format for editing and re-importing.</p>
+          <button class="btn block ghost" id="wine-export" style="margin-top:8px">Export wine database (Excel)</button>
+
+          <div class="flabel" style="margin-top:24px">Recent imports</div>
+          <p class="muted" style="font-size:12px;line-height:1.5">Undo an import if a price list was wrong — restores previous prices/stock and removes newly-added products.</p>
+          <div id="sync-list" style="margin-top:8px"><div class="empty">No imports yet.</div></div>
+        </div>
+      </section>
+
+      <!-- INSTALL QR POSTER -->
+      <section class="view" id="installqr">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Install QR poster</div></div>
+        <div class="body">
+          <p class="muted" style="font-size:12.5px;line-height:1.6">Print this and display it in store. Members scan it to install the app and join.</p>
+          <div class="qrposter" id="qr-poster">
+            <div class="qp-eb">TOPS CELLAR SELECTION</div>
+            <div class="qp-h">Scan to join<br>the Club</div>
+            <div class="qp-qr" id="qr-canvas"></div>
+            <div class="qp-url">topscellarclub.co.za</div>
+            <div class="qp-note">Free membership &middot; 18+ &middot; Beacon Isle</div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn" style="flex:1" id="qr-print">Print poster</button>
+            <button class="btn ghost" id="qr-download">Save image</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN GUIDE -->
+      <section class="view" id="adminguide">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Admin guide</div></div>
+        <div class="mdwrap" id="adminguide-body"><div class="empty">Loading…</div></div>
       </section>
 
     </div>

@@ -1,11 +1,11 @@
-/* Cellar Club service worker
+/* Tops Cellar Selection service worker
    Responsibilities:
    1. Receive and display push notifications (the whole point of the install gate).
    2. Open the right screen when a notification is tapped.
    3. A conservative cache so the shell loads offline — never cache the SW itself.
    Bump CACHE_VERSION on every release so clients update. */
 
-const CACHE_VERSION = 'cellar-v2';
+const CACHE_VERSION = 'cellar-v7';
 const SHELL = ['/', '/index.html', '/css/tokens.css', '/css/app.css', '/js/app.js', '/js/config.js', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
@@ -41,7 +41,7 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (e) { data = { body: event.data && event.data.text() }; }
-  const title = data.title || 'Cellar Selection Club';
+  const title = data.title || 'Tops Cellar Selection';
   const options = {
     body: data.body || '',
     icon: '/icons/icon-192.png',

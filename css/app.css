@@ -5,7 +5,12 @@
 
 /* ---------- app shell ---------- */
 [hidden]{display:none!important}
-html,body{height:100%}
+*,*::before,*::after{box-sizing:border-box}
+/* iOS Safari zooms in (and stays zoomed) when focusing inputs under 16px — keep form controls at 16px. */
+input,textarea,select{font-size:16px}
+button,a,[data-go],[data-act],[data-nav],.chip,.tog,.aud,.qa,.nrow,.ni2,.bell,.ctab,.schip,.rrow{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:active,.btn:active,[data-go]:active,[data-act]:active,[data-nav]:active,.ctab:active,.schip:active,.ni2:active{opacity:.7}
+html,body{height:100%;max-width:100%;overflow-x:hidden}
 body{
   background:radial-gradient(circle at 50% 0%,#17171b,#0a0a0c 70%);
   min-height:100%;color:var(--paper);
@@ -61,7 +66,7 @@ body{
 .reg{padding:6px 22px 26px}
 .field{margin-top:14px}
 .field .fl{font-size:10px;letter-spacing:1.4px;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:7px}
-.field .fi{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:13px 14px;font-size:13px;color:var(--paper);width:100%;font-family:var(--body)}
+.field .fi{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:13px 14px;font-size:16px;color:var(--paper);width:100%;font-family:var(--body)}
 .field .fi::placeholder{color:var(--muted)}
 .field select.fi{appearance:none;-webkit-appearance:none}
 .field .err{color:#e98a8a;font-size:10.5px;margin-top:6px;display:none}
@@ -201,7 +206,7 @@ body{
 .memcard .eb{position:relative}
 .memcard .nm{position:relative;font-family:var(--disp);font-size:26px;font-weight:600;margin-top:6px}
 .memcard .no{position:relative;font-size:11px;letter-spacing:2px;color:var(--gold-br);margin-top:4px}
-.qr{position:relative;width:150px;height:150px;background:#f7f4ee;border-radius:14px;margin:20px auto 0;padding:12px}
+.qr{position:relative;width:150px;height:150px;background:#f7f4ee;border-radius:14px;margin:20px auto 0;padding:12px;overflow:hidden}
 .qr svg,.qr canvas,.qr img{width:100%;height:100%;display:block}
 .memcard .scan{position:relative;font-size:10.5px;color:var(--muted);margin-top:14px;letter-spacing:.5px}
 .cardview .tier{margin-top:18px;font-size:11px;color:var(--muted)}
@@ -215,6 +220,17 @@ body{
 .nrow .nt p{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45}
 .nrow .nt .tm{font-size:9px;color:#5f5c55;margin-top:5px;letter-spacing:.5px;text-transform:uppercase}
 .nrow.unread .ni{background:var(--wine)}
+.nrow.has-img .ni{width:54px;height:54px;border-radius:10px;overflow:hidden;background:var(--surface2)}
+.nrow.has-img .ni img{width:100%;height:100%;object-fit:cover;display:block}
+.nrow{cursor:pointer}
+.nchev{margin-left:auto;color:var(--muted);font-size:18px;align-self:center;flex-shrink:0}
+/* notification detail */
+.ndimg{height:260px;background:var(--surface2) center/cover no-repeat;border-radius:0 0 18px 18px;margin-bottom:4px}
+#nd-body{padding:22px 22px 40px}
+.nd-title{font-family:var(--disp);font-size:26px;font-weight:600;line-height:1.2;margin-bottom:12px}
+.nd-body{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.nd-tm{font-size:10px;color:#5f5c55;letter-spacing:.5px;text-transform:uppercase;margin-bottom:22px}
+.nd-btn{display:block;text-align:center;text-decoration:none;margin-top:10px}
 .empty{padding:50px 30px;text-align:center;color:var(--muted);font-style:italic;font-family:var(--disp);font-size:14px}
 
 /* generic placeholder (cellar/sommelier) */
@@ -225,6 +241,56 @@ body{
 .soon{margin-top:14px;font-size:9px;letter-spacing:2px;color:var(--gold);border:1px solid var(--hair);padding:6px 12px;border-radius:20px;text-transform:uppercase}
 
 .sp{height:22px}
+
+/* cellar tabs */
+.ctabs{display:flex;border-bottom:1px solid var(--hair)}
+.ctab{flex:1;text-align:center;padding:11px 6px;font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.ctab.on{color:var(--gold-br);border-bottom-color:var(--gold-br)}
+.cpanel{display:none;padding-bottom:80px}
+.cpanel.on{display:block}
+.wine-grid{display:flex;flex-direction:column;gap:12px;padding:14px 0}
+
+/* cellar rating rows */
+.rrow{display:flex;gap:13px;padding:14px 22px;border-bottom:1px solid var(--cardbd);align-items:center;cursor:pointer;touch-action:manipulation}
+.rri{width:44px;height:44px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden}
+.rri img{width:100%;height:100%;object-fit:cover}
+.rrt{flex:1;min-width:0}
+.rrt h4{font-family:var(--disp);font-size:16px;font-weight:600;line-height:1.1}
+.rrt p{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrs{color:var(--gold-br);font-size:12px;letter-spacing:1px;margin-top:3px}
+
+/* magazine rows */
+.magrow{display:flex;gap:14px;padding:14px 22px;border-bottom:1px solid var(--cardbd);align-items:center;cursor:pointer}
+.magcov{width:56px;height:72px;border-radius:8px;background:var(--surface);flex-shrink:0;background-size:cover;background-position:center}
+.magt .te{font-size:8px;letter-spacing:2px;color:var(--gold);font-weight:700}
+.magt h3{font-family:var(--disp);font-size:17px;font-weight:600;margin-top:4px;line-height:1.1}
+
+/* rating modal */
+.rmodal{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end}
+.rmdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);cursor:pointer}
+.rmcard{position:relative;width:100%;background:var(--surface2);border-radius:22px 22px 0 0;padding:28px 24px calc(34px + env(safe-area-inset-bottom))}
+.rmtitle{font-family:var(--disp);font-size:21px;font-weight:600;margin-bottom:18px;text-align:center}
+.rmstars{display:flex;justify-content:center;gap:10px;font-size:38px;cursor:pointer;touch-action:manipulation}
+.rmstars span{color:var(--hair);transition:color .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;padding:4px}
+.rmstars span.on{color:var(--gold-br)}
+
+/* sommelier */
+.som-wrap{padding:16px 22px 14px}
+.som-intro{display:flex;flex-direction:column;align-items:center;padding:30px 0 16px;text-align:center}
+.som-ic{font-size:44px;color:var(--gold-br);margin-bottom:14px}
+.som-intro p{font-size:13px;color:var(--muted);line-height:1.55}
+.som-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.schip{font-size:11px;padding:8px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--hair);color:var(--gold-br);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.som-messages{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.smsg{max-width:82%;padding:11px 14px;border-radius:18px;font-size:13px;line-height:1.55}
+.sme{background:var(--gold);color:#241a08;align-self:flex-end;border-radius:18px 18px 4px 18px}
+.sma{background:var(--surface2);color:var(--paper);align-self:flex-start;border-radius:18px 18px 18px 4px}
+.sthink{color:var(--muted)!important;font-style:italic}
+.som-bar{position:sticky;bottom:0;display:flex;align-items:center;gap:10px;padding:10px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--hair);background:rgba(16,15,18,.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.som-input{flex:1;background:var(--surface);border:1px solid var(--hair);border-radius:20px;padding:10px 16px;font-size:16px;color:var(--paper);resize:none;line-height:1.4;font-family:inherit;max-height:100px;overflow-y:auto}
+.som-input::placeholder{color:var(--muted)}
+.som-input:focus{outline:none;border-color:rgba(194,162,90,.4)}
+.som-send{width:40px;height:40px;border-radius:50%;background:linear-gradient(180deg,var(--gold-br),var(--gold));border:none;color:#241a08;font-size:16px;cursor:pointer;flex-shrink:0;touch-action:manipulation}
 
 /* re-engagement banner (notifications later disabled) */
 .reengage{margin:10px 18px 0;background:rgba(94,26,39,.25);border:1px solid rgba(194,162,90,.3);border-radius:14px;padding:13px 15px;display:flex;gap:11px;align-items:center}
@@ -247,3 +313,62 @@ body{
 #boot .crest{width:60px;height:60px;border-radius:50%;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:24px}
 #boot .nm{font-family:var(--disp);font-size:22px;color:var(--paper)}
 #boot .eb{font-size:8px;letter-spacing:2.4px;color:var(--gold);font-weight:700;text-transform:uppercase}
+
+/* ---- Specials image lightbox ---- */
+.spcard .mb2.img{position:relative;cursor:zoom-in;touch-action:manipulation}
+.spcard .mb2 .zoom{position:absolute;right:8px;bottom:8px;width:26px;height:26px;border-radius:50%;background:rgba(16,15,18,.62);color:var(--gold-br);display:flex;align-items:center;justify-content:center;font-size:15px;backdrop-filter:blur(4px)}
+.lightbox{position:fixed;inset:0;z-index:120;background:rgba(8,7,9,.92);display:none;align-items:center;justify-content:center;padding:18px}
+.lightbox.on{display:flex}
+.lightbox img{max-width:100%;max-height:88vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.lightbox .lbx{position:absolute;top:16px;right:20px;color:var(--paper);font-size:34px;line-height:1;opacity:.8}
+
+/* ---- In-app guide (rendered Markdown) ---- */
+.mdwrap{padding:8px 22px calc(40px + env(safe-area-inset-bottom))}
+.mdwrap h1{font-family:var(--disp);font-size:24px;font-weight:600;color:var(--paper);margin:18px 0 8px;line-height:1.1}
+.mdwrap h2{font-family:var(--disp);font-size:19px;font-weight:600;color:var(--gold-br);margin:22px 0 6px}
+.mdwrap h3{font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin:16px 0 6px}
+.mdwrap p{font-size:13.5px;line-height:1.6;color:var(--paper);margin:8px 0;opacity:.92}
+.mdwrap ul,.mdwrap ol{margin:8px 0 8px 20px;padding:0}
+.mdwrap li{font-size:13.5px;line-height:1.55;color:var(--paper);margin:5px 0;opacity:.92}
+.mdwrap strong{color:var(--gold-br)}
+.mdwrap code{background:var(--surface2);border:1px solid var(--hair);border-radius:5px;padding:1px 5px;font-size:12px;color:var(--gold-br)}
+.mdwrap hr{border:none;border-top:1px solid var(--hair);margin:20px 0}
+
+/* ---- Wine price (customer) ---- */
+.lmeta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+.wprice{font-family:var(--disp);font-size:15px;color:var(--gold-br);font-weight:600;white-space:nowrap}
+.wprice .pnow{color:var(--gold-br)}
+.wprice .pwas{color:var(--muted);text-decoration:line-through;font-size:12px;margin-left:5px}
+.wprice.big{font-size:22px;margin-top:12px}
+.wprice.big .pwas{font-size:15px}
+.wprice .psize{color:var(--muted);font-size:12px;font-family:var(--body);margin-left:6px}
+
+/* ---- Sommelier wine recommendation cards ---- */
+.som-recs{display:flex;flex-direction:column;gap:10px;margin:2px 0 6px}
+.srw{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--cardbd);border-radius:14px;padding:12px;cursor:pointer;touch-action:manipulation}
+.srw:active{opacity:.7}
+.srw-img{width:44px;height:64px;flex-shrink:0;position:relative;display:flex;align-items:flex-end;justify-content:center;background-size:contain;background-repeat:no-repeat;background-position:center}
+.srw-img .bd{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:26px;height:52px;background:linear-gradient(90deg,#07070a,#3a3a44 45%,#0d0d10);border-radius:5px}
+.srw-img .nk{position:absolute;top:0;left:50%;transform:translateX(-50%);width:9px;height:16px;background:linear-gradient(90deg,#0c0c0e,#2c2c33,#0c0c0e);border-radius:3px 3px 0 0;z-index:2}
+.srw-img .lb{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);width:20px;height:24px;background:linear-gradient(180deg,#efe9dc,#cfc6b2);border-radius:2px;z-index:2}
+.srw-i{flex:1;min-width:0}
+.srw-i h4{font-size:14px;color:var(--paper);margin:0;line-height:1.2}
+.srw-s{font-size:11px;color:var(--muted);margin-top:3px}
+.srw-p{font-size:11px;color:var(--gold-br);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srw .wprice{margin-top:5px;font-size:15px}
+.srw-go{color:var(--gold-br);font-size:20px;flex-shrink:0}
+
+/* ---- Magazine (editorial) ---- */
+.magchips{display:flex;gap:7px;flex-wrap:wrap;padding:10px 22px 6px}
+.mage{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+#mag-list:not(.empty){padding:6px 18px 30px}
+.mag-hero{height:220px;background-size:cover;background-position:center}
+.mag-b{padding:20px 22px 30px}
+.mag-b .te{font-size:9px;letter-spacing:2px;color:var(--gold);font-weight:700;text-transform:uppercase}
+.mag-b h1{font-family:var(--disp);font-size:28px;font-weight:600;line-height:1.1;margin-top:8px;color:var(--paper)}
+.mag-b .ptext{font-size:14px;line-height:1.7;color:var(--paper);opacity:.9;margin-top:14px}
+
+/* Keep back buttons tappable above any sibling / hero overlay */
+.bhead{position:relative;z-index:6}
+.bhead .bk{position:relative;z-index:6}
+.wdhero .bk2,.wdhero .fav{z-index:6}
