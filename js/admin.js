@@ -92,6 +92,7 @@ function loadFor(id) {
   if (id === 'm-prizes') loadManage('prize');
   if (id === 'luckydraw') loadDrawPrizes();
   if (id === 'prizereports') loadPrizeReports();
+  if (id === 'orders') loadOrders();
   if (id === 'adminguide') loadAdminGuide();
   if (id === 'installqr') renderInstallQr();
 }
@@ -337,6 +338,126 @@ async function exportWins() {
 function wirePrizes() {
   $('draw-run').addEventListener('click', runDraw);
   $('wins-export').addEventListener('click', exportWins);
+}
+
+/* ---------------- ORDERS ---------------- */
+let ORDERS = [], OITEMS = [], EDIT_ORDER = null;
+const OSTATUS = { pending: 'p', paid: 'g', packed: 'a', ready: 'a', collected: 'g', delivered: 'g', cancelled: 'r' };
+
+async function loadOrders() {
+  const host = $('orders-list'); host.innerHTML = '<div class="empty">Loading…</div>';
+  try { const r = await contentApi('list-orders'); ORDERS = r.items || []; renderOrders(); }
+  catch (err) { host.innerHTML = `<div class="empty">${esc(err.message)}</div>`; }
+}
+function renderOrders() {
+  const q = ($('order-search').value || '').trim().toLowerCase();
+  const st = $('order-status-filter').value;
+  let list = ORDERS;
+  if (st) list = list.filter((o) => o.status === st);
+  if (q) list = list.filter((o) => {
+    const items = (o.items || []).map((i) => `${i.description} ${i.code}`).join(' ');
+    return `${o.order_number} ${o.customer_name} ${o.member_number || ''} ${items}`.toLowerCase().includes(q);
+  });
+  $('orders-list').innerHTML = list.length ? list.map((o) => `
+    <div class="crow" data-order="${esc(o.id)}">
+      <div class="ci"><h4>${esc(o.customer_name || '—')} <span class="obadge ${OSTATUS[o.status] || 'p'}">${esc(o.status)}</span></h4>
+      <p>${esc(o.order_number || '')} · ${rands(o.total || 0)} · ${(o.items || []).length} item(s) · ${o.created_at ? new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : ''}</p></div>
+      <div class="ch">›</div>
+    </div>`).join('') : '<div class="empty">No orders yet. Tap “New order”.</div>';
+}
+function orderFormShow(show) { $('orders').classList.toggle('on', !show); $('order-form').classList.toggle('on', show); $('vp').scrollTop = 0; }
+function openOrderForm(o) {
+  EDIT_ORDER = o ? o.id : null;
+  $('of-title').textContent = o ? `Order ${o.order_number || ''}` : 'New order';
+  $('of-customer_name').value = o ? (o.customer_name || '') : '';
+  $('of-member_number').value = o ? (o.member_number || '') : '';
+  $('of-contact').value = o ? (o.contact || '') : '';
+  $('of-order_type').value = o ? (o.order_type || 'wine') : 'wine';
+  $('of-fulfilment').value = o ? (o.fulfilment || 'collection') : 'collection';
+  $('of-payment_status').value = o ? (o.payment_status || 'unpaid') : 'unpaid';
+  $('of-status').value = o ? (o.status || 'pending') : 'pending';
+  $('of-discount').value = o && o.discount ? o.discount : '';
+  $('of-notes').value = o ? (o.notes || '') : '';
+  OITEMS = o && Array.isArray(o.items) ? o.items.map((i) => ({ ...i })) : [{ code: '', description: '', qty: 1, price: '' }];
+  renderOItems(); recomputeOTotal();
+  $('of-delete').hidden = !o;
+  go('order-form');
+}
+function renderOItems() {
+  $('of-items').innerHTML = OITEMS.map((it, i) => `
+    <div class="oitem" data-idx="${i}">
+      <input class="tinput oi" data-f="description" placeholder="Wine / item" value="${esc(it.description || '')}">
+      <div class="frow" style="margin-top:6px">
+        <input class="tinput oi" data-f="code" placeholder="Code" value="${esc(it.code || '')}">
+        <input class="tinput oi" data-f="qty" inputmode="numeric" placeholder="Qty" value="${it.qty != null ? it.qty : ''}">
+        <input class="tinput oi" data-f="price" inputmode="decimal" placeholder="Price" value="${it.price != null ? it.price : ''}">
+      </div>
+      <div class="oi-rm" data-rm="${i}">Remove item</div>
+    </div>`).join('');
+}
+function recomputeOTotal() {
+  const sub = OITEMS.reduce((s, it) => s + (parseInt(it.qty, 10) || 0) * (parseFloat(it.price) || 0), 0);
+  const disc = parseFloat($('of-discount').value) || 0;
+  $('of-total').value = rands(Math.max(0, sub - disc));
+}
+async function saveOrder() {
+  const customer = $('of-customer_name').value.trim();
+  if (!customer) { toast('Customer name is required.'); return; }
+  const btn = $('of-save'); btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    await contentApi('save-order', {
+      id: EDIT_ORDER || undefined, customer_name: customer,
+      member_number: $('of-member_number').value.trim(), contact: $('of-contact').value.trim(),
+      order_type: $('of-order_type').value, fulfilment: $('of-fulfilment').value,
+      payment_status: $('of-payment_status').value, status: $('of-status').value,
+      discount: $('of-discount').value.trim(), notes: $('of-notes').value.trim(),
+      items: OITEMS.filter((it) => (it.description || '').trim() || (it.code || '').trim()),
+    });
+    toast('Order saved.'); await loadOrders(); go('orders');
+  } catch (err) { toast(err.message || 'Save failed.'); }
+  finally { btn.disabled = false; btn.textContent = 'Save order'; }
+}
+async function deleteOrder() {
+  if (!EDIT_ORDER) { go('orders'); return; }
+  if (!confirm('Delete this order permanently?')) return;
+  try { await contentApi('delete-order', { id: EDIT_ORDER }); toast('Order deleted.'); await loadOrders(); go('orders'); }
+  catch (err) { toast(err.message || 'Delete failed.'); }
+}
+async function exportOrders() {
+  try {
+    const XLSX = await loadSheetJs();
+    const data = ORDERS.map((o) => ({
+      'Order': o.order_number || '', 'Customer': o.customer_name || '', 'Member No': o.member_number || '',
+      'Contact': o.contact || '', 'Type': o.order_type || '', 'Fulfilment': o.fulfilment || '',
+      'Items': (o.items || []).map((i) => `${i.qty}x ${i.description}`).join('; '),
+      'Discount': o.discount || 0, 'Total': o.total || 0, 'Payment': o.payment_status || '', 'Status': o.status || '',
+      'Date': o.created_at ? new Date(o.created_at).toLocaleString('en-ZA') : '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Orders');
+    XLSX.writeFile(wb, 'tops-cellar-selection-orders.xlsx');
+    toast(`Exported ${data.length} orders.`);
+  } catch (err) { toast(err.message || 'Export failed.'); }
+}
+function wireOrders() {
+  $('order-new').addEventListener('click', () => openOrderForm(null));
+  $('order-search').addEventListener('input', renderOrders);
+  $('order-status-filter').addEventListener('change', renderOrders);
+  $('orders-export').addEventListener('click', exportOrders);
+  $('orders-list').addEventListener('click', (e) => { const row = e.target.closest('.crow[data-order]'); if (row) openOrderForm(ORDERS.find((o) => o.id === row.dataset.order)); });
+  $('of-additem').addEventListener('click', () => { OITEMS.push({ code: '', description: '', qty: 1, price: '' }); renderOItems(); });
+  $('of-discount').addEventListener('input', recomputeOTotal);
+  $('of-save').addEventListener('click', saveOrder);
+  $('of-cancel').addEventListener('click', () => go('orders'));
+  $('of-delete').addEventListener('click', deleteOrder);
+  $('of-items').addEventListener('input', (e) => {
+    const inp = e.target.closest('.oi'); if (!inp) return;
+    const idx = parseInt(inp.closest('.oitem').dataset.idx, 10);
+    OITEMS[idx][inp.dataset.f] = inp.value; recomputeOTotal();
+  });
+  $('of-items').addEventListener('click', (e) => {
+    const rm = e.target.closest('[data-rm]'); if (!rm) return;
+    OITEMS.splice(parseInt(rm.dataset.rm, 10), 1); if (!OITEMS.length) OITEMS.push({ code: '', description: '', qty: 1, price: '' }); renderOItems(); recomputeOTotal();
+  });
 }
 
 let STATS = null;
@@ -939,7 +1060,7 @@ function wireManage() {
 
 /* ---------------- boot ---------------- */
 function start() {
-  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance(); wirePrizes();
+  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance(); wirePrizes(); wireOrders();
   if (TOKEN) {
     const hr = new Date().getHours();
     $('dash-greeting').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Ashley';

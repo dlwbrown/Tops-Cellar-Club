@@ -91,6 +91,17 @@ Give members something to read under **Cellar → Magazine**. In **Manage Backen
 5. Optionally add a **link to read** (a PDF or web page for the full issue).
 6. **Save**. The issue appears in the member app's Magazine tab.
 
+## Orders
+
+**Dashboard → Orders** records and tracks customer orders — Mystery Boxes, wine orders and merchandise.
+
+- **+ New order** — capture the customer, member number, contact, order type, fulfilment (collection/delivery), and line items (each with a code, description, quantity and price). The **total** calculates automatically after any discount.
+- **Payment & status** — mark payment (unpaid/paid) and move the order through its lifecycle: Pending → Paid → Packed → Ready → Collected/Delivered (or Cancelled).
+- **Search & filter** — find orders by customer, order number, product or status.
+- **Export to Excel** — download all orders with their items, totals and statuses.
+
+Each order gets a unique number (e.g. `TCS-1001`).
+
 ## Broadcast
 
 **Send a broadcast** pushes a notification to members. Set a title, message, optional image and deep link, choose the audience (all / by store / by taste) and channels (push / in-app / email), and send.

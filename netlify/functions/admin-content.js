@@ -166,6 +166,39 @@ exports.handler = async (event) => {
     } catch (e) { return json({ error: String(e) }, 500); }
   }
 
+  // ---- Orders (save has custom order-number + total) ----
+  if (action === 'save-order') {
+    try {
+      const p = payload;
+      const items = Array.isArray(p.items) ? p.items.map((it) => ({
+        code: String(it.code || ''), description: String(it.description || ''),
+        qty: parseInt(it.qty, 10) || 0, price: parseFloat(it.price) || 0,
+      })) : [];
+      const sub = items.reduce((s, it) => s + it.qty * it.price, 0);
+      const discount = parseFloat(p.discount) || 0;
+      const total = Math.max(0, Math.round((sub - discount) * 100) / 100);
+      const body = {
+        member_id: p.member_id || null, customer_name: (p.customer_name || '').trim(),
+        member_number: (p.member_number || '').trim() || null, contact: (p.contact || '').trim() || null,
+        order_type: p.order_type || 'wine', fulfilment: p.fulfilment || 'collection',
+        payment_status: p.payment_status || 'unpaid', status: p.status || 'pending',
+        items, discount, total, notes: (p.notes || '').trim() || null,
+      };
+      if (p.id) {
+        const res = await rest(`orders?id=eq.${p.id}`, { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: JSON.stringify(body) });
+        const rows = await res.json(); if (!res.ok) return json({ error: rows.message || JSON.stringify(rows) }, 400);
+        return json({ ok: true, item: Array.isArray(rows) ? rows[0] : rows });
+      }
+      // next order number from the current count
+      const cres = await rest('orders?select=id&limit=1', { headers: { Prefer: 'count=exact' } });
+      let count = 0; const cr = cres.headers.get('content-range'); if (cr) { const m = cr.match(/\/(\d+)$/); if (m) count = parseInt(m[1], 10) || 0; }
+      body.order_number = 'TCS-' + (1001 + count);
+      const res = await rest('orders', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(body) });
+      const rows = await res.json(); if (!res.ok) return json({ error: rows.message || JSON.stringify(rows) }, 400);
+      return json({ ok: true, item: Array.isArray(rows) ? rows[0] : rows });
+    } catch (e) { return json({ error: String(e) }, 500); }
+  }
+
   // map an action to its table
   const TABLE = {
     'list-wines': 'wines', 'save-wine': 'wines', 'delete-wine': 'wines',
@@ -173,11 +206,12 @@ exports.handler = async (event) => {
     'list-boxes': 'discovery_boxes', 'save-box': 'discovery_boxes', 'delete-box': 'discovery_boxes',
     'list-mags': 'magazines', 'save-mag': 'magazines', 'delete-mag': 'magazines',
     'list-prizes': 'prizes', 'save-prize': 'prizes', 'delete-prize': 'prizes',
+    'list-orders': 'orders', 'delete-order': 'orders',
   };
   const table = TABLE[action];
   if (!table) return json({ error: 'Unknown action: ' + action }, 400);
 
-  const order = table === 'events' ? 'datetime.asc' : (table === 'discovery_boxes' || table === 'prizes') ? 'created_at.desc' : table === 'magazines' ? 'issue_date.desc' : 'name.asc';
+  const order = table === 'events' ? 'datetime.asc' : (table === 'discovery_boxes' || table === 'prizes' || table === 'orders') ? 'created_at.desc' : table === 'magazines' ? 'issue_date.desc' : 'name.asc';
 
   try {
     // LIST

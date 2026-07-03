@@ -47,6 +47,7 @@
         <div class="label"><span>Jump to</span><div class="ln"></div></div>
         <div class="jump">
           <div class="jrow" data-go="broadcast" data-nav="broadcast"><div class="ji">&#128226;</div><div class="jt"><h4>Send a broadcast</h4><p>Push a message to members</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="orders"><div class="ji">&#128230;</div><div class="jt"><h4>Orders</h4><p>Mystery boxes &amp; wine orders</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="prizes"><div class="ji">&#127942;</div><div class="jt"><h4>Prizes &amp; Lucky Draw</h4><p>Prizes, spinning wheel &amp; reports</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="staff"><div class="ji">&#11088;</div><div class="jt"><h4>Staff Champions</h4><p>Signups by team member</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="manage"><div class="ji">&#127863;</div><div class="jt"><h4>Manage Backend</h4><p>Wines, events &amp; Discovery Boxes</p></div><div class="ch">&#8250;</div></div>
@@ -397,6 +398,64 @@
             </div>
             <button class="btn block ghost danger" id="gf-delete" style="margin-top:10px" hidden>Delete issue</button>
           </div>
+        </div>
+      </section>
+
+      <!-- ORDERS -->
+      <section class="view" id="orders">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Orders</div></div>
+        <div class="body">
+          <button class="btn block" id="order-new">&#43; New order</button>
+          <div style="margin-top:12px"><input class="tinput" id="order-search" placeholder="&#128269;  Search customer, number, product…" style="margin-top:0"></div>
+          <select class="tinput" id="order-status-filter">
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option><option value="paid">Paid</option>
+            <option value="packed">Packed</option><option value="ready">Ready</option>
+            <option value="collected">Collected</option><option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button class="btn block ghost" id="orders-export" style="margin-top:10px">Export to Excel</button>
+          <div id="orders-list" style="margin-top:12px"><div class="empty">Loading&hellip;</div></div>
+        </div>
+      </section>
+
+      <!-- ORDER FORM -->
+      <section class="view" id="order-form">
+        <div class="bhead"><div class="bk" data-go="orders">&#8249;</div><div class="ti" id="of-title">New order</div></div>
+        <div class="body">
+          <div class="flabel">Customer name *</div>
+          <input class="tinput" id="of-customer_name" placeholder="Jane Smith" />
+          <div class="frow">
+            <div><div class="flabel">Member number</div><input class="tinput" id="of-member_number" placeholder="1023" /></div>
+            <div><div class="flabel">Contact</div><input class="tinput" id="of-contact" placeholder="082 555 0142" /></div>
+          </div>
+          <div class="frow">
+            <div><div class="flabel">Order type</div><select class="tinput" id="of-order_type"><option value="wine">Wine order</option><option value="mystery_box">Mystery Box</option><option value="merchandise">Merchandise</option></select></div>
+            <div><div class="flabel">Fulfilment</div><select class="tinput" id="of-fulfilment"><option value="collection">Collection</option><option value="delivery">Delivery</option></select></div>
+          </div>
+
+          <div class="flabel">Items</div>
+          <div id="of-items"></div>
+          <button class="btn block ghost" id="of-additem" style="margin-top:8px">&#43; Add item</button>
+
+          <div class="frow" style="margin-top:12px">
+            <div><div class="flabel">Discount (R)</div><input class="tinput" id="of-discount" inputmode="decimal" placeholder="0" /></div>
+            <div><div class="flabel">Total</div><input class="tinput" id="of-total" readonly style="font-weight:700" /></div>
+          </div>
+          <div class="frow">
+            <div><div class="flabel">Payment</div><select class="tinput" id="of-payment_status"><option value="unpaid">Unpaid</option><option value="paid">Paid</option></select></div>
+            <div><div class="flabel">Status</div><select class="tinput" id="of-status">
+              <option value="pending">Pending</option><option value="paid">Paid</option><option value="packed">Packed</option>
+              <option value="ready">Ready</option><option value="collected">Collected</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option>
+            </select></div>
+          </div>
+          <div class="flabel">Notes</div>
+          <textarea class="tinput" id="of-notes" placeholder="Any special instructions…"></textarea>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn" style="flex:1" id="of-save">Save order</button>
+            <button class="btn ghost" id="of-cancel">Cancel</button>
+          </div>
+          <button class="btn block ghost danger" id="of-delete" style="margin-top:10px" hidden>Delete order</button>
         </div>
       </section>
 
