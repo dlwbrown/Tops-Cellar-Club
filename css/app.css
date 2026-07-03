@@ -333,3 +333,12 @@ body{
 .mdwrap strong{color:var(--gold-br)}
 .mdwrap code{background:var(--surface2);border:1px solid var(--hair);border-radius:5px;padding:1px 5px;font-size:12px;color:var(--gold-br)}
 .mdwrap hr{border:none;border-top:1px solid var(--hair);margin:20px 0}
+
+/* ---- Wine price (customer) ---- */
+.lmeta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+.wprice{font-family:var(--disp);font-size:15px;color:var(--gold-br);font-weight:600;white-space:nowrap}
+.wprice .pnow{color:var(--gold-br)}
+.wprice .pwas{color:var(--muted);text-decoration:line-through;font-size:12px;margin-left:5px}
+.wprice.big{font-size:22px;margin-top:12px}
+.wprice.big .pwas{font-size:15px}
+.wprice .psize{color:var(--muted);font-size:12px;font-family:var(--body);margin-left:6px}

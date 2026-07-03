@@ -301,7 +301,7 @@ async function loadHome() {
   renderThisWeek(box, nextEvent);
   // featured wine (the highest-rated wine in the catalogue)
   try {
-    const { data } = await sb.from('wines').select('*').order('avg_rating', { ascending: false }).limit(1);
+    const { data } = await sb.from('wines').select('*').or('active.is.null,active.eq.true').order('avg_rating', { ascending: false }).limit(1);
     if (data && data[0]) renderFeaturedWine(data[0]);
   } catch {}
 }
@@ -331,7 +331,7 @@ function renderFeaturedWine(w) {
       <div class="bottle${w.image_url ? ' img' : ''}"${w.image_url ? ` style="background-image:url('${esc(w.image_url)}')"` : ''}><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
       <div class="winfo"><div class="te">${esc((w.producer || '').toUpperCase())}</div><h3>${esc(w.name)}</h3><div class="rg">${esc([w.region, w.varietal].filter(Boolean).join(' · '))}</div>
       ${w.tasting_notes ? `<div class="nt">&ldquo;${esc(w.tasting_notes)}&rdquo;</div>` : ''}
-      <div class="st"><span class="s">★★★★★</span><span class="r">${(w.avg_rating || 0).toFixed(1)}</span></div></div>
+      <div class="st"><span class="s">★★★★★</span><span class="r">${(w.avg_rating || 0).toFixed(1)}</span>${priceLine(w) ? `<span class="wprice" style="margin-left:auto">${priceLine(w)}</span>` : ''}</div></div>
     </div>`;
 }
 
@@ -464,20 +464,30 @@ let WINES = [];
 async function loadWines() {
   try {
     const sb = await getSb(); if (!sb) return;
-    const { data } = await sb.from('wines').select('*').order('avg_rating', { ascending: false });
+    const { data } = await sb.from('wines').select('*').or('active.is.null,active.eq.true').order('avg_rating', { ascending: false }).limit(2000);
     if (!data || !data.length) return;
     WINES = data;
     renderWineList(data);
   } catch {}
 }
 function starStr(r) { const f = Math.round(r || 0); return '★★★★★☆☆☆☆☆'.slice(5 - f, 10 - f); }
+// Live price: promo overrides the normal selling price.
+function priceLine(w) {
+  const sp = (w.selling_price != null && w.selling_price !== '') ? Number(w.selling_price) : null;
+  const promo = (w.promo_price != null && w.promo_price !== '') ? Number(w.promo_price) : null;
+  if (promo != null && sp != null && promo < sp) return `<span class="pnow">${rands(promo)}</span> <span class="pwas">${rands(sp)}</span>`;
+  const p = promo != null ? promo : sp;
+  return p != null ? `<span class="pnow">${rands(p)}</span>` : '';
+}
 function renderWineList(list) {
-  document.getElementById('wine-list').innerHTML = list.map((w) => `
+  document.getElementById('wine-list').innerHTML = list.map((w) => {
+    const price = priceLine(w);
+    return `
     <div class="lrow" data-go="wine" data-wine="${esc(w.id)}">
       <div class="mb${w.image_url ? ' img' : ''}"${w.image_url ? ` style="background-image:url('${esc(w.image_url)}')"` : ''}><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>
-      <div class="li"><h4>${esc(w.name)}</h4><div class="sm">${esc([w.producer, w.region].filter(Boolean).join(' · '))}</div>
-      <div class="stars">${starStr(w.avg_rating)} ${(w.avg_rating || 0).toFixed(1)}</div></div>
-    </div>`).join('');
+      <div class="li"><h4>${esc(w.name)}</h4><div class="sm">${esc([w.producer, w.region, w.size].filter(Boolean).join(' · '))}</div>
+      <div class="lmeta"><div class="stars">${starStr(w.avg_rating)} ${(w.avg_rating || 0).toFixed(1)}</div>${price ? `<div class="wprice">${price}</div>` : ''}</div></div>
+    </div>`; }).join('');
 }
 
 function renderWineDetail(w) {
@@ -492,6 +502,7 @@ function renderWineDetail(w) {
     <div class="te">${esc((w.producer || '').toUpperCase())}</div>
     <h1>${esc(w.name)}</h1>
     <div class="rg">${esc([w.region, w.varietal, w.country].filter(Boolean).join(' · '))}</div>
+    ${priceLine(w) ? `<div class="wprice big">${priceLine(w)}${w.size ? ` <span class="psize">${esc(w.size)}</span>` : ''}</div>` : ''}
     <div class="specs">
       <div class="spec"><div class="k">Region</div><div class="v">${esc(w.region || '—')}</div></div>
       <div class="spec"><div class="k">Serve at</div><div class="v">${esc(w.serving_temp || '—')}</div></div>
