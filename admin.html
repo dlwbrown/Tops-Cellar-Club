@@ -47,7 +47,7 @@
         <div class="label"><span>Jump to</span><div class="ln"></div></div>
         <div class="jump">
           <div class="jrow" data-go="broadcast" data-nav="broadcast"><div class="ji">&#128226;</div><div class="jt"><h4>Send a broadcast</h4><p>Push a message to members</p></div><div class="ch">&#8250;</div></div>
-          <div class="jrow" data-go="draw"><div class="ji">&#127942;</div><div class="jt"><h4>Monthly prize draw</h4><p>Draw this month&rsquo;s winner</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="prizes"><div class="ji">&#127942;</div><div class="jt"><h4>Prizes &amp; Lucky Draw</h4><p>Prizes, spinning wheel &amp; reports</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="staff"><div class="ji">&#11088;</div><div class="jt"><h4>Staff Champions</h4><p>Signups by team member</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="manage"><div class="ji">&#127863;</div><div class="jt"><h4>Manage Backend</h4><p>Wines, events &amp; Discovery Boxes</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="maint"><div class="ji">&#128295;</div><div class="jt"><h4>Maintenance</h4><p>Wine database import &amp; export</p></div><div class="ch">&#8250;</div></div>
@@ -397,6 +397,89 @@
             </div>
             <button class="btn block ghost danger" id="gf-delete" style="margin-top:10px" hidden>Delete issue</button>
           </div>
+        </div>
+      </section>
+
+      <!-- PRIZES HUB -->
+      <section class="view" id="prizes">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Prizes &amp; Lucky Draw</div></div>
+        <div class="jump" style="margin-top:8px">
+          <div class="jrow" data-go="luckydraw"><div class="ji">&#127920;</div><div class="jt"><h4>Run the Lucky Draw</h4><p>Spin the wheel for a winner</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="m-prizes"><div class="ji">&#127873;</div><div class="jt"><h4>Manage prizes</h4><p>Add, edit &amp; set quantities</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="prizereports"><div class="ji">&#128202;</div><div class="jt"><h4>Prize reports</h4><p>Winners &amp; export to Excel</p></div><div class="ch">&#8250;</div></div>
+        </div>
+      </section>
+
+      <!-- MANAGE PRIZES -->
+      <section class="view" id="m-prizes">
+        <div class="bhead"><div class="bk" data-go="prizes">&#8249;</div><div class="ti">Prizes</div></div>
+        <div class="body">
+          <button class="btn block" id="prize-add">&#43; Add a prize</button>
+          <div id="prize-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
+          <div id="prize-form" class="cform" hidden>
+            <div class="flabel">Prize name *</div>
+            <input class="tinput" id="pf-name" placeholder="e.g. R3,000 drinks hamper" />
+            <div class="flabel">Description</div>
+            <textarea class="tinput" id="pf-description" placeholder="What the winner receives…"></textarea>
+            <div class="frow">
+              <div><div class="flabel">Value (R)</div><input class="tinput" id="pf-value" inputmode="decimal" placeholder="3000" /></div>
+              <div><div class="flabel">Qty available</div><input class="tinput" id="pf-qty_available" inputmode="numeric" placeholder="1" /></div>
+            </div>
+            <div class="frow">
+              <div><div class="flabel">Start date</div><input class="tinput" id="pf-start_date" type="date" /></div>
+              <div><div class="flabel">End date</div><input class="tinput" id="pf-end_date" type="date" /></div>
+            </div>
+            <div class="flabel">Image URL (optional)</div>
+            <input class="tinput" id="pf-image_url" placeholder="https://…" />
+            <div class="frow">
+              <div><div class="flabel">Type</div><select class="tinput" id="pf-is_bonus"><option value="false">Standard prize</option><option value="true">Bonus prize</option></select></div>
+              <div><div class="flabel">Status</div><select class="tinput" id="pf-active"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+            </div>
+            <div class="hint" id="pf-remaining"></div>
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn" style="flex:1" id="pf-save">Save prize</button>
+              <button class="btn ghost" id="pf-cancel">Cancel</button>
+            </div>
+            <button class="btn block ghost danger" id="pf-delete" style="margin-top:10px" hidden>Delete prize</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- LUCKY DRAW (wheel) -->
+      <section class="view" id="luckydraw">
+        <div class="bhead"><div class="bk" data-go="prizes">&#8249;</div><div class="ti">Lucky Draw</div></div>
+        <div class="body">
+          <div class="flabel">Prize</div>
+          <select class="tinput" id="draw-prize"><option value="">Loading prizes…</option></select>
+          <div class="flabel">Qualifying period (members who joined between)</div>
+          <div class="frow">
+            <div><input class="tinput" id="draw-start" type="date" /></div>
+            <div><input class="tinput" id="draw-end" type="date" /></div>
+          </div>
+          <div class="hint">Leave dates blank to include all members.</div>
+
+          <div class="wheelwrap" id="wheel-wrap">
+            <div class="wheel-pointer">&#9660;</div>
+            <canvas id="wheel" width="600" height="600"></canvas>
+          </div>
+          <button class="btn block" id="draw-run" style="margin-top:16px">&#127920; Run Lucky Draw</button>
+
+          <div class="winner" id="draw-result" hidden>
+            <div class="wl">&#127881; Winner &#127881;</div>
+            <div class="wn" id="draw-winner-name">&mdash;</div>
+            <div class="wm" id="draw-winner-meta"></div>
+          </div>
+        </div>
+        <canvas id="confetti" class="confetti" hidden></canvas>
+      </section>
+
+      <!-- PRIZE REPORTS -->
+      <section class="view" id="prizereports">
+        <div class="bhead"><div class="bk" data-go="prizes">&#8249;</div><div class="ti">Prize reports</div></div>
+        <div class="body">
+          <button class="btn block ghost" id="wins-export">Export to Excel</button>
+          <div id="wins-summary" style="margin-top:14px"></div>
+          <div id="wins-list" style="margin-top:10px"><div class="empty">Loading&hellip;</div></div>
         </div>
       </section>
 

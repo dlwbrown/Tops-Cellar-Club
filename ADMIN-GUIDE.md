@@ -95,9 +95,13 @@ Give members something to read under **Cellar → Magazine**. In **Manage Backen
 
 **Send a broadcast** pushes a notification to members. Set a title, message, optional image and deep link, choose the audience (all / by store / by taste) and channels (push / in-app / email), and send.
 
-## Prize draw
+## Prizes & Lucky Draw
 
-Run the **monthly prize draw**. Every signup is auto-entered. Draw or re-draw a winner; past winners are listed.
+**Dashboard → Prizes & Lucky Draw** has three parts:
+
+- **Manage prizes** — add unlimited prizes (and Bonus prizes). Each has a name, description, image, value, quantity available, start/end dates and an active switch. As winners are drawn the remaining quantity drops, and a prize automatically becomes unavailable when it reaches zero.
+- **Run the Lucky Draw** — choose a prize and an optional qualifying date range (members who joined between those dates). Tap **Run Lucky Draw** to spin the animated wheel; it lands on a winner with a celebration, records the win, and decrements the prize. A member can't win the same prize twice.
+- **Prize reports** — every win (winner, prize, value, date, who drew it), remaining quantities per prize, and an **Export to Excel** button.
 
 ## Staff Champions
 

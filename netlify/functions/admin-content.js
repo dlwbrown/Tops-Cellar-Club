@@ -27,6 +27,7 @@ const FIELDS = {
   events: ['type', 'title', 'description', 'datetime', 'location', 'capacity', 'image_url', 'status'],
   discovery_boxes: ['month', 'title', 'image_url', 'price', 'included', 'availability', 'status'],
   magazines: ['title', 'issue_date', 'cover_url', 'content_ref'],
+  prizes: ['name', 'description', 'image_url', 'value', 'qty_available', 'qty_awarded', 'start_date', 'end_date', 'is_bonus', 'active'],
 };
 
 function pick(table, body) {
@@ -100,17 +101,83 @@ exports.handler = async (event) => {
     } catch (e) { return json({ error: String(e) }, 500); }
   }
 
+  // ---- Prizes & Lucky Draw ----
+  if (action === 'list-wins') {
+    try {
+      const res = await rest('prize_wins?select=*&order=created_at.desc&limit=1000');
+      const rows = await res.json();
+      if (!res.ok) return json({ error: rows.message || 'Load failed' }, 400);
+      return json({ wins: Array.isArray(rows) ? rows : [] });
+    } catch (e) { return json({ error: String(e) }, 500); }
+  }
+  if (action === 'draw-winner') {
+    try {
+      const { prize_id, start, end, drawn_by } = payload;
+      if (!prize_id) return json({ error: 'prize_id required' }, 400);
+      // load the prize
+      const pr = await (await rest(`prizes?id=eq.${prize_id}&select=*`)).json();
+      const prize = Array.isArray(pr) ? pr[0] : null;
+      if (!prize) return json({ error: 'Prize not found' }, 404);
+      const remaining = (prize.qty_available || 0) - (prize.qty_awarded || 0);
+      if (prize.active === false || remaining <= 0) return json({ error: 'This prize is no longer available.' }, 400);
+
+      // eligible members: joined within the qualifying range (inclusive)
+      let q = 'members?select=id,first_name,surname,membership_number,created_at';
+      if (start) q += `&created_at=gte.${start}T00:00:00`;
+      if (end) q += `&created_at=lte.${end}T23:59:59`;
+      q += '&limit=100000';
+      let members = await (await rest(q)).json();
+      members = Array.isArray(members) ? members : [];
+      // prevent a member winning the SAME prize twice
+      const prevWins = await (await rest(`prize_wins?prize_id=eq.${prize_id}&select=member_id`)).json();
+      const won = new Set((Array.isArray(prevWins) ? prevWins : []).map((w) => w.member_id));
+      const pool = members.filter((m) => !won.has(m.id));
+      if (!pool.length) return json({ error: 'No qualifying members for that date range.' }, 400);
+
+      // pick a winner (server-side)
+      const winner = pool[Math.floor(Math.random() * pool.length)];
+      const winnerName = `${winner.first_name || ''} ${winner.surname || ''}`.trim();
+
+      // build a readable wheel (winner + up to 19 others), shuffled
+      const others = pool.filter((m) => m.id !== winner.id);
+      for (let i = others.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [others[i], others[j]] = [others[j], others[i]]; }
+      const sample = others.slice(0, 19).map((m) => `${m.first_name || ''} ${m.surname || ''}`.trim() || 'Member');
+      const wheelNames = [...sample, winnerName];
+      for (let i = wheelNames.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [wheelNames[i], wheelNames[j]] = [wheelNames[j], wheelNames[i]]; }
+      const winnerIndex = wheelNames.lastIndexOf(winnerName);
+
+      // record the win + decrement remaining
+      await rest('prize_wins', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({
+        prize_id, prize_name: prize.name, prize_value: prize.value,
+        member_id: winner.id, member_name: winnerName, member_number: winner.membership_number || null,
+        drawn_by: drawn_by || 'admin', range_start: start || null, range_end: end || null,
+      }) });
+      const newAwarded = (prize.qty_awarded || 0) + 1;
+      const patch = { qty_awarded: newAwarded };
+      if (newAwarded >= (prize.qty_available || 0)) patch.active = false; // auto-unavailable at zero
+      await rest(`prizes?id=eq.${prize_id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(patch) });
+
+      return json({
+        winner: { name: winnerName, number: winner.membership_number || '' },
+        participants: pool.length,
+        wheelNames, winnerIndex,
+        remaining: (prize.qty_available || 0) - newAwarded,
+      });
+    } catch (e) { return json({ error: String(e) }, 500); }
+  }
+
   // map an action to its table
   const TABLE = {
     'list-wines': 'wines', 'save-wine': 'wines', 'delete-wine': 'wines',
     'list-events': 'events', 'save-event': 'events', 'delete-event': 'events',
     'list-boxes': 'discovery_boxes', 'save-box': 'discovery_boxes', 'delete-box': 'discovery_boxes',
     'list-mags': 'magazines', 'save-mag': 'magazines', 'delete-mag': 'magazines',
+    'list-prizes': 'prizes', 'save-prize': 'prizes', 'delete-prize': 'prizes',
   };
   const table = TABLE[action];
   if (!table) return json({ error: 'Unknown action: ' + action }, 400);
 
-  const order = table === 'events' ? 'datetime.asc' : table === 'discovery_boxes' ? 'created_at.desc' : table === 'magazines' ? 'issue_date.desc' : 'name.asc';
+  const order = table === 'events' ? 'datetime.asc' : (table === 'discovery_boxes' || table === 'prizes') ? 'created_at.desc' : table === 'magazines' ? 'issue_date.desc' : 'name.asc';
 
   try {
     // LIST
@@ -144,6 +211,14 @@ exports.handler = async (event) => {
       }
       if (body.soh !== undefined) body.soh = (body.soh === '' || body.soh === null) ? 0 : (parseInt(body.soh, 10) || 0);
       if (body.product_code === '') body.product_code = null;
+      if (body.value === '') body.value = null;
+      else if (body.value !== undefined && body.value !== null) body.value = parseFloat(String(body.value).replace(/[^\d.]/g, '')) || null;
+      for (const k of ['qty_available', 'qty_awarded']) {
+        if (body[k] === '' || body[k] === null) body[k] = (k === 'qty_available' ? 1 : 0);
+        else if (body[k] !== undefined) body[k] = parseInt(body[k], 10) || 0;
+      }
+      for (const k of ['start_date', 'end_date']) if (body[k] === '') body[k] = null;
+      if (body.is_bonus !== undefined) body.is_bonus = (body.is_bonus === true || body.is_bonus === 'true' || body.is_bonus === 'on' || body.is_bonus === 1);
       if (body.active !== undefined) body.active = (body.active === true || body.active === 'true' || body.active === 'on' || body.active === 1);
 
       const { id } = payload;

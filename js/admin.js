@@ -89,6 +89,9 @@ function loadFor(id) {
   if (id === 'm-events') loadManage('event');
   if (id === 'm-boxes') loadManage('box');
   if (id === 'm-mags') loadManage('mag');
+  if (id === 'm-prizes') loadManage('prize');
+  if (id === 'luckydraw') loadDrawPrizes();
+  if (id === 'prizereports') loadPrizeReports();
   if (id === 'adminguide') loadAdminGuide();
   if (id === 'installqr') renderInstallQr();
 }
@@ -232,6 +235,108 @@ function wireMaintenance() {
   $('wine-file').addEventListener('change', onWineFile);
   $('import-commit').addEventListener('click', onImportCommit);
   $('wine-export').addEventListener('click', onWineExport);
+}
+
+/* ---------------- PRIZES: Lucky Draw wheel + reports ---------------- */
+let DRAW_PRIZES = [];
+async function loadDrawPrizes() {
+  const sel = $('draw-prize');
+  try {
+    const r = await contentApi('list-prizes');
+    DRAW_PRIZES = (r.items || []).filter((p) => p.active !== false && ((p.qty_available || 0) - (p.qty_awarded || 0)) > 0);
+    sel.innerHTML = DRAW_PRIZES.length
+      ? DRAW_PRIZES.map((p) => `<option value="${p.id}">${esc(p.name)} — ${(p.qty_available || 0) - (p.qty_awarded || 0)} left</option>`).join('')
+      : '<option value="">No available prizes — add one first</option>';
+  } catch (err) { sel.innerHTML = `<option value="">${esc(err.message)}</option>`; }
+  $('draw-result').hidden = true;
+  drawWheel(['Spin', 'to', 'win', 'a', 'prize', '★'], 0);
+}
+
+let wheelRot = 0;
+function drawWheel(names, rot) {
+  const c = $('wheel'); if (!c) return; const x = c.getContext('2d');
+  const W = c.width, cx = W / 2, cy = W / 2, R = W / 2 - 6;
+  const N = Math.max(names.length, 1), seg = (Math.PI * 2) / N;
+  x.clearRect(0, 0, W, W);
+  x.save(); x.translate(cx, cy); x.rotate(rot);
+  for (let i = 0; i < N; i++) {
+    const a0 = -Math.PI / 2 + i * seg;
+    x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, R, a0, a0 + seg); x.closePath();
+    x.fillStyle = i % 2 ? '#211d17' : '#c2a25a'; x.fill();
+    x.strokeStyle = 'rgba(16,15,18,.5)'; x.lineWidth = 2; x.stroke();
+    x.save(); x.rotate(a0 + seg / 2); x.textAlign = 'right'; x.fillStyle = i % 2 ? '#e9dfc4' : '#241a08';
+    x.font = '600 20px Inter, sans-serif';
+    x.fillText(String(names[i] || '').slice(0, 16), R - 14, 7); x.restore();
+  }
+  x.restore();
+  x.beginPath(); x.arc(cx, cy, 26, 0, Math.PI * 2); x.fillStyle = '#100f12'; x.fill();
+  x.strokeStyle = '#c2a25a'; x.lineWidth = 3; x.stroke();
+}
+function spinTo(names, winnerIndex) {
+  return new Promise((resolve) => {
+    const N = names.length, seg = (Math.PI * 2) / N;
+    const target = Math.PI * 2 * 8 - (winnerIndex + 0.5) * seg;
+    const dur = 5200, t0 = Date.now();
+    (function frame() {
+      const t = Math.min(1, (Date.now() - t0) / dur), e = 1 - Math.pow(1 - t, 3);
+      wheelRot = target * e; drawWheel(names, wheelRot);
+      if (t < 1) requestAnimationFrame(frame); else resolve();
+    })();
+  });
+}
+async function runDraw() {
+  const prize_id = $('draw-prize').value;
+  if (!prize_id) { toast('Add or select a prize first.'); return; }
+  const btn = $('draw-run'); btn.disabled = true; btn.textContent = 'Spinning…'; $('draw-result').hidden = true;
+  try {
+    const r = await contentApi('draw-winner', { prize_id, start: $('draw-start').value || null, end: $('draw-end').value || null, drawn_by: 'admin' });
+    await spinTo(r.wheelNames, r.winnerIndex);
+    $('draw-winner-name').textContent = r.winner.name;
+    $('draw-winner-meta').textContent = `${r.winner.number ? 'Member ' + r.winner.number + ' · ' : ''}${r.participants} entrants · ${r.remaining} left`;
+    $('draw-result').hidden = false; fireConfetti(); toast('Winner drawn 🎉'); loadDrawPrizes();
+  } catch (err) { toast(err.message || 'Draw failed.'); }
+  finally { btn.disabled = false; btn.innerHTML = '&#127920; Run Lucky Draw'; }
+}
+function fireConfetti() {
+  const c = $('confetti'); if (!c) return; c.hidden = false;
+  const W = c.width = c.offsetWidth || window.innerWidth, H = c.height = c.offsetHeight || window.innerHeight, x = c.getContext('2d');
+  const cols = ['#c2a25a', '#d8bd7e', '#f7f4ee', '#8a1c2b'];
+  const P = Array.from({ length: 130 }, () => ({ x: Math.random() * W, y: -20 - Math.random() * H * 0.4, r: 4 + Math.random() * 5, vy: 2 + Math.random() * 4, vx: -2 + Math.random() * 4, c: cols[Math.floor(Math.random() * cols.length)], a: Math.random() * Math.PI }));
+  const t0 = Date.now();
+  (function frame() {
+    const el = Date.now() - t0; x.clearRect(0, 0, W, H);
+    P.forEach((p) => { p.y += p.vy; p.x += p.vx; p.a += 0.1; x.save(); x.translate(p.x, p.y); x.rotate(p.a); x.fillStyle = p.c; x.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 1.6); x.restore(); });
+    if (el < 2800) requestAnimationFrame(frame); else { x.clearRect(0, 0, W, H); c.hidden = true; }
+  })();
+}
+
+let WINS = [];
+async function loadPrizeReports() {
+  const host = $('wins-list');
+  try {
+    const [r, pr] = await Promise.all([contentApi('list-wins'), contentApi('list-prizes')]);
+    WINS = r.wins || []; const prizes = pr.items || [];
+    $('wins-summary').innerHTML = prizes.length
+      ? `<div class="imp">${prizes.map((p) => `<div class="ir"><span>${esc(p.name)}</span><b>${(p.qty_available || 0) - (p.qty_awarded || 0)}/${p.qty_available || 0} left</b></div>`).join('')}</div>`
+      : '';
+    host.innerHTML = WINS.length
+      ? WINS.map((w) => `<div class="crow"><div class="ci"><h4>${esc(w.member_name || '—')}</h4><p>${esc(w.prize_name || '')}${w.prize_value ? ' · ' + rands(w.prize_value) : ''} · ${w.created_at ? new Date(w.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</p></div></div>`).join('')
+      : '<div class="empty">No winners drawn yet.</div>';
+  } catch (err) { host.innerHTML = `<div class="empty">${esc(err.message)}</div>`; }
+}
+async function exportWins() {
+  try {
+    const XLSX = await loadSheetJs();
+    const data = WINS.map((w) => ({ Winner: w.member_name || '', 'Member No': w.member_number || '', Prize: w.prize_name || '', Value: w.prize_value != null ? w.prize_value : '', 'Drawn by': w.drawn_by || '', Date: w.created_at ? new Date(w.created_at).toLocaleString('en-ZA') : '', 'Range start': w.range_start || '', 'Range end': w.range_end || '' }));
+    const ws = XLSX.utils.json_to_sheet(data, { header: ['Winner', 'Member No', 'Prize', 'Value', 'Drawn by', 'Date', 'Range start', 'Range end'] });
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Prize wins');
+    XLSX.writeFile(wb, 'tops-cellar-selection-prize-wins.xlsx');
+    toast(`Exported ${data.length} winners.`);
+  } catch (err) { toast(err.message || 'Export failed.'); }
+}
+function wirePrizes() {
+  $('draw-run').addEventListener('click', runDraw);
+  $('wins-export').addEventListener('click', exportWins);
 }
 
 let STATS = null;
@@ -744,14 +849,33 @@ function readBox() { return { title: $('bf-title').value.trim(), month: $('bf-mo
 function fillMag(g) { g = g || {}; $('gf-title').value = g.title || ''; $('gf-issue_date').value = g.issue_date || ''; $('gf-cover_url').value = g.cover_url || ''; $('gf-content_ref').value = g.content_ref || ''; }
 function readMag() { return { title: $('gf-title').value.trim(), issue_date: $('gf-issue_date').value || null, cover_url: $('gf-cover_url').value.trim(), content_ref: $('gf-content_ref').value.trim() }; }
 
+function fillPrize(p) {
+  p = p || {};
+  $('pf-name').value = p.name || ''; $('pf-description').value = p.description || '';
+  $('pf-value').value = p.value != null ? p.value : ''; $('pf-qty_available').value = p.qty_available != null ? p.qty_available : '1';
+  $('pf-start_date').value = p.start_date || ''; $('pf-end_date').value = p.end_date || ''; $('pf-image_url').value = p.image_url || '';
+  $('pf-is_bonus').value = p.is_bonus ? 'true' : 'false'; $('pf-active').value = (p.active === false) ? 'false' : 'true';
+  const rem = (p.qty_available || 0) - (p.qty_awarded || 0);
+  $('pf-remaining').textContent = p.id ? `Awarded ${p.qty_awarded || 0} · ${rem} remaining` : '';
+}
+function readPrize() {
+  return {
+    name: $('pf-name').value.trim(), description: $('pf-description').value.trim(),
+    value: $('pf-value').value.trim(), qty_available: $('pf-qty_available').value.trim(),
+    start_date: $('pf-start_date').value || null, end_date: $('pf-end_date').value || null,
+    image_url: $('pf-image_url').value.trim(), is_bonus: $('pf-is_bonus').value, active: $('pf-active').value,
+  };
+}
+
 const MGR = {
   wine: { p: 'wine', f: 'wf', list: 'list-wines', save: 'save-wine', del: 'delete-wine', fill: fillWine, read: readWine, row: (w) => ({ t: w.name, s: [w.producer, w.region].filter(Boolean).join(' · ') }) },
   event: { p: 'event', f: 'ef', list: 'list-events', save: 'save-event', del: 'delete-event', fill: fillEvent, read: readEvent, row: (e) => ({ t: e.title, s: e.datetime ? new Date(e.datetime).toLocaleString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '' }) },
   box: { p: 'box', f: 'bf', list: 'list-boxes', save: 'save-box', del: 'delete-box', fill: fillBox, read: readBox, row: (b) => ({ t: b.title, s: [b.month, b.status].filter(Boolean).join(' · ') }) },
   mag: { p: 'mag', f: 'gf', list: 'list-mags', save: 'save-mag', del: 'delete-mag', fill: fillMag, read: readMag, row: (g) => ({ t: g.title, s: g.issue_date ? new Date(g.issue_date).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' }) : '' }) },
+  prize: { p: 'prize', f: 'pf', list: 'list-prizes', save: 'save-prize', del: 'delete-prize', fill: fillPrize, read: readPrize, row: (p) => { const rem = (p.qty_available || 0) - (p.qty_awarded || 0); return { t: p.name + (p.is_bonus ? ' · Bonus' : ''), s: `${p.value ? rands(p.value) + ' · ' : ''}${rem}/${p.qty_available || 0} left${p.active === false ? ' · inactive' : ''}` }; } },
 };
-let MITEMS = { wine: [], event: [], box: [], mag: [] };
-let EDITING = { wine: null, event: null, box: null, mag: null };
+let MITEMS = { wine: [], event: [], box: [], mag: [], prize: [] };
+let EDITING = { wine: null, event: null, box: null, mag: null, prize: null };
 
 function mgrShowForm(p) { $(`${p}-list`).hidden = true; $(`${p}-add`).hidden = true; $(`${p}-form`).hidden = false; $('vp').scrollTop = 0; }
 function mgrShowList(p) { $(`${p}-list`).hidden = false; $(`${p}-add`).hidden = false; $(`${p}-form`).hidden = true; }
@@ -783,6 +907,8 @@ async function saveMForm(key) {
   if (key === 'wine' && !body.name) { toast('Name is required.'); return; }
   if (key === 'event' && (!body.title || !body.datetime)) { toast('Title and date are required.'); return; }
   if (key === 'box' && !body.title) { toast('Title is required.'); return; }
+  if (key === 'prize' && !body.name) { toast('Prize name is required.'); return; }
+  if (key === 'mag' && !body.title) { toast('Issue title is required.'); return; }
   const btn = $(`${m.f}-save`); btn.disabled = true; const label = btn.textContent; btn.textContent = 'Saving…';
   try {
     await contentApi(m.save, { id: EDITING[key] || undefined, ...body });
@@ -798,7 +924,7 @@ async function delMForm(key) {
   catch (err) { toast(err.message || 'Delete failed.'); }
 }
 function wireManage() {
-  ['wine', 'event', 'box', 'mag'].forEach((key) => {
+  ['wine', 'event', 'box', 'mag', 'prize'].forEach((key) => {
     const m = MGR[key];
     $(`${m.p}-add`).addEventListener('click', () => openMForm(key, null));
     $(`${m.f}-save`).addEventListener('click', () => saveMForm(key));
@@ -813,7 +939,7 @@ function wireManage() {
 
 /* ---------------- boot ---------------- */
 function start() {
-  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance();
+  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance(); wirePrizes();
   if (TOKEN) {
     const hr = new Date().getHours();
     $('dash-greeting').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Ashley';
