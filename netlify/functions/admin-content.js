@@ -68,24 +68,23 @@ exports.handler = async (event) => {
   if (action === 'import-wines') {
     try {
       const rows = Array.isArray(payload.rows) ? payload.rows : [];
-      // existing codes so we update price/stock only (never clobber curated names/enrichment)
-      const cres = await rest('wines?select=product_code&product_code=not.is.null&limit=100000');
-      const existing = new Set((await cres.json() || []).map((r) => String(r.product_code)));
-      const news = [], upds = []; let skipped = 0;
+      // snapshot current values so an import can be rolled back
+      const cres = await rest('wines?select=product_code,name,size,soh,selling_price&product_code=not.is.null&limit=100000');
+      const before = new Map((await cres.json() || []).map((r) => [String(r.product_code), r]));
+      const news = [], upds = [], undoUpdates = []; let skipped = 0;
       for (const r of rows) {
         const code = (r.product_code ?? '').toString().trim();
         if (!code) { skipped++; continue; }
         const size = r.size !== undefined ? String(r.size).trim() : undefined;
         const soh = (r.soh !== undefined && r.soh !== '') ? (parseInt(r.soh, 10) || 0) : undefined;
         const sp = (r.selling_price !== undefined && r.selling_price !== '') ? (parseFloat(String(r.selling_price).replace(/[^\d.]/g, '')) || null) : undefined;
-        // Description (name) follows the import; enrichment (image, region, notes…) is
-        // never in the payload, so it is preserved on existing wines.
         const nm = (r.name !== undefined && String(r.name).trim() !== '') ? String(r.name).trim() : code;
         const o = { product_code: code, name: nm };
         if (size !== undefined) o.size = size;
         if (soh !== undefined) o.soh = soh;
         if (sp !== undefined) o.selling_price = sp;
-        if (existing.has(code)) upds.push(o); else news.push(o);
+        if (before.has(code)) { upds.push(o); const b = before.get(code); undoUpdates.push({ product_code: code, name: b.name, size: b.size, soh: b.soh, selling_price: b.selling_price }); }
+        else news.push(o);
       }
       const post = async (arr) => {
         for (let i = 0; i < arr.length; i += 500) {
@@ -97,7 +96,46 @@ exports.handler = async (event) => {
       };
       if (upds.length) await post(upds);
       if (news.length) await post(news);
+      // record a rollback point
+      await rest('sync_history', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({
+        added: news.length, updated: upds.length,
+        undo: { updates: undoUpdates, inserts: news.map((n) => n.product_code) },
+        note: payload.note || null,
+      }) }).catch(() => {});
       return json({ ok: true, processed: upds.length + news.length, added: news.length, updated: upds.length, skipped });
+    } catch (e) { return json({ error: String(e) }, 500); }
+  }
+  if (action === 'list-syncs') {
+    try {
+      const res = await rest('sync_history?select=id,created_at,added,updated,rolled_back&order=created_at.desc&limit=50');
+      const rows = await res.json();
+      if (!res.ok) return json({ error: rows.message || 'Load failed' }, 400);
+      return json({ syncs: Array.isArray(rows) ? rows : [] });
+    } catch (e) { return json({ error: String(e) }, 500); }
+  }
+  if (action === 'rollback-sync') {
+    try {
+      const { id } = payload; if (!id) return json({ error: 'id required' }, 400);
+      const rowsRes = await rest(`sync_history?id=eq.${id}&select=*`);
+      const rec = (await rowsRes.json())[0];
+      if (!rec) return json({ error: 'Sync not found' }, 404);
+      if (rec.rolled_back) return json({ error: 'This import was already rolled back.' }, 400);
+      const undo = rec.undo || {};
+      // restore prior values on updated wines
+      const ups = Array.isArray(undo.updates) ? undo.updates : [];
+      for (let i = 0; i < ups.length; i += 500) {
+        const chunk = ups.slice(i, i + 500);
+        const res = await rest('wines?on_conflict=product_code', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(chunk) });
+        if (!res.ok) return json({ error: await res.text() }, 400);
+      }
+      // remove wines that this import added
+      const ins = Array.isArray(undo.inserts) ? undo.inserts.filter(Boolean) : [];
+      for (let i = 0; i < ins.length; i += 200) {
+        const list = ins.slice(i, i + 200).map((c) => `"${String(c).replace(/"/g, '')}"`).join(',');
+        await rest(`wines?product_code=in.(${list})`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+      }
+      await rest(`sync_history?id=eq.${id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ rolled_back: true }) });
+      return json({ ok: true, restored: ups.length, removed: ins.length });
     } catch (e) { return json({ error: String(e) }, 500); }
   }
 

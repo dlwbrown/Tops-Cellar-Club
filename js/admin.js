@@ -93,6 +93,7 @@ function loadFor(id) {
   if (id === 'luckydraw') loadDrawPrizes();
   if (id === 'prizereports') loadPrizeReports();
   if (id === 'orders') loadOrders();
+  if (id === 'maint') loadSyncs();
   if (id === 'adminguide') loadAdminGuide();
   if (id === 'installqr') renderInstallQr();
 }
@@ -214,8 +215,26 @@ async function onImportCommit() {
     toast(`Imported ${r.processed} products.`);
     $('import-preview').innerHTML = `<div class="imp"><div class="ir add"><span>Added</span><b>${r.added ?? 0}</b></div><div class="ir upd"><span>Updated (price/stock)</span><b>${r.updated ?? 0}</b></div>${r.skipped ? `<div class="ir err"><span>Skipped (no code)</span><b>${r.skipped}</b></div>` : ''}</div>`;
     $('import-commit').hidden = true; importRows = null;
+    loadSyncs();
   } catch (err) { toast(err.message || 'Import failed.'); }
   finally { btn.disabled = false; btn.textContent = 'Commit import'; }
+}
+
+async function loadSyncs() {
+  const host = $('sync-list'); if (!host) return;
+  try {
+    const r = await contentApi('list-syncs'); const syncs = r.syncs || [];
+    host.innerHTML = syncs.length ? syncs.map((s) => `
+      <div class="crow"><div class="ci"><h4>${s.created_at ? new Date(s.created_at).toLocaleString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}${s.rolled_back ? ' · rolled back' : ''}</h4>
+      <p>${s.added || 0} added · ${s.updated || 0} updated</p></div>
+      ${s.rolled_back ? '' : `<button class="btn ghost" data-rollback="${s.id}" style="padding:8px 12px;font-size:12px">Undo</button>`}</div>`).join('')
+      : '<div class="empty">No imports yet.</div>';
+  } catch (err) { host.innerHTML = `<div class="empty">${esc(err.message)}</div>`; }
+}
+async function rollbackSync(id) {
+  if (!confirm('Undo this import? Prices/stock are restored to before it, and products it added are removed.')) return;
+  try { const r = await contentApi('rollback-sync', { id }); toast(`Rolled back — ${r.restored} restored, ${r.removed} removed.`); loadSyncs(); }
+  catch (err) { toast(err.message || 'Rollback failed.'); }
 }
 
 async function onWineExport() {
@@ -236,6 +255,7 @@ function wireMaintenance() {
   $('wine-file').addEventListener('change', onWineFile);
   $('import-commit').addEventListener('click', onImportCommit);
   $('wine-export').addEventListener('click', onWineExport);
+  $('sync-list').addEventListener('click', (e) => { const b = e.target.closest('[data-rollback]'); if (b) rollbackSync(b.dataset.rollback); });
 }
 
 /* ---------------- PRIZES: Lucky Draw wheel + reports ---------------- */
