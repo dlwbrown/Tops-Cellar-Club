@@ -216,6 +216,16 @@ textarea.tinput{min-height:64px;resize:vertical}
   .qrposter .qp-note{color:#555}
 }
 
+/* ---- Bottle Scanner match card ---- */
+.imatch{background:var(--surface);border:1px solid var(--cardbd);border-radius:14px;padding:16px 18px}
+.imatch .im-label{font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:5px}
+.imatch .im-name{font-family:var(--disp);font-size:18px;font-weight:600;color:var(--paper);line-height:1.1}
+.imatch .im-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.imatch .im-conf{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:4px 10px;border-radius:20px;text-transform:uppercase}
+.imatch .hi{background:rgba(120,190,110,.12);color:#7dbf6e;border:1px solid rgba(120,190,110,.28)}
+.imatch .med{background:rgba(224,169,59,.12);color:var(--amber);border:1px solid rgba(224,169,59,.28)}
+.imatch .lo{background:rgba(201,138,138,.12);color:#c98a8a;border:1px solid rgba(201,138,138,.28)}
+
 /* ---- Wine import summary ---- */
 .imp{border:1px solid var(--cardbd);border-radius:12px;overflow:hidden;margin-top:6px}
 .imp .ir{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid var(--cardbd);font-size:13px;color:var(--paper)}

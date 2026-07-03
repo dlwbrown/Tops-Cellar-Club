@@ -91,6 +91,18 @@ Give members something to read under **Cellar → Magazine**. In **Manage Backen
 5. Optionally add a **link to read** (a PDF or web page for the full issue).
 6. **Save**. The issue appears in the member app's Magazine tab.
 
+## Bottle Scanner
+
+**Dashboard → Bottle Scanner** lets you photograph a wine bottle and have the AI automatically identify it and save the image to the correct product in the database — no manual matching needed.
+
+1. Tap the camera area to take a photo (or choose one from your library). **Point the camera at the front label** so the brand and wine name are clearly visible.
+2. The AI reads the label and finds the best match in your wine database. You'll see the matched wine name and a confidence level.
+3. If the match is wrong, use the **"Not the right wine?"** dropdown to pick the correct one from the top candidates.
+4. The **Image URL** field is auto-filled if your Supabase Storage bucket ("wine-images") is set up. If it's not set up, paste a direct image URL here (e.g. from a supplier's website or Google Images).
+5. Tap **Save image to wine** — the image is linked to that product and members will see it in the app.
+
+**Setting up auto image upload (one-time):** In your Supabase dashboard, go to Storage → New bucket, name it `wine-images`, and set it to **Public**. Once created, photos taken in the Bottle Scanner are automatically uploaded and the URL is filled in for you.
+
 ## Broadcast
 
 **Send a broadcast** pushes a notification to members. Set a title, message, optional image and deep link, choose the audience (all / by store / by taste) and channels (push / in-app / email), and send.

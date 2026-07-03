@@ -91,6 +91,7 @@ function loadFor(id) {
   if (id === 'm-mags') loadManage('mag');
   if (id === 'adminguide') loadAdminGuide();
   if (id === 'installqr') renderInstallQr();
+  if (id === 'm-images') resetBottleScanner();
 }
 
 /* ---------------- GUIDE + INSTALL QR ---------------- */
@@ -811,9 +812,133 @@ function wireManage() {
   });
 }
 
+/* ---------------- BOTTLE IMAGE SCANNER ---------------- */
+let bottleState = { wine: null, topMatches: [] };
+
+function resetBottleScanner() {
+  const prev = $('img-preview'); prev.hidden = true; prev.src = '';
+  $('img-cap').textContent = '📷 Tap to take a photo or choose one';
+  $('img-status').textContent = '';
+  $('img-result').hidden = true;
+  $('img-url').value = '';
+  $('img-match-card').innerHTML = '';
+  $('img-alts-wrap').hidden = true;
+  bottleState = { wine: null, topMatches: [] };
+}
+
+function renderMatchCard(wine, score) {
+  if (!wine) {
+    return `<div style="text-align:center;padding:14px;color:var(--muted);font-style:italic;font-family:var(--disp)">No match found — select from the list below.</div>`;
+  }
+  const cls = score >= 70 ? 'hi' : score >= 45 ? 'med' : 'lo';
+  const lbl = score >= 70 ? '&#10003; High confidence' : score >= 45 ? '~ Likely match' : '? Low confidence — check manually';
+  const sub = [wine.producer, wine.varietal].filter(Boolean).map(esc).join(' &middot; ');
+  return `
+    <div class="im-label">Code ${esc(wine.product_code || '—')}</div>
+    <div class="im-name">${esc(wine.name || '—')}</div>
+    ${sub ? `<div class="im-sub">${sub}</div>` : ''}
+    <span class="im-conf ${cls}">${lbl} &middot; ${Math.round(score)}%</span>
+  `;
+}
+
+function compressImage(dataUrl, maxPx, quality) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = rej;
+    img.src = dataUrl;
+  });
+}
+
+async function onBottlePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  e.target.value = '';
+
+  // show preview immediately
+  const rawDataUrl = await fileToDataUrl(file);
+  const prev = $('img-preview'); prev.src = rawDataUrl; prev.hidden = false;
+  $('img-cap').textContent = '📷 Tap to change photo';
+  $('img-result').hidden = true;
+  $('img-status').textContent = 'Compressing…';
+  bottleState = { wine: null, topMatches: [] };
+
+  try {
+    // compress to max 1400px before sending (stays under Netlify's 6MB payload limit)
+    const compressed = await compressImage(rawDataUrl, 1400, 0.88);
+    const base64 = compressed.split(',')[1];
+    $('img-status').textContent = 'Identifying bottle…';
+
+    const r = await contentFn('identify-bottle', { imageBase64: base64, imageMediaType: 'image/jpeg' });
+
+    bottleState.topMatches = r.top_matches || [];
+    bottleState.wine = r.best_match || null;
+
+    $('img-match-card').innerHTML = renderMatchCard(bottleState.wine, (bottleState.wine || {}).match_score || 0);
+
+    // alt dropdown — shown when there are multiple candidates
+    const alts = bottleState.topMatches;
+    if (alts.length > 1) {
+      $('img-alt-select').innerHTML = alts.map((w, i) =>
+        `<option value="${esc(String(w.id))}" data-idx="${i}">${esc(w.name)}${w.match_score ? ` (${Math.round(w.match_score)}%)` : ''}</option>`
+      ).join('');
+      $('img-alt-select').value = bottleState.wine ? String(bottleState.wine.id) : '';
+      $('img-alts-wrap').hidden = false;
+    } else {
+      $('img-alts-wrap').hidden = true;
+    }
+
+    $('img-url').value = r.image_url || '';
+    $('img-result').hidden = false;
+
+    const lb = r.label || {};
+    const read = [lb.brand, lb.wine_name, lb.variety].filter(Boolean).join(' · ');
+    $('img-status').textContent = read ? `Label read: ${read}` : 'Label read — limited detail visible.';
+  } catch (err) {
+    $('img-status').textContent = 'Identification failed — ' + (err.message || 'unknown error');
+  }
+}
+
+async function onBottleSave() {
+  const wine = bottleState.wine;
+  const imageUrl = $('img-url').value.trim();
+  if (!wine) { toast('No wine selected — please retry or choose one from the list.'); return; }
+  if (!imageUrl) { toast('Add an image URL first.'); return; }
+  const btn = $('img-save'); btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    // include wine.name to pass the name-required check for existing records
+    await contentApi('save-wine', { id: wine.id, name: wine.name, image_url: imageUrl });
+    toast('Image saved to wine database. ✓');
+    resetBottleScanner();
+  } catch (err) {
+    toast(err.message || 'Save failed.');
+  } finally {
+    btn.disabled = false; btn.textContent = '✓ Save image to wine';
+  }
+}
+
+function wireBottleScanner() {
+  $('img-input').addEventListener('change', onBottlePhoto);
+  $('img-save').addEventListener('click', onBottleSave);
+  $('img-alt-select').addEventListener('change', (e) => {
+    const idx = parseInt(e.target.options[e.target.selectedIndex]?.dataset.idx ?? '-1', 10);
+    const wine = bottleState.topMatches[idx];
+    if (wine) {
+      bottleState.wine = wine;
+      $('img-match-card').innerHTML = renderMatchCard(wine, wine.match_score || 0);
+    }
+  });
+}
+
 /* ---------------- boot ---------------- */
 function start() {
-  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance();
+  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance(); wireBottleScanner();
   if (TOKEN) {
     const hr = new Date().getHours();
     $('dash-greeting').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Ashley';
