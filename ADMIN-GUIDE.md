@@ -38,7 +38,7 @@ Tap any item to edit it; tap **+ Add** to create one. Tap **Delete** inside an i
 2. You'll see a **preview**: how many products will be added, how many updated, any duplicate codes, and any rows ignored (missing a code). Nothing is saved yet.
 3. Tap **Commit import** to apply it.
 
-Imports **merge** by Product Code: for products already in the catalogue only the **size, stock and price** are updated; new codes are added as new products; and nothing is ever deleted or duplicated. Everything you've curated — **names, images, tasting notes, regions, producer, food pairing, ratings** — is **preserved** across every import, so you can re-import your price list daily without losing your work.
+Imports **merge** by Product Code: existing products have their **description, size, stock and price** updated to match the list; new codes are added; and nothing is ever deleted or duplicated. Everything you've enriched — **images, tasting notes, regions, producer, food pairing, ratings** — is **preserved** across every import, so you can re-import your price list daily without losing your work.
 
 ### Export the wine database
 

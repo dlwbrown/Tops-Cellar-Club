@@ -77,16 +77,14 @@ exports.handler = async (event) => {
         const size = r.size !== undefined ? String(r.size).trim() : undefined;
         const soh = (r.soh !== undefined && r.soh !== '') ? (parseInt(r.soh, 10) || 0) : undefined;
         const sp = (r.selling_price !== undefined && r.selling_price !== '') ? (parseFloat(String(r.selling_price).replace(/[^\d.]/g, '')) || null) : undefined;
-        const o = { product_code: code };
+        // Description (name) follows the import; enrichment (image, region, notes…) is
+        // never in the payload, so it is preserved on existing wines.
+        const nm = (r.name !== undefined && String(r.name).trim() !== '') ? String(r.name).trim() : code;
+        const o = { product_code: code, name: nm };
         if (size !== undefined) o.size = size;
         if (soh !== undefined) o.soh = soh;
         if (sp !== undefined) o.selling_price = sp;
-        if (existing.has(code)) {
-          upds.push(o); // operational fields only — name & enrichment preserved
-        } else {
-          o.name = (r.name !== undefined && String(r.name).trim() !== '') ? String(r.name).trim() : code;
-          news.push(o);
-        }
+        if (existing.has(code)) upds.push(o); else news.push(o);
       }
       const post = async (arr) => {
         for (let i = 0; i < arr.length; i += 500) {
