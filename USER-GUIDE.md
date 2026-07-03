@@ -40,7 +40,7 @@ Your personal space, with three tabs:
 
 ## AI Sommelier
 
-Tap **Sommelier** and ask anything — "What wine goes with a braai?", "A crisp white under R120?" — for instant, personalised recommendations based on your taste preferences.
+Tap **Sommelier** and ask anything — "What wine goes with a braai?", "A crisp white under R120?" — for instant, personalised recommendations based on your taste preferences. It only ever suggests wines that are **actually in stock**, and shows each one as a card with its bottle, **live price**, variety, region and food pairing — tap a card to open the full wine.
 
 ## Membership card
 

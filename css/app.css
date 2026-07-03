@@ -342,3 +342,18 @@ body{
 .wprice.big{font-size:22px;margin-top:12px}
 .wprice.big .pwas{font-size:15px}
 .wprice .psize{color:var(--muted);font-size:12px;font-family:var(--body);margin-left:6px}
+
+/* ---- Sommelier wine recommendation cards ---- */
+.som-recs{display:flex;flex-direction:column;gap:10px;margin:2px 0 6px}
+.srw{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--cardbd);border-radius:14px;padding:12px;cursor:pointer;touch-action:manipulation}
+.srw:active{opacity:.7}
+.srw-img{width:44px;height:64px;flex-shrink:0;position:relative;display:flex;align-items:flex-end;justify-content:center;background-size:contain;background-repeat:no-repeat;background-position:center}
+.srw-img .bd{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:26px;height:52px;background:linear-gradient(90deg,#07070a,#3a3a44 45%,#0d0d10);border-radius:5px}
+.srw-img .nk{position:absolute;top:0;left:50%;transform:translateX(-50%);width:9px;height:16px;background:linear-gradient(90deg,#0c0c0e,#2c2c33,#0c0c0e);border-radius:3px 3px 0 0;z-index:2}
+.srw-img .lb{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);width:20px;height:24px;background:linear-gradient(180deg,#efe9dc,#cfc6b2);border-radius:2px;z-index:2}
+.srw-i{flex:1;min-width:0}
+.srw-i h4{font-size:14px;color:var(--paper);margin:0;line-height:1.2}
+.srw-s{font-size:11px;color:var(--muted);margin-top:3px}
+.srw-p{font-size:11px;color:var(--gold-br);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srw .wprice{margin-top:5px;font-size:15px}
+.srw-go{color:var(--gold-br);font-size:20px;flex-shrink:0}

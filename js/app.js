@@ -835,9 +835,29 @@ async function doAsk() {
       body: JSON.stringify({ question: q, prefs }),
     });
     const r = await res.json();
-    thinking.classList.remove('sthink'); thinking.textContent = r.answer || 'I couldn\'t answer that just now.';
+    thinking.classList.remove('sthink');
+    thinking.textContent = r.answer || 'I couldn\'t answer that just now.';
+    if (Array.isArray(r.wines) && r.wines.length) {
+      // make the recommended wines tappable (openWine needs them in WINES)
+      r.wines.forEach((w) => { if (!WINES.some((x) => x.id === w.id)) WINES.push(w); });
+      const cards = r.wines.map((w) => somWineCard(w)).join('');
+      thread.insertAdjacentHTML('beforeend', `<div class="som-recs">${cards}</div>`);
+    }
   } catch { thinking.classList.remove('sthink'); thinking.textContent = 'Sorry, I\'m unavailable right now.'; }
   if (vp) vp.scrollTop = vp.scrollHeight;
+}
+
+function somWineCard(w) {
+  const price = priceLine(w);
+  const sub = [w.varietal, w.region].filter(Boolean).join(' · ');
+  const img = w.image_url ? `style="background-image:url('${esc(w.image_url)}')" class="srw-img img"` : 'class="srw-img"';
+  return `<div class="srw" data-go="wine" data-wine="${esc(w.id)}">
+    <div ${img}>${w.image_url ? '' : '<div class="nk"></div><div class="bd"></div><div class="lb"></div>'}</div>
+    <div class="srw-i"><h4>${esc(w.name)}</h4>${sub ? `<div class="srw-s">${esc(sub)}</div>` : ''}
+    ${w.food_pairings ? `<div class="srw-p">🍽 ${esc(w.food_pairings)}</div>` : ''}
+    ${price ? `<div class="wprice">${price}</div>` : ''}</div>
+    <div class="srw-go">›</div>
+  </div>`;
 }
 
 /* ============================================================= *
