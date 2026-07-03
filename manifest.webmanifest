@@ -1,6 +1,6 @@
 {
   "name": "Tops Cellar Selection",
-  "short_name": "Cellar Selection",
+  "short_name": "Tops Cellar",
   "description": "Wine discovery, member specials and exclusive experiences from TOPS at SPAR Beacon Isle.",
   "start_url": "/?source=app",
   "scope": "/",
