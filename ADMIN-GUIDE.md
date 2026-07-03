@@ -101,7 +101,7 @@ Give members something to read under **Cellar → Magazine**. In **Manage Backen
 4. The **Image URL** field is auto-filled if your Supabase Storage bucket ("wine-images") is set up. If it's not set up, paste a direct image URL here (e.g. from a supplier's website or Google Images).
 5. Tap **Save image to wine** — the image is linked to that product and members will see it in the app.
 
-**Setting up auto image upload (one-time):** In your Supabase dashboard, go to Storage → New bucket, name it `wine-images`, and set it to **Public**. Once created, photos taken in the Bottle Scanner are automatically uploaded and the URL is filled in for you.
+**Auto image upload** uses the existing `post-images` bucket in Supabase Storage. Photos taken in the Bottle Scanner are automatically uploaded there and the URL is filled in for you.
 
 ## Broadcast
 

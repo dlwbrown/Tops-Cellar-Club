@@ -186,7 +186,7 @@ exports.handler = async (event) => {
     const ext = (mediaType.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
     const fname = `scan-${Date.now()}.${ext}`;
     const imgBuf = Buffer.from(imageBase64, 'base64');
-    const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/wine-images/${fname}`, {
+    const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/post-images/${fname}`, {
       method: 'POST',
       headers: {
         apikey: srKey,
@@ -197,7 +197,7 @@ exports.handler = async (event) => {
       body: imgBuf,
     });
     if (upRes.ok) {
-      imageUrl = `${SUPABASE_URL}/storage/v1/object/public/wine-images/${fname}`;
+      imageUrl = `${SUPABASE_URL}/storage/v1/object/public/post-images/${fname}`;
     }
   } catch (_) {
     // Storage not configured — image_url stays null; staff can paste a URL manually.
