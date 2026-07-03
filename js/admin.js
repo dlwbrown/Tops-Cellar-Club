@@ -899,7 +899,8 @@ async function onBottlePhoto(e) {
 
     const lb = r.label || {};
     const read = [lb.brand, lb.wine_name, lb.variety].filter(Boolean).join(' · ');
-    $('img-status').textContent = read ? `Label read: ${read}` : 'Label read — limited detail visible.';
+    const urlNote = r.image_url ? '' : ' · Photo not auto-uploaded — paste an image URL below.';
+    $('img-status').textContent = (read ? `Label read: ${read}` : 'Label read — limited detail visible.') + urlNote;
   } catch (err) {
     $('img-status').textContent = 'Identification failed — ' + (err.message || 'unknown error');
   }

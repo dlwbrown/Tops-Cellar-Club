@@ -98,7 +98,7 @@ Give members something to read under **Cellar → Magazine**. In **Manage Backen
 1. Tap the camera area to take a photo (or choose one from your library). **Point the camera at the front label** so the brand and wine name are clearly visible.
 2. The AI reads the label and finds the best match in your wine database. You'll see the matched wine name and a confidence level.
 3. If the match is wrong, use the **"Not the right wine?"** dropdown to pick the correct one from the top candidates.
-4. The **Image URL** field is auto-filled if your Supabase Storage bucket ("wine-images") is set up. If it's not set up, paste a direct image URL here (e.g. from a supplier's website or Google Images).
+4. The **Image URL** field is auto-filled from the `post-images` bucket in Supabase Storage. If the field is empty (upload failed), paste a direct image URL here (e.g. from a supplier's website or Google Images).
 5. Tap **Save image to wine** — the image is linked to that product and members will see it in the app.
 
 **Auto image upload** uses the existing `post-images` bucket in Supabase Storage. Photos taken in the Bottle Scanner are automatically uploaded there and the URL is filled in for you.

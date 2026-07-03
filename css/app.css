@@ -149,16 +149,16 @@ body{
 
 /* wine detail */
 .wdhero{height:230px;position:relative;background:radial-gradient(120% 90% at 50% 10%,rgba(194,162,90,.18),transparent 60%),linear-gradient(180deg,#1a1a1e,#100f12);display:flex;align-items:center;justify-content:center}
-.wdhero .big{width:58px;height:190px;position:relative;filter:drop-shadow(0 16px 22px rgba(0,0,0,.6))}
+.wdhero .big{width:58px;height:190px;position:relative;filter:drop-shadow(0 16px 22px rgba(0,0,0,.6));pointer-events:none}
 .wdhero .big .nk{position:absolute;top:0;left:50%;transform:translateX(-50%);width:19px;height:42px;background:linear-gradient(90deg,#0c0c0e,#2c2c33,#0c0c0e);border-radius:6px 6px 0 0}
 .wdhero .big .bd{position:absolute;bottom:0;width:58px;height:155px;background:linear-gradient(90deg,#07070a,#3a3a44 45%,#0d0d10);border-radius:10px}
 .wdhero .big .lb{position:absolute;bottom:34px;left:8px;width:42px;height:66px;background:linear-gradient(180deg,#efe9dc,#cfc6b2);border-radius:2px}
 .wdhero .big .lb::before{content:"";position:absolute;top:11px;left:7px;right:7px;height:1px;background:var(--wine)}
 .wdhero .big.img{width:120px;background-size:contain;background-repeat:no-repeat;background-position:center}
 .wdhero .big.img .nk,.wdhero .big.img .bd,.wdhero .big.img .lb{display:none}
-.wdhero .fav{position:absolute;top:16px;right:18px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.35);border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:16px;cursor:pointer}
+.wdhero .fav{position:absolute;top:16px;right:18px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.35);border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:16px;cursor:pointer;z-index:2;pointer-events:all}
 .wdhero .fav.on{background:var(--wine);color:var(--paper)}
-.wdhero .bk2{position:absolute;top:16px;left:18px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.35);border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:16px;cursor:pointer}
+.wdhero .bk2{position:absolute;top:16px;left:18px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.35);border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--gold-br);font-size:16px;cursor:pointer;z-index:2;pointer-events:all}
 .wbody{padding:18px 22px 24px}
 .wbody .te{font-size:8.5px;letter-spacing:2.2px;color:var(--gold);font-weight:700}
 .wbody h1{font-family:var(--disp);font-size:30px;font-weight:600;line-height:1.04;margin-top:6px}
