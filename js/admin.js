@@ -558,15 +558,26 @@ async function loadInsights() {
 let MEMBERS = [];
 async function loadMembers() {
   try {
-    const r = await adminApi('members');
+    const r = await contentApi('list-members');
     MEMBERS = r.members || [];
     renderMembers(MEMBERS);
   } catch (err) { toast(err.message); }
 }
 function renderMembers(list) {
   $('members-list').innerHTML = list.length
-    ? list.map((m) => `<div class="mrow"><div class="av">${esc((m.first_name || '?')[0])}</div><div class="mi"><h4>${esc(m.first_name)} ${esc(m.surname)}</h4><p>No. ${esc(m.membership_number || '—')} · joined ${m.created_at ? new Date(m.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : ''}</p></div><span class="src">${esc(m.signup_source || 'app')}</span></div>`).join('')
+    ? list.map((m) => `<div class="mrow"><div class="av">${esc((m.first_name || '?')[0])}</div>
+        <div class="mi"><h4>${esc(m.first_name)} ${esc(m.surname)}</h4><p>No. ${esc(m.membership_number || '—')} · joined ${m.created_at ? new Date(m.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : ''}</p></div>
+        <select class="mtype" data-member="${esc(m.id)}">
+          <option value=""${!m.membership_type ? ' selected' : ''}>General</option>
+          <option value="box"${m.membership_type === 'box' ? ' selected' : ''}>Box</option>
+          <option value="wine"${m.membership_type === 'wine' ? ' selected' : ''}>Wine</option>
+          <option value="premium"${m.membership_type === 'premium' ? ' selected' : ''}>Premium</option>
+        </select></div>`).join('')
     : '<div class="empty">No members yet.</div>';
+}
+async function onSetMemberType(sel) {
+  try { await contentApi('set-member-type', { member_id: sel.dataset.member, membership_type: sel.value }); toast('Member updated.'); const m = MEMBERS.find((x) => x.id === sel.dataset.member); if (m) m.membership_type = sel.value; }
+  catch (err) { toast(err.message || 'Update failed.'); }
 }
 
 async function loadMode() {
@@ -736,7 +747,7 @@ async function onApproveSend() {
     // 2) broadcast it (push/in-app/email) via the send engine
     const pushChannels = channels.filter((c) => c !== 'web');
     if (pushChannels.length) {
-      await fn('send-push', { title: headline, body, image: postImage, audience: { type: 'all' }, channels: pushChannels, sent_by: 'admin' });
+      await contentFn('send-push', { title: headline, body, image: postImage, audience: { type: 'all' }, channels: pushChannels, sent_by: 'admin' });
     }
     toast('Post approved & sent.');
     go('dash', 'dash');
@@ -815,14 +826,12 @@ async function onBroadcast() {
   const title = $('bc-title').value.trim();
   if (!title) { toast('Add a title.'); return; }
   const audSel = document.querySelector('#bc-audience .aud.on')?.dataset.aud || 'all';
-  const audience = audSel === 'store' ? { type: 'store', value: 'Beacon Isle' }
-    : audSel === 'taste' ? { type: 'taste', value: $('bc-taste').value }
-      : { type: 'all' };
+  const audience = (audSel === 'all') ? { type: 'all' } : { type: 'membership', value: audSel };
   const channels = [...document.querySelectorAll('#bc-channels .tog.on')].map((t) => t.dataset.ch);
   if (!channels.length) { toast('Pick at least one channel.'); return; }
   const btn = $('btn-broadcast'); btn.disabled = true; btn.textContent = 'Sending…';
   try {
-    const r = await fn('send-push', { title, body: $('bc-body').value.trim(), image: $('bc-image').value.trim() || undefined, link: $('bc-link').value.trim() || undefined, audience, channels, sent_by: 'admin' });
+    const r = await contentFn('send-push', { title, body: $('bc-body').value.trim(), image: $('bc-image').value.trim() || undefined, link: $('bc-link').value.trim() || undefined, audience, channels, sent_by: 'admin' });
     toast(`Sent. ${r.pushed != null ? r.pushed + ' devices reached.' : ''}`);
     $('bc-title').value = ''; $('bc-body').value = ''; $('bc-image').value = ''; $('bc-link').value = '';
     go('dash', 'dash');
@@ -921,6 +930,7 @@ function wireDelegation() {
     const q = $('member-search').value.trim().toLowerCase();
     renderMembers(!q ? MEMBERS : MEMBERS.filter((m) => `${m.first_name} ${m.surname} ${m.membership_number} ${m.email}`.toLowerCase().includes(q)));
   });
+  $('members-list').addEventListener('change', (e) => { const s = e.target.closest('.mtype'); if (s) onSetMemberType(s); });
 }
 
 /* ---------------- MANAGE CATALOGUE (wines / events / boxes) ---------------- */

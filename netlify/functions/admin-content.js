@@ -139,6 +139,25 @@ exports.handler = async (event) => {
     } catch (e) { return json({ error: String(e) }, 500); }
   }
 
+  // ---- Members (type tagging for audience targeting) ----
+  if (action === 'list-members') {
+    try {
+      const res = await rest('members?select=id,first_name,surname,membership_number,email,mobile,preferred_store,signup_source,membership_type,created_at&order=created_at.desc&limit=100000');
+      const rows = await res.json();
+      if (!res.ok) return json({ error: rows.message || 'Load failed' }, 400);
+      return json({ members: Array.isArray(rows) ? rows : [] });
+    } catch (e) { return json({ error: String(e) }, 500); }
+  }
+  if (action === 'set-member-type') {
+    try {
+      const { member_id, membership_type } = payload;
+      if (!member_id) return json({ error: 'member_id required' }, 400);
+      const res = await rest(`members?id=eq.${member_id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ membership_type: membership_type || null }) });
+      if (!res.ok) return json({ error: await res.text() }, 400);
+      return json({ ok: true });
+    } catch (e) { return json({ error: String(e) }, 500); }
+  }
+
   // ---- Prizes & Lucky Draw ----
   if (action === 'list-wins') {
     try {

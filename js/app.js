@@ -78,7 +78,7 @@ function setMember(m) { localStorage.setItem(LS_KEY, JSON.stringify(m)); }
 
 /* Actions served by the Netlify function (auto-deploys with the site) instead of
    the Supabase member-api. These need the service-role key, which lives in Netlify. */
-const NETLIFY_ACTIONS = new Set(['get-cellar', 'toggle-fav', 'add-rating', 'rsvp', 'save-subscription']);
+const NETLIFY_ACTIONS = new Set(['get-cellar', 'toggle-fav', 'add-rating', 'rsvp', 'save-subscription', 'get-me']);
 
 /* Edge Function helpers (anon JWT satisfies default verify_jwt; service role is internal). */
 async function memberApi(action, payload = {}) {
@@ -178,6 +178,9 @@ function go(id, nav) {
   if (id === 'cellar') loadCellar();
   if (id === 'magazine') loadMagazine();
   if (id === 'guide') loadGuide();
+  // defensively clear any overlay so it can never block navigation/taps
+  const rm = document.getElementById('rate-modal'); if (rm) rm.hidden = true;
+  const lb = document.getElementById('lightbox'); if (lb) lb.classList.remove('on');
 }
 function setNav(n) {
   document.querySelectorAll('.ni2').forEach((x) => x.classList.toggle('on', x.getAttribute('data-nav') === n));
@@ -515,11 +518,28 @@ function renderWineDetail(w) {
     <div style="margin-top:18px;display:flex;gap:10px"><button class="btn" style="flex:1" data-act="rate-wine" data-wine="${esc(w.id)}" data-wname="${esc(w.name)}">Add my rating</button><button class="btn ghost" data-act="note-wine">My notes</button></div>`;
 }
 
+// Refresh the member's membership type (set by admin) so in-app targeting is accurate.
+async function refreshMemberType() {
+  const m = getMember(); if (!m) return;
+  try {
+    const me = await memberApi('get-me', { member_id: m.id });
+    if (me && ('membership_type' in me)) { setMember({ ...m, membership_type: me.membership_type }); loadNotifications(); }
+  } catch {}
+}
+
 const NOTIF_MAP = new Map();
 async function loadNotifications() {
   try {
     const sb = await getSb(); if (!sb) return;
-    const { data } = await sb.from('notifications').select('*').order('sent_at', { ascending: false }).limit(40);
+    const { data: raw } = await sb.from('notifications').select('*').order('sent_at', { ascending: false }).limit(60);
+    // only show notifications meant for this member (all, or their membership type)
+    const myType = (getMember() || {}).membership_type || null;
+    const data = (raw || []).filter((n) => {
+      const a = n.audience || { type: 'all' };
+      if (!a || a.type === 'all' || a.type === 'store' || a.type === 'taste') return true;
+      if (a.type === 'membership') return a.value === myType;
+      return true;
+    }).slice(0, 40);
     const host = document.getElementById('notif-list');
     if (!data || !data.length) { host.innerHTML = '<div class="empty">Your member alerts will appear here.</div>'; updateBell(0); return; }
     const lastSeen = Number(localStorage.getItem('cellar.notifSeen') || 0);
@@ -925,7 +945,7 @@ async function start() {
   else { go('home', 'home'); }
 
   // background data load for the in-app screens
-  loadHome(); loadBox(); loadSpecials(); loadEvents(); loadWines(); loadNotifications(); loadCellar();
+  loadHome(); loadBox(); loadSpecials(); loadEvents(); loadWines(); loadNotifications(); loadCellar(); refreshMemberType();
   checkReengagement();
 
   // deep link from a tapped notification (?link=/specials etc.)

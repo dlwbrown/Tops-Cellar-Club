@@ -103,7 +103,9 @@ Each order gets a unique number (e.g. `TCS-1001`).
 
 ## Broadcast
 
-**Send a broadcast** pushes a notification to members. Set a title, message, optional image and deep link, choose the audience (all / by store / by taste) and channels (push / in-app / email), and send.
+**Send a broadcast** pushes a notification to members. Set a title, message, optional image and deep link, choose the **audience** — All members, or a specific segment (**Box / Wine / Premium members**) — and channels (push / in-app), then send. Only the chosen audience receives it, on their phones and in their in-app feed.
+
+Set a member's segment under **Members** — each member row has a **General / Box / Wine / Premium** selector.
 
 ## Prizes & Lucky Draw
 

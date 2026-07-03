@@ -54,6 +54,14 @@ exports.handler = async (event) => {
         return json({ ok: true });
       }
 
+      case 'get-me': {
+        const { member_id } = payload;
+        if (!member_id) return json({ error: 'member_id required' }, 400);
+        const res = await rest(`members?id=eq.${member_id}&select=membership_type,first_name,surname,membership_number`);
+        const rows = await res.json();
+        return json((Array.isArray(rows) ? rows[0] : rows) || {});
+      }
+
       case 'get-cellar': {
         const { member_id } = payload;
         if (!member_id) return json({ error: 'member_id required' }, 400);

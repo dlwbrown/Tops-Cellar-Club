@@ -245,3 +245,6 @@ textarea.tinput{min-height:64px;resize:vertical}
 .oitem{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:10px;margin-bottom:9px}
 .oitem .tinput{margin-top:0}
 .oi-rm{font-size:11px;color:#c06060;margin-top:8px;cursor:pointer;text-align:right}
+
+/* Member type tag */
+.mrow .mtype{background:var(--surface2);border:1px solid var(--cardbd);border-radius:20px;color:var(--gold-br);font-size:11px;padding:5px 8px;font-family:var(--body);flex-shrink:0}

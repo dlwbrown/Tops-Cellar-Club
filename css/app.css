@@ -367,3 +367,8 @@ body{
 .mag-b .te{font-size:9px;letter-spacing:2px;color:var(--gold);font-weight:700;text-transform:uppercase}
 .mag-b h1{font-family:var(--disp);font-size:28px;font-weight:600;line-height:1.1;margin-top:8px;color:var(--paper)}
 .mag-b .ptext{font-size:14px;line-height:1.7;color:var(--paper);opacity:.9;margin-top:14px}
+
+/* Keep back buttons tappable above any sibling / hero overlay */
+.bhead{position:relative;z-index:6}
+.bhead .bk{position:relative;z-index:6}
+.wdhero .bk2,.wdhero .fav{z-index:6}
