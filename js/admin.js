@@ -208,7 +208,7 @@ async function onImportCommit() {
   try {
     const r = await contentApi('import-wines', { rows: importRows });
     toast(`Imported ${r.processed} products.`);
-    $('import-preview').innerHTML = `<div class="imp"><div class="ir add"><span>Imported</span><b>${r.processed}</b></div>${r.skipped ? `<div class="ir err"><span>Skipped (no code)</span><b>${r.skipped}</b></div>` : ''}</div>`;
+    $('import-preview').innerHTML = `<div class="imp"><div class="ir add"><span>Added</span><b>${r.added ?? 0}</b></div><div class="ir upd"><span>Updated (price/stock)</span><b>${r.updated ?? 0}</b></div>${r.skipped ? `<div class="ir err"><span>Skipped (no code)</span><b>${r.skipped}</b></div>` : ''}</div>`;
     $('import-commit').hidden = true; importRows = null;
   } catch (err) { toast(err.message || 'Import failed.'); }
   finally { btn.disabled = false; btn.textContent = 'Commit import'; }

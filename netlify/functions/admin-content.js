@@ -67,33 +67,38 @@ exports.handler = async (event) => {
   if (action === 'import-wines') {
     try {
       const rows = Array.isArray(payload.rows) ? payload.rows : [];
-      const clean = [];
-      let skipped = 0;
+      // existing codes so we update price/stock only (never clobber curated names/enrichment)
+      const cres = await rest('wines?select=product_code&product_code=not.is.null&limit=100000');
+      const existing = new Set((await cres.json() || []).map((r) => String(r.product_code)));
+      const news = [], upds = []; let skipped = 0;
       for (const r of rows) {
         const code = (r.product_code ?? '').toString().trim();
         if (!code) { skipped++; continue; }
-        const obj = { product_code: code };
-        if (r.name !== undefined && String(r.name).trim() !== '') obj.name = String(r.name).trim();
-        if (r.size !== undefined) obj.size = String(r.size).trim();
-        if (r.soh !== undefined && r.soh !== '') obj.soh = parseInt(r.soh, 10) || 0;
-        if (r.selling_price !== undefined && r.selling_price !== '') obj.selling_price = parseFloat(String(r.selling_price).replace(/[^\d.]/g, '')) || null;
-        // rows that are brand-new need a name (NOT NULL) — fall back to the code
-        if (obj.name === undefined) obj.name = code;
-        clean.push(obj);
+        const size = r.size !== undefined ? String(r.size).trim() : undefined;
+        const soh = (r.soh !== undefined && r.soh !== '') ? (parseInt(r.soh, 10) || 0) : undefined;
+        const sp = (r.selling_price !== undefined && r.selling_price !== '') ? (parseFloat(String(r.selling_price).replace(/[^\d.]/g, '')) || null) : undefined;
+        const o = { product_code: code };
+        if (size !== undefined) o.size = size;
+        if (soh !== undefined) o.soh = soh;
+        if (sp !== undefined) o.selling_price = sp;
+        if (existing.has(code)) {
+          upds.push(o); // operational fields only — name & enrichment preserved
+        } else {
+          o.name = (r.name !== undefined && String(r.name).trim() !== '') ? String(r.name).trim() : code;
+          news.push(o);
+        }
       }
-      if (!clean.length) return json({ ok: true, processed: 0, skipped });
-      let processed = 0;
-      for (let i = 0; i < clean.length; i += 500) {
-        const chunk = clean.slice(i, i + 500);
-        const res = await rest('wines?on_conflict=product_code', {
-          method: 'POST',
-          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-          body: JSON.stringify(chunk),
-        });
-        if (!res.ok) return json({ error: await res.text(), processed }, 400);
-        processed += chunk.length;
-      }
-      return json({ ok: true, processed, skipped });
+      const post = async (arr) => {
+        for (let i = 0; i < arr.length; i += 500) {
+          const res = await rest('wines?on_conflict=product_code', {
+            method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(arr.slice(i, i + 500)),
+          });
+          if (!res.ok) throw new Error(await res.text());
+        }
+      };
+      if (upds.length) await post(upds);
+      if (news.length) await post(news);
+      return json({ ok: true, processed: upds.length + news.length, added: news.length, updated: upds.length, skipped });
     } catch (e) { return json({ error: String(e) }, 500); }
   }
 
