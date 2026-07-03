@@ -215,3 +215,12 @@ textarea.tinput{min-height:64px;resize:vertical}
   .qrposter .qp-h{color:#100f12}
   .qrposter .qp-note{color:#555}
 }
+
+/* ---- Wine import summary ---- */
+.imp{border:1px solid var(--cardbd);border-radius:12px;overflow:hidden;margin-top:6px}
+.imp .ir{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid var(--cardbd);font-size:13px;color:var(--paper)}
+.imp .ir:last-child{border-bottom:none}
+.imp .ir b{font-family:var(--disp);font-size:17px;color:var(--paper)}
+.imp .ir.add b{color:#7dbf6e}
+.imp .ir.upd b{color:var(--gold-br)}
+.imp .ir.err b{color:#c98a8a}

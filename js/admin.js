@@ -146,6 +146,94 @@ function wireInstallQr() {
   });
 }
 
+/* ---------------- MAINTENANCE: wine database import / export ---------------- */
+let importRows = null;
+async function loadSheetJs() { return await import('https://esm.sh/xlsx@0.18.5'); }
+function pickCol(headers, names) { for (const n of names) { const i = headers.indexOf(n); if (i !== -1) return i; } return -1; }
+
+async function onWineFile(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const prev = $('import-preview'); prev.innerHTML = '<div class="empty">Reading spreadsheet…</div>';
+  $('import-commit').hidden = true; importRows = null;
+  try {
+    const XLSX = await loadSheetJs();
+    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
+    if (!aoa.length) throw new Error('The spreadsheet is empty.');
+    const headers = aoa[0].map((h) => String(h || '').trim().toLowerCase());
+    const ci = {
+      code: pickCol(headers, ['product code', 'product_code', 'code']),
+      desc: pickCol(headers, ['product description', 'description', 'name']),
+      size: pickCol(headers, ['size']),
+      soh: pickCol(headers, ['soh', 'stock on hand', 'stock']),
+      sp: pickCol(headers, ['sp', 'selling price', 'price']),
+    };
+    if (ci.code === -1) throw new Error('No "Product Code" column found in the file.');
+    const rows = [], seen = new Set(); let errors = 0, dupes = 0;
+    for (let r = 1; r < aoa.length; r++) {
+      const row = aoa[r]; if (!row) continue;
+      const code = String(row[ci.code] ?? '').trim();
+      if (!code) { errors++; continue; }
+      if (seen.has(code)) dupes++; else seen.add(code);
+      rows.push({
+        product_code: code,
+        name: ci.desc !== -1 ? String(row[ci.desc] ?? '').trim() : '',
+        size: ci.size !== -1 ? String(row[ci.size] ?? '').trim() : '',
+        soh: ci.soh !== -1 ? row[ci.soh] : '',
+        selling_price: ci.sp !== -1 ? row[ci.sp] : '',
+      });
+    }
+    const codesRes = await contentApi('list-wine-codes');
+    const existing = new Set((codesRes.codes || []).map(String));
+    let added = 0, updated = 0;
+    for (const c of seen) { if (existing.has(c)) updated++; else added++; }
+    importRows = rows;
+    prev.innerHTML = `<div class="imp">
+      <div class="ir"><span>Rows in file</span><b>${rows.length + errors}</b></div>
+      <div class="ir add"><span>New products to add</span><b>${added}</b></div>
+      <div class="ir upd"><span>Existing to update</span><b>${updated}</b></div>
+      <div class="ir"><span>Duplicate codes in file</span><b>${dupes}</b></div>
+      <div class="ir err"><span>Rows ignored (no code)</span><b>${errors}</b></div>
+    </div><p class="muted" style="font-size:11px;margin-top:8px">Nothing is saved until you tap Commit. Images, tasting notes and regions are preserved.</p>`;
+    $('import-commit').hidden = rows.length === 0;
+  } catch (err) {
+    prev.innerHTML = `<div class="empty">${esc(err.message || 'Could not read the file.')}</div>`;
+  } finally { e.target.value = ''; }
+}
+
+async function onImportCommit() {
+  if (!importRows || !importRows.length) return;
+  const btn = $('import-commit'); btn.disabled = true; btn.textContent = 'Importing…';
+  try {
+    const r = await contentApi('import-wines', { rows: importRows });
+    toast(`Imported ${r.processed} products.`);
+    $('import-preview').innerHTML = `<div class="imp"><div class="ir add"><span>Imported</span><b>${r.processed}</b></div>${r.skipped ? `<div class="ir err"><span>Skipped (no code)</span><b>${r.skipped}</b></div>` : ''}</div>`;
+    $('import-commit').hidden = true; importRows = null;
+  } catch (err) { toast(err.message || 'Import failed.'); }
+  finally { btn.disabled = false; btn.textContent = 'Commit import'; }
+}
+
+async function onWineExport() {
+  const btn = $('wine-export'); btn.disabled = true; const label = btn.textContent; btn.textContent = 'Preparing…';
+  try {
+    const XLSX = await loadSheetJs();
+    const { items } = await contentApi('list-wines');
+    const data = (items || []).map((w) => ({ 'Product Code': w.product_code || '', 'Product Description': w.name || '', 'Size': w.size || '', 'SOH': w.soh != null ? w.soh : '', 'SP': w.selling_price != null ? w.selling_price : '' }));
+    const ws = XLSX.utils.json_to_sheet(data, { header: ['Product Code', 'Product Description', 'Size', 'SOH', 'SP'] });
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Wines');
+    XLSX.writeFile(wb, 'tops-cellar-selection-wines.xlsx');
+    toast(`Exported ${data.length} products.`);
+  } catch (err) { toast(err.message || 'Export failed.'); }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+
+function wireMaintenance() {
+  $('wine-file').addEventListener('change', onWineFile);
+  $('import-commit').addEventListener('click', onImportCommit);
+  $('wine-export').addEventListener('click', onWineExport);
+}
+
 let STATS = null;
 async function loadDash() {
   try {
@@ -619,8 +707,33 @@ async function contentFn(name, payload = {}) {
 function pad2(n) { return String(n).padStart(2, '0'); }
 function toLocalInput(iso) { if (!iso) return ''; const d = new Date(iso); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
 
-function fillWine(w) { w = w || {}; $('wf-name').value = w.name || ''; $('wf-producer').value = w.producer || ''; $('wf-varietal').value = w.varietal || ''; $('wf-region').value = w.region || ''; $('wf-country').value = w.country || ''; $('wf-serving_temp').value = w.serving_temp || ''; $('wf-avg_rating').value = w.avg_rating != null ? w.avg_rating : ''; $('wf-food_pairings').value = w.food_pairings || ''; $('wf-story').value = w.story || ''; $('wf-tasting_notes').value = w.tasting_notes || ''; $('wf-awards').value = w.awards || ''; $('wf-image_url').value = w.image_url || ''; }
-function readWine() { return { name: $('wf-name').value.trim(), producer: $('wf-producer').value.trim(), varietal: $('wf-varietal').value.trim(), region: $('wf-region').value.trim(), country: $('wf-country').value.trim(), serving_temp: $('wf-serving_temp').value.trim(), avg_rating: $('wf-avg_rating').value.trim(), food_pairings: $('wf-food_pairings').value.trim(), story: $('wf-story').value.trim(), tasting_notes: $('wf-tasting_notes').value.trim(), awards: $('wf-awards').value.trim(), image_url: $('wf-image_url').value.trim() }; }
+function fillWine(w) {
+  w = w || {};
+  $('wf-product_code').value = w.product_code || ''; $('wf-category').value = w.category || '';
+  $('wf-name').value = w.name || ''; $('wf-producer').value = w.producer || ''; $('wf-varietal').value = w.varietal || '';
+  $('wf-region').value = w.region || ''; $('wf-country').value = w.country || '';
+  $('wf-vintage').value = w.vintage || ''; $('wf-size').value = w.size || ''; $('wf-alcohol').value = w.alcohol != null ? w.alcohol : '';
+  $('wf-serving_temp').value = w.serving_temp || '';
+  $('wf-selling_price').value = w.selling_price != null ? w.selling_price : ''; $('wf-promo_price').value = w.promo_price != null ? w.promo_price : ''; $('wf-soh').value = w.soh != null ? w.soh : '';
+  $('wf-food_pairings').value = w.food_pairings || ''; $('wf-story').value = w.story || ''; $('wf-tasting_notes').value = w.tasting_notes || '';
+  $('wf-cellaring_potential').value = w.cellaring_potential || ''; $('wf-avg_rating').value = w.avg_rating != null ? w.avg_rating : '';
+  $('wf-awards').value = w.awards || ''; $('wf-image_url').value = w.image_url || '';
+  $('wf-active').value = (w.active === false) ? 'false' : 'true';
+}
+function readWine() {
+  return {
+    product_code: $('wf-product_code').value.trim(), category: $('wf-category').value.trim(),
+    name: $('wf-name').value.trim(), producer: $('wf-producer').value.trim(), varietal: $('wf-varietal').value.trim(),
+    region: $('wf-region').value.trim(), country: $('wf-country').value.trim(),
+    vintage: $('wf-vintage').value.trim(), size: $('wf-size').value.trim(), alcohol: $('wf-alcohol').value.trim(),
+    serving_temp: $('wf-serving_temp').value.trim(),
+    selling_price: $('wf-selling_price').value.trim(), promo_price: $('wf-promo_price').value.trim(), soh: $('wf-soh').value.trim(),
+    food_pairings: $('wf-food_pairings').value.trim(), story: $('wf-story').value.trim(), tasting_notes: $('wf-tasting_notes').value.trim(),
+    cellaring_potential: $('wf-cellaring_potential').value.trim(), avg_rating: $('wf-avg_rating').value.trim(),
+    awards: $('wf-awards').value.trim(), image_url: $('wf-image_url').value.trim(),
+    active: $('wf-active').value,
+  };
+}
 
 function fillEvent(e) { e = e || {}; $('ef-title').value = e.title || ''; $('ef-datetime').value = toLocalInput(e.datetime); $('ef-location').value = e.location || ''; $('ef-capacity').value = e.capacity != null ? e.capacity : ''; $('ef-description').value = e.description || ''; $('ef-image_url').value = e.image_url || ''; }
 function readEvent() { const dt = $('ef-datetime').value; return { title: $('ef-title').value.trim(), datetime: dt ? new Date(dt).toISOString() : null, location: $('ef-location').value.trim(), capacity: $('ef-capacity').value.trim(), description: $('ef-description').value.trim(), image_url: $('ef-image_url').value.trim(), status: 'confirmed' }; }
@@ -700,7 +813,7 @@ function wireManage() {
 
 /* ---------------- boot ---------------- */
 function start() {
-  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr();
+  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance();
   if (TOKEN) {
     const hr = new Date().getHours();
     $('dash-greeting').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Ashley';

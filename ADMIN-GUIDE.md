@@ -28,6 +28,26 @@ Add, edit and remove everything members see — no technical knowledge needed. *
 
 Tap any item to edit it; tap **+ Add** to create one. Tap **Delete** inside an item to remove it. Changes appear in the member app the next time a member opens it.
 
+## Maintenance — wine database
+
+**Dashboard → Maintenance** is where you keep the wine catalogue in sync with your price list.
+
+### Import a price list (XLS or XLSX)
+
+1. Tap **Choose spreadsheet** and pick your file. It should have the columns **Product Code, Product Description, Size, SOH, SP**.
+2. You'll see a **preview**: how many products will be added, how many updated, any duplicate codes, and any rows ignored (missing a code). Nothing is saved yet.
+3. Tap **Commit import** to apply it.
+
+Imports **merge** by Product Code: existing products are updated (description, size, stock, price), new codes are added, and nothing is ever deleted or duplicated. Enriched details you've added — images, tasting notes, regions, producer, food pairing — are **preserved**.
+
+### Export the wine database
+
+Tap **Export wine database (Excel)** to download the full catalogue in the same format. Edit it in Excel and re-import to make bulk changes.
+
+### Enrich a wine
+
+**Maintenance → Wines** (or Manage Backend → Wines) opens the full editor, where each wine can carry Product Code, category, producer, country, region, variety, vintage, size, alcohol %, tasting notes, food pairing, serving temperature, cellaring potential, bottle image, selling & promo price, stock, rating and an Active/Inactive switch. Fields can be filled in over time.
+
 ## Managing the Home screen
 
 The member Home screen has three live areas you control:

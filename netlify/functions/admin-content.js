@@ -23,7 +23,7 @@ function json(obj, statusCode = 200) {
 
 // whitelist of writable columns per table (ignore anything else the client sends)
 const FIELDS = {
-  wines: ['name', 'producer', 'region', 'country', 'varietal', 'story', 'food_pairings', 'serving_temp', 'tasting_notes', 'awards', 'facts', 'image_url', 'avg_rating'],
+  wines: ['name', 'producer', 'region', 'country', 'varietal', 'story', 'food_pairings', 'serving_temp', 'tasting_notes', 'awards', 'facts', 'image_url', 'avg_rating', 'product_code', 'category', 'vintage', 'size', 'alcohol', 'cellaring_potential', 'selling_price', 'promo_price', 'soh', 'active'],
   events: ['type', 'title', 'description', 'datetime', 'location', 'capacity', 'image_url', 'status'],
   discovery_boxes: ['month', 'title', 'image_url', 'price', 'included', 'availability', 'status'],
   magazines: ['title', 'issue_date', 'cover_url', 'content_ref'],
@@ -54,6 +54,48 @@ exports.handler = async (event) => {
   let payload;
   try { payload = JSON.parse(event.body || '{}'); } catch { return json({ error: 'Invalid JSON' }, 400); }
   const { action } = payload;
+
+  // ---- Wine price-list import (MERGE by product_code) ----
+  if (action === 'list-wine-codes') {
+    try {
+      const res = await rest('wines?select=product_code&product_code=not.is.null&limit=100000');
+      const rows = await res.json();
+      if (!res.ok) return json({ error: rows.message || 'Load failed' }, 400);
+      return json({ codes: (Array.isArray(rows) ? rows : []).map((r) => String(r.product_code)) });
+    } catch (e) { return json({ error: String(e) }, 500); }
+  }
+  if (action === 'import-wines') {
+    try {
+      const rows = Array.isArray(payload.rows) ? payload.rows : [];
+      const clean = [];
+      let skipped = 0;
+      for (const r of rows) {
+        const code = (r.product_code ?? '').toString().trim();
+        if (!code) { skipped++; continue; }
+        const obj = { product_code: code };
+        if (r.name !== undefined && String(r.name).trim() !== '') obj.name = String(r.name).trim();
+        if (r.size !== undefined) obj.size = String(r.size).trim();
+        if (r.soh !== undefined && r.soh !== '') obj.soh = parseInt(r.soh, 10) || 0;
+        if (r.selling_price !== undefined && r.selling_price !== '') obj.selling_price = parseFloat(String(r.selling_price).replace(/[^\d.]/g, '')) || null;
+        // rows that are brand-new need a name (NOT NULL) — fall back to the code
+        if (obj.name === undefined) obj.name = code;
+        clean.push(obj);
+      }
+      if (!clean.length) return json({ ok: true, processed: 0, skipped });
+      let processed = 0;
+      for (let i = 0; i < clean.length; i += 500) {
+        const chunk = clean.slice(i, i + 500);
+        const res = await rest('wines?on_conflict=product_code', {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify(chunk),
+        });
+        if (!res.ok) return json({ error: await res.text(), processed }, 400);
+        processed += chunk.length;
+      }
+      return json({ ok: true, processed, skipped });
+    } catch (e) { return json({ error: String(e) }, 500); }
+  }
 
   // map an action to its table
   const TABLE = {
@@ -93,6 +135,13 @@ exports.handler = async (event) => {
       if (body.capacity !== undefined && body.capacity !== null && body.capacity !== '') body.capacity = parseInt(body.capacity, 10) || null;
       if (body.price !== undefined && body.price !== null && body.price !== '') body.price = parseFloat(body.price) || null;
       if (body.avg_rating !== undefined && body.avg_rating !== null && body.avg_rating !== '') body.avg_rating = parseFloat(body.avg_rating) || 0;
+      for (const k of ['selling_price', 'promo_price', 'alcohol']) {
+        if (body[k] === '' ) body[k] = null;
+        else if (body[k] !== undefined && body[k] !== null) body[k] = parseFloat(String(body[k]).replace(/[^\d.]/g, '')) || null;
+      }
+      if (body.soh !== undefined) body.soh = (body.soh === '' || body.soh === null) ? 0 : (parseInt(body.soh, 10) || 0);
+      if (body.product_code === '') body.product_code = null;
+      if (body.active !== undefined) body.active = (body.active === true || body.active === 'true' || body.active === 'on' || body.active === 1);
 
       const { id } = payload;
       if (id) {

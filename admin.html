@@ -50,6 +50,7 @@
           <div class="jrow" data-go="draw"><div class="ji">&#127942;</div><div class="jt"><h4>Monthly prize draw</h4><p>Draw this month&rsquo;s winner</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="staff"><div class="ji">&#11088;</div><div class="jt"><h4>Staff Champions</h4><p>Signups by team member</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="manage"><div class="ji">&#127863;</div><div class="jt"><h4>Manage Backend</h4><p>Wines, events &amp; Discovery Boxes</p></div><div class="ch">&#8250;</div></div>
+          <div class="jrow" data-go="maint"><div class="ji">&#128295;</div><div class="jt"><h4>Maintenance</h4><p>Wine database import &amp; export</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="suppliers"><div class="ji">&#129309;</div><div class="jt"><h4>Suppliers</h4><p>Partner tiers &amp; features</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="settings-view"><div class="ji">&#9881;</div><div class="jt"><h4>Discovery Box mode</h4><p id="dbmode-sub">Waiting list &middot; flip in September</p></div><div class="ch">&#8250;</div></div>
           <div class="jrow" data-go="installqr"><div class="ji">&#128241;</div><div class="jt"><h4>Install QR poster</h4><p>Print the in-store scan code</p></div><div class="ch">&#8250;</div></div>
@@ -257,19 +258,33 @@
           <button class="btn block" id="wine-add">&#43; Add a wine</button>
           <div id="wine-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
           <div id="wine-form" class="cform" hidden>
-            <div class="flabel">Name *</div>
+            <div class="frow">
+              <div><div class="flabel">Product code</div><input class="tinput" id="wf-product_code" placeholder="6227" /></div>
+              <div><div class="flabel">Category</div><input class="tinput" id="wf-category" placeholder="Wine / Gin / Beer" /></div>
+            </div>
+            <div class="flabel">Name / description *</div>
             <input class="tinput" id="wf-name" placeholder="e.g. Palladius 2022" />
             <div class="frow">
               <div><div class="flabel">Producer</div><input class="tinput" id="wf-producer" placeholder="Sadie Family" /></div>
-              <div><div class="flabel">Varietal</div><input class="tinput" id="wf-varietal" placeholder="White Blend" /></div>
+              <div><div class="flabel">Variety</div><input class="tinput" id="wf-varietal" placeholder="White Blend" /></div>
             </div>
             <div class="frow">
               <div><div class="flabel">Region</div><input class="tinput" id="wf-region" placeholder="Swartland" /></div>
               <div><div class="flabel">Country</div><input class="tinput" id="wf-country" placeholder="South Africa" /></div>
             </div>
             <div class="frow">
+              <div><div class="flabel">Vintage</div><input class="tinput" id="wf-vintage" placeholder="2022" /></div>
+              <div><div class="flabel">Size</div><input class="tinput" id="wf-size" placeholder="750ML" /></div>
+            </div>
+            <div class="frow">
+              <div><div class="flabel">Alcohol %</div><input class="tinput" id="wf-alcohol" inputmode="decimal" placeholder="13.5" /></div>
               <div><div class="flabel">Serve at</div><input class="tinput" id="wf-serving_temp" placeholder="12–14°C" /></div>
-              <div><div class="flabel">Rating (0–5)</div><input class="tinput" id="wf-avg_rating" inputmode="decimal" placeholder="4.8" /></div>
+            </div>
+            <div class="flabel">Selling price / Promo price / Stock</div>
+            <div class="frow">
+              <div><input class="tinput" id="wf-selling_price" inputmode="decimal" placeholder="Selling R" /></div>
+              <div><input class="tinput" id="wf-promo_price" inputmode="decimal" placeholder="Promo R" /></div>
+              <div><input class="tinput" id="wf-soh" inputmode="numeric" placeholder="Stock" /></div>
             </div>
             <div class="flabel">Food pairing</div>
             <input class="tinput" id="wf-food_pairings" placeholder="Roast chicken, line-fish" />
@@ -277,10 +292,19 @@
             <textarea class="tinput" id="wf-story" placeholder="A legendary white blend…"></textarea>
             <div class="flabel">Tasting notes</div>
             <textarea class="tinput" id="wf-tasting_notes" placeholder="Stone fruit, fynbos, saline finish"></textarea>
+            <div class="frow">
+              <div><div class="flabel">Cellaring potential</div><input class="tinput" id="wf-cellaring_potential" placeholder="Drink now – 2030" /></div>
+              <div><div class="flabel">Rating (0–5)</div><input class="tinput" id="wf-avg_rating" inputmode="decimal" placeholder="4.8" /></div>
+            </div>
             <div class="flabel">Awards</div>
             <input class="tinput" id="wf-awards" placeholder="Tim Atkin 97pts" />
-            <div class="flabel">Image URL (optional)</div>
+            <div class="flabel">Bottle image URL (optional)</div>
             <input class="tinput" id="wf-image_url" placeholder="https://…" />
+            <div class="flabel">Visibility</div>
+            <select class="tinput" id="wf-active">
+              <option value="true">Active — visible to members</option>
+              <option value="false">Inactive — hidden</option>
+            </select>
             <div style="display:flex;gap:10px;margin-top:16px">
               <button class="btn" style="flex:1" id="wf-save">Save wine</button>
               <button class="btn ghost" id="wf-cancel">Cancel</button>
@@ -373,6 +397,26 @@
             </div>
             <button class="btn block ghost danger" id="gf-delete" style="margin-top:10px" hidden>Delete issue</button>
           </div>
+        </div>
+      </section>
+
+      <!-- MAINTENANCE (wine database) -->
+      <section class="view" id="maint">
+        <div class="bhead"><div class="bk" data-go="dash" data-nav="dash">&#8249;</div><div class="ti">Maintenance</div></div>
+        <div class="body">
+          <div class="jrow" data-go="m-wines" style="margin-bottom:16px"><div class="ji">&#127863;</div><div class="jt"><h4>Wines</h4><p>Add / edit individual wines &amp; enrichment</p></div><div class="ch">&#8250;</div></div>
+
+          <div class="flabel">Import price list (XLS / XLSX)</div>
+          <p class="muted" style="font-size:12px;line-height:1.5">Spreadsheet columns: <b>Product Code, Product Description, Size, SOH, SP</b>. Existing codes are updated; new codes are added. Wines are never deleted or duplicated, and enriched data (images, tasting notes, regions) is preserved.</p>
+          <label class="btn block ghost" style="display:block;text-align:center;margin-top:10px">Choose spreadsheet&hellip;
+            <input type="file" id="wine-file" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+          </label>
+          <div id="import-preview" style="margin-top:14px"></div>
+          <button class="btn block" id="import-commit" hidden style="margin-top:12px">Commit import</button>
+
+          <div class="flabel" style="margin-top:24px">Export</div>
+          <p class="muted" style="font-size:12px;line-height:1.5">Download the full wine database in the same format for editing and re-importing.</p>
+          <button class="btn block ghost" id="wine-export" style="margin-top:8px">Export wine database (Excel)</button>
         </div>
       </section>
 
