@@ -144,7 +144,7 @@
         <div class="label"><span>Quick actions</span><div class="ln"></div></div>
         <div class="quick">
           <div class="qa" data-go="box"><div class="ic">&#127863;</div><div class="t">Discovery Box</div></div>
-          <div class="qa" data-go="cellar" data-nav="cellar"><div class="ic">&#128214;</div><div class="t">Magazine</div></div>
+          <div class="qa" data-go="magazine"><div class="ic">&#128214;</div><div class="t">Magazine</div></div>
           <div class="qa" data-go="events"><div class="ic">&#127862;</div><div class="t">Events</div></div>
           <div class="qa" data-go="specials"><div class="ic">&#127991;</div><div class="t">Specials</div></div>
           <div class="qa" data-go="discover" data-nav="discover"><div class="ic">&#11088;</div><div class="t">Rate wines</div></div>
@@ -289,7 +289,6 @@
         <div class="ctabs">
           <div class="ctab on" data-tab="favs">Favourites</div>
           <div class="ctab" data-tab="ratings">My Ratings</div>
-          <div class="ctab" data-tab="magazine">Magazine</div>
         </div>
         <div class="cpanel on" id="cpanel-favs">
           <div id="fav-list" class="empty">Your favourited wines will appear here.</div>
@@ -297,9 +296,26 @@
         <div class="cpanel" id="cpanel-ratings">
           <div id="rating-list" class="empty">Wines you rate will appear here.</div>
         </div>
-        <div class="cpanel" id="cpanel-magazine">
-          <div id="mag-list" class="empty">No issues yet.</div>
+      </section>
+
+      <!-- ============ MAGAZINE (editorial) ============ -->
+      <section class="view" id="magazine">
+        <div class="bhead"><div class="bk" data-go="home">&#8249;</div><div class="ti">Magazine</div></div>
+        <div class="magchips" id="mag-chips">
+          <span class="schip on" data-cat="">All</span>
+          <span class="schip" data-cat="Article">Articles</span>
+          <span class="schip" data-cat="Promotion">Promotions</span>
+          <span class="schip" data-cat="Wine Education">Wine Education</span>
+          <span class="schip" data-cat="News">News</span>
+          <span class="schip" data-cat="Seasonal">Seasonal</span>
         </div>
+        <div id="mag-list" class="empty" style="padding:0 22px">Fresh reading coming soon.</div>
+      </section>
+
+      <!-- ============ MAGAZINE ARTICLE ============ -->
+      <section class="view" id="mag-detail">
+        <div class="bhead"><div class="bk" data-go="magazine">&#8249;</div><div class="ti">Article</div></div>
+        <div class="mag-article" id="mag-article"></div>
       </section>
 
       <!-- ============ RATE WINE MODAL ============ -->

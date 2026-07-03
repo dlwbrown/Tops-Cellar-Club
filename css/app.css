@@ -357,3 +357,13 @@ body{
 .srw-p{font-size:11px;color:var(--gold-br);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .srw .wprice{margin-top:5px;font-size:15px}
 .srw-go{color:var(--gold-br);font-size:20px;flex-shrink:0}
+
+/* ---- Magazine (editorial) ---- */
+.magchips{display:flex;gap:7px;flex-wrap:wrap;padding:10px 22px 6px}
+.mage{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+#mag-list:not(.empty){padding:6px 18px 30px}
+.mag-hero{height:220px;background-size:cover;background-position:center}
+.mag-b{padding:20px 22px 30px}
+.mag-b .te{font-size:9px;letter-spacing:2px;color:var(--gold);font-weight:700;text-transform:uppercase}
+.mag-b h1{font-family:var(--disp);font-size:28px;font-weight:600;line-height:1.1;margin-top:8px;color:var(--paper)}
+.mag-b .ptext{font-size:14px;line-height:1.7;color:var(--paper);opacity:.9;margin-top:14px}

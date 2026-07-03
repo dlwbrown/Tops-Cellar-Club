@@ -384,13 +384,22 @@
           <button class="btn block" id="mag-add">&#43; Add an issue</button>
           <div id="mag-list" style="margin-top:14px"><div class="empty">Loading&hellip;</div></div>
           <div id="mag-form" class="cform" hidden>
-            <div class="flabel">Issue title *</div>
+            <div class="flabel">Title *</div>
             <input class="tinput" id="gf-title" placeholder="e.g. Meet the Winemaker" />
-            <div class="flabel">Issue date</div>
-            <input class="tinput" id="gf-issue_date" type="date" />
+            <div class="frow">
+              <div><div class="flabel">Category</div><select class="tinput" id="gf-category">
+                <option value="Article">Article</option><option value="Promotion">Promotion</option>
+                <option value="Wine Education">Wine Education</option><option value="News">News</option><option value="Seasonal">Seasonal</option>
+              </select></div>
+              <div><div class="flabel">Date</div><input class="tinput" id="gf-issue_date" type="date" /></div>
+            </div>
+            <div class="flabel">Short excerpt</div>
+            <input class="tinput" id="gf-excerpt" placeholder="One-line teaser shown in the list" />
+            <div class="flabel">Article body</div>
+            <textarea class="tinput" id="gf-body" placeholder="Write the article here…" style="min-height:120px"></textarea>
             <div class="flabel">Cover image URL</div>
             <input class="tinput" id="gf-cover_url" placeholder="https://…" />
-            <div class="flabel">Link to read (optional)</div>
+            <div class="flabel">External link (optional)</div>
             <input class="tinput" id="gf-content_ref" placeholder="https://… PDF or web link" />
             <div style="display:flex;gap:10px;margin-top:16px">
               <button class="btn" style="flex:1" id="gf-save">Save issue</button>

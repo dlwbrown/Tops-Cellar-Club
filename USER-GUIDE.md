@@ -32,11 +32,14 @@ The **bell** (top right) opens your notifications.
 
 ## The Cellar
 
-Your personal space, with three tabs:
+Your personal space, with two tabs:
 
 - **Favourites** — wines you've hearted.
 - **Ratings** — wines you've reviewed.
-- **Magazine** — the Club's latest issues.
+
+## Magazine
+
+Tap **Magazine** (on Home) for the Club's editorial — **Articles, Promotions, Wine Education, News and Seasonal features**. Filter by category at the top and tap any piece to read it.
 
 ## AI Sommelier
 

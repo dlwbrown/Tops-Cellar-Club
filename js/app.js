@@ -176,6 +176,7 @@ function go(id, nav) {
   if (id === 'card') renderCard();
   if (id === 'notifications') markNotificationsSeen();
   if (id === 'cellar') loadCellar();
+  if (id === 'magazine') loadMagazine();
   if (id === 'guide') loadGuide();
 }
 function setNav(n) {
@@ -746,17 +747,50 @@ function renderRatings() {
     </div>`).join('');
 }
 
+let MAGAZINE = [];
+let magCat = '';
 async function loadMagazine() {
   try {
     const sb = await getSb(); if (!sb) return;
-    const { data } = await sb.from('magazines').select('*').order('issue_date', { ascending: false }).limit(12);
-    const host = document.getElementById('mag-list');
-    if (!data || !data.length) { host.innerHTML = '<div class="empty">First issue coming soon.</div>'; return; }
-    host.innerHTML = data.map(m => `<div class="magrow">
-      ${m.cover_url ? `<div class="magcov" style="background-image:url('${esc(m.cover_url)}')"></div>` : '<div class="magcov"></div>'}
-      <div class="magt"><div class="te">${esc(m.issue_date ? new Date(m.issue_date).toLocaleDateString('en-ZA',{month:'long',year:'numeric'}) : '')}</div>
-      <h3>${esc(m.title||'')}</h3></div></div>`).join('');
+    const { data } = await sb.from('magazines').select('*').order('issue_date', { ascending: false }).limit(60);
+    MAGAZINE = data || [];
+    renderMagazine();
   } catch {}
+}
+function renderMagazine() {
+  const host = document.getElementById('mag-list');
+  if (!host) return;
+  const list = magCat ? MAGAZINE.filter((m) => (m.category || 'Article') === magCat) : MAGAZINE;
+  if (!list.length) { host.className = 'empty'; host.style.padding = '0 22px'; host.innerHTML = 'Fresh reading coming soon.'; return; }
+  host.className = ''; host.style.padding = '';
+  host.innerHTML = list.map((m, i) => `<div class="magrow" data-mag="${i}">
+    ${m.cover_url ? `<div class="magcov" style="background-image:url('${esc(m.cover_url)}')"></div>` : '<div class="magcov"></div>'}
+    <div class="magt"><div class="te">${esc(m.category || 'Article')}${m.issue_date ? ' · ' + new Date(m.issue_date).toLocaleDateString('en-ZA', { month: 'short', year: 'numeric' }) : ''}</div>
+    <h3>${esc(m.title || '')}</h3>${m.excerpt ? `<p class="mage">${esc(m.excerpt)}</p>` : ''}</div></div>`).join('');
+}
+function openMagArticle(idx) {
+  const filtered = magCat ? MAGAZINE.filter((m) => (m.category || 'Article') === magCat) : MAGAZINE;
+  const m = filtered[idx]; if (!m) return;
+  const host = document.getElementById('mag-article');
+  host.innerHTML = `
+    ${m.cover_url ? `<div class="mag-hero" style="background-image:url('${esc(m.cover_url)}')"></div>` : ''}
+    <div class="mag-b">
+      <div class="te">${esc(m.category || 'Article')}${m.issue_date ? ' · ' + new Date(m.issue_date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</div>
+      <h1>${esc(m.title || '')}</h1>
+      ${m.body ? `<div class="ptext">${esc(m.body).replace(/\n/g, '<br>')}</div>` : ''}
+      ${m.content_ref ? `<a class="btn block" href="${esc(m.content_ref)}" target="_blank" rel="noopener" style="margin-top:16px;text-align:center;text-decoration:none">Read the full piece →</a>` : ''}
+    </div>`;
+  go('mag-detail');
+}
+function wireMagazine() {
+  const chips = document.getElementById('mag-chips');
+  if (chips) chips.addEventListener('click', (e) => {
+    const c = e.target.closest('.schip'); if (!c) return;
+    chips.querySelectorAll('.schip').forEach((x) => x.classList.remove('on'));
+    c.classList.add('on'); magCat = c.dataset.cat || ''; renderMagazine();
+  });
+  const list = document.getElementById('mag-list');
+  if (list) list.addEventListener('click', (e) => { const row = e.target.closest('.magrow[data-mag]'); if (row) openMagArticle(parseInt(row.dataset.mag, 10)); });
 }
 
 function wireCellar() {
@@ -877,6 +911,7 @@ async function start() {
   wireDelegation();
   wireCellar();
   wireSommelier();
+  wireMagazine();
   renderGate();
 
   const state = await boot();

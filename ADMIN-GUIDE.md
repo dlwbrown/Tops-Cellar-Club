@@ -82,14 +82,13 @@ The top-rated wine is shown as the Featured wine. As members rate wines, the hig
 
 ## Magazine
 
-Give members something to read under **Cellar → Magazine**. In **Manage Backend → Magazine**:
+The member **Magazine** is the Club's editorial feed — Articles, Promotions, Wine Education, News and Seasonal features (it's separate from members' personal Favourites & Ratings). In **Manage Backend → Magazine**:
 
 1. Tap **+ Add an issue**.
-2. Enter the **issue title** (e.g. "Meet the Winemaker").
-3. Set the **issue date** (used for ordering — newest first).
-4. Add a **cover image URL** so it looks great in the list.
-5. Optionally add a **link to read** (a PDF or web page for the full issue).
-6. **Save**. The issue appears in the member app's Magazine tab.
+2. Enter the **title** and choose a **category** (Article / Promotion / Wine Education / News / Seasonal).
+3. Add a **short excerpt** (the teaser shown in the list) and the **article body**.
+4. Add a **cover image URL** so it looks great, and optionally an **external link** (PDF or web page).
+5. **Save**. It appears in the member app's Magazine, filterable by category.
 
 ## Orders
 

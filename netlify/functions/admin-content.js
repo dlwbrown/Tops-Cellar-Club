@@ -26,7 +26,7 @@ const FIELDS = {
   wines: ['name', 'producer', 'region', 'country', 'varietal', 'story', 'food_pairings', 'serving_temp', 'tasting_notes', 'awards', 'facts', 'image_url', 'avg_rating', 'product_code', 'category', 'vintage', 'size', 'alcohol', 'cellaring_potential', 'selling_price', 'promo_price', 'soh', 'active'],
   events: ['type', 'title', 'description', 'datetime', 'location', 'capacity', 'image_url', 'status'],
   discovery_boxes: ['month', 'title', 'image_url', 'price', 'included', 'availability', 'status'],
-  magazines: ['title', 'issue_date', 'cover_url', 'content_ref'],
+  magazines: ['title', 'issue_date', 'cover_url', 'content_ref', 'category', 'excerpt', 'body'],
   prizes: ['name', 'description', 'image_url', 'value', 'qty_available', 'qty_awarded', 'start_date', 'end_date', 'is_bonus', 'active'],
 };
 
