@@ -85,6 +85,154 @@ function loadFor(id) {
   if (id === 'insights') loadInsights();
   if (id === 'members') loadMembers();
   if (id === 'settings-view') loadMode();
+  if (id === 'm-wines') loadManage('wine');
+  if (id === 'm-events') loadManage('event');
+  if (id === 'm-boxes') loadManage('box');
+  if (id === 'm-mags') loadManage('mag');
+  if (id === 'adminguide') loadAdminGuide();
+  if (id === 'installqr') renderInstallQr();
+  if (id === 'm-images') resetBottleScanner();
+}
+
+/* ---------------- GUIDE + INSTALL QR ---------------- */
+function mdToHtml(md) {
+  const e = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const inline = (t) => e(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/`(.+?)`/g, '<code>$1</code>');
+  let html = '', list = null;
+  const closeList = () => { if (list) { html += `</${list}>`; list = null; } };
+  for (const raw of md.split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    if (/^\s*[-*]\s+/.test(line)) { if (list !== 'ul') { closeList(); html += '<ul>'; list = 'ul'; } html += `<li>${inline(line.replace(/^\s*[-*]\s+/, ''))}</li>`; continue; }
+    if (/^\s*\d+\.\s+/.test(line)) { if (list !== 'ol') { closeList(); html += '<ol>'; list = 'ol'; } html += `<li>${inline(line.replace(/^\s*\d+\.\s+/, ''))}</li>`; continue; }
+    closeList();
+    if (/^###\s+/.test(line)) html += `<h3>${inline(line.replace(/^###\s+/, ''))}</h3>`;
+    else if (/^##\s+/.test(line)) html += `<h2>${inline(line.replace(/^##\s+/, ''))}</h2>`;
+    else if (/^#\s+/.test(line)) html += `<h1>${inline(line.replace(/^#\s+/, ''))}</h1>`;
+    else if (/^---\s*$/.test(line)) html += '<hr>';
+    else if (line.trim() === '') { /* paragraph break */ }
+    else html += `<p>${inline(line)}</p>`;
+  }
+  closeList();
+  return html;
+}
+let adminGuideLoaded = false;
+async function loadAdminGuide() {
+  if (adminGuideLoaded) return;
+  const host = $('adminguide-body');
+  try {
+    const res = await fetch('/ADMIN-GUIDE.md', { cache: 'no-cache' });
+    host.innerHTML = mdToHtml(await res.text());
+    adminGuideLoaded = true;
+  } catch { host.innerHTML = '<div class="empty">Guide unavailable. Reconnect and try again.</div>'; }
+}
+
+const INSTALL_URL = 'https://topscellarclub.co.za';
+let qrCanvas = null;
+async function renderInstallQr() {
+  if (qrCanvas) return;
+  try {
+    const { default: QRCode } = await import('https://esm.sh/qrcode@1.5.4');
+    const canvas = document.createElement('canvas');
+    await QRCode.toCanvas(canvas, INSTALL_URL, { width: 460, margin: 1, color: { dark: '#100f12', light: '#ffffff' } });
+    canvas.style.cssText = 'width:100%;height:auto;display:block;border-radius:10px';
+    const host = $('qr-canvas'); host.innerHTML = ''; host.appendChild(canvas);
+    qrCanvas = canvas;
+  } catch { $('qr-canvas').innerHTML = '<div class="empty">Could not load QR generator (needs internet).</div>'; }
+}
+function wireInstallQr() {
+  $('qr-print').addEventListener('click', () => window.print());
+  $('qr-download').addEventListener('click', () => {
+    if (!qrCanvas) { toast('QR not ready yet.'); return; }
+    const a = document.createElement('a'); a.href = qrCanvas.toDataURL('image/png'); a.download = 'tops-cellar-selection-install-qr.png'; a.click();
+  });
+}
+
+/* ---------------- MAINTENANCE: wine database import / export ---------------- */
+let importRows = null;
+async function loadSheetJs() { return await import('https://esm.sh/xlsx@0.18.5'); }
+function pickCol(headers, names) { for (const n of names) { const i = headers.indexOf(n); if (i !== -1) return i; } return -1; }
+
+async function onWineFile(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const prev = $('import-preview'); prev.innerHTML = '<div class="empty">Reading spreadsheet…</div>';
+  $('import-commit').hidden = true; importRows = null;
+  try {
+    const XLSX = await loadSheetJs();
+    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
+    if (!aoa.length) throw new Error('The spreadsheet is empty.');
+    const headers = aoa[0].map((h) => String(h || '').trim().toLowerCase());
+    const ci = {
+      code: pickCol(headers, ['product code', 'product_code', 'code']),
+      desc: pickCol(headers, ['product description', 'description', 'name']),
+      size: pickCol(headers, ['size']),
+      soh: pickCol(headers, ['soh', 'stock on hand', 'stock']),
+      sp: pickCol(headers, ['sp', 'selling price', 'price']),
+    };
+    if (ci.code === -1) throw new Error('No "Product Code" column found in the file.');
+    const rows = [], seen = new Set(); let errors = 0, dupes = 0;
+    for (let r = 1; r < aoa.length; r++) {
+      const row = aoa[r]; if (!row) continue;
+      const code = String(row[ci.code] ?? '').trim();
+      if (!code) { errors++; continue; }
+      if (seen.has(code)) dupes++; else seen.add(code);
+      rows.push({
+        product_code: code,
+        name: ci.desc !== -1 ? String(row[ci.desc] ?? '').trim() : '',
+        size: ci.size !== -1 ? String(row[ci.size] ?? '').trim() : '',
+        soh: ci.soh !== -1 ? row[ci.soh] : '',
+        selling_price: ci.sp !== -1 ? row[ci.sp] : '',
+      });
+    }
+    const codesRes = await contentApi('list-wine-codes');
+    const existing = new Set((codesRes.codes || []).map(String));
+    let added = 0, updated = 0;
+    for (const c of seen) { if (existing.has(c)) updated++; else added++; }
+    importRows = rows;
+    prev.innerHTML = `<div class="imp">
+      <div class="ir"><span>Rows in file</span><b>${rows.length + errors}</b></div>
+      <div class="ir add"><span>New products to add</span><b>${added}</b></div>
+      <div class="ir upd"><span>Existing to update</span><b>${updated}</b></div>
+      <div class="ir"><span>Duplicate codes in file</span><b>${dupes}</b></div>
+      <div class="ir err"><span>Rows ignored (no code)</span><b>${errors}</b></div>
+    </div><p class="muted" style="font-size:11px;margin-top:8px">Nothing is saved until you tap Commit. Images, tasting notes and regions are preserved.</p>`;
+    $('import-commit').hidden = rows.length === 0;
+  } catch (err) {
+    prev.innerHTML = `<div class="empty">${esc(err.message || 'Could not read the file.')}</div>`;
+  } finally { e.target.value = ''; }
+}
+
+async function onImportCommit() {
+  if (!importRows || !importRows.length) return;
+  const btn = $('import-commit'); btn.disabled = true; btn.textContent = 'Importing…';
+  try {
+    const r = await contentApi('import-wines', { rows: importRows });
+    toast(`Imported ${r.processed} products.`);
+    $('import-preview').innerHTML = `<div class="imp"><div class="ir add"><span>Added</span><b>${r.added ?? 0}</b></div><div class="ir upd"><span>Updated (price/stock)</span><b>${r.updated ?? 0}</b></div>${r.skipped ? `<div class="ir err"><span>Skipped (no code)</span><b>${r.skipped}</b></div>` : ''}</div>`;
+    $('import-commit').hidden = true; importRows = null;
+  } catch (err) { toast(err.message || 'Import failed.'); }
+  finally { btn.disabled = false; btn.textContent = 'Commit import'; }
+}
+
+async function onWineExport() {
+  const btn = $('wine-export'); btn.disabled = true; const label = btn.textContent; btn.textContent = 'Preparing…';
+  try {
+    const XLSX = await loadSheetJs();
+    const { items } = await contentApi('list-wines');
+    const data = (items || []).map((w) => ({ 'Product Code': w.product_code || '', 'Product Description': w.name || '', 'Size': w.size || '', 'SOH': w.soh != null ? w.soh : '', 'SP': w.selling_price != null ? w.selling_price : '' }));
+    const ws = XLSX.utils.json_to_sheet(data, { header: ['Product Code', 'Product Description', 'Size', 'SOH', 'SP'] });
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Wines');
+    XLSX.writeFile(wb, 'tops-cellar-selection-wines.xlsx');
+    toast(`Exported ${data.length} products.`);
+  } catch (err) { toast(err.message || 'Export failed.'); }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+
+function wireMaintenance() {
+  $('wine-file').addEventListener('change', onWineFile);
+  $('import-commit').addEventListener('click', onImportCommit);
+  $('wine-export').addEventListener('click', onWineExport);
 }
 
 let STATS = null;
@@ -184,7 +332,7 @@ async function loadMode() {
 }
 
 /* ---------------- CREATE: AI post ---------------- */
-const post = { type: 'Member Special', photoBase64: null, photoMediaType: null, photoDataUrl: null, price: null, price_found: false, channels: ['push', 'in_app'] };
+const post = { type: 'Member Special', photoBase64: null, photoMediaType: null, photoDataUrl: null, photoUrl: null, price: null, price_found: false, showImage: true, channels: ['push', 'in_app'] };
 
 function wireCreate() {
   $('post-types').addEventListener('click', (e) => {
@@ -200,6 +348,15 @@ function wireCreate() {
     post.photoBase64 = dataUrl.split(',')[1];
     const img = $('photo-preview'); img.src = dataUrl; img.hidden = false;
     $('photo-cap').textContent = '📷 Tap to change photo';
+    $('btn-enhance').hidden = false;
+    $('enhance-styles').hidden = false;
+    uploadPhoto();
+  });
+  $('btn-enhance').addEventListener('click', onEnhance);
+  $('enhance-styles').addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip'); if (!chip) return;
+    document.querySelectorAll('#enhance-styles .chip').forEach((c) => c.classList.remove('on'));
+    chip.classList.add('on');
   });
   $('btn-generate').addEventListener('click', onGenerate);
 }
@@ -209,12 +366,43 @@ function fileToDataUrl(file) {
     const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file);
   });
 }
+async function uploadPhoto() {
+  if (!post.photoBase64) return;
+  try {
+    const r = await adminApi('upload-image', { imageBase64: post.photoBase64, imageMediaType: post.photoMediaType });
+    if (r.url) post.photoUrl = r.url;
+  } catch {}
+}
+
+async function onEnhance() {
+  if (!post.photoBase64) { toast('Add a photo first.'); return; }
+  const btn = $('btn-enhance'); btn.disabled = true; $('enhance-label').textContent = 'Creating scene…';
+  try {
+    const style = document.querySelector('#enhance-styles .chip.on')?.dataset.val || '';
+    const r = await fn('enhance-photo', {
+      imageBase64: post.photoBase64,
+      imageMediaType: post.photoMediaType,
+      style,
+    });
+    if (r.error) throw new Error(r.error);
+    const dataUrl = `data:image/png;base64,${r.enhancedImageBase64}`;
+    post.photoBase64 = r.enhancedImageBase64;
+    post.photoMediaType = 'image/png';
+    post.photoDataUrl = dataUrl;
+    post.photoUrl = null;
+    const img = $('photo-preview'); img.src = dataUrl;
+    uploadPhoto();
+    toast('Photo enhanced! Now generate your post.');
+  } catch (err) {
+    toast(err.message || 'Could not enhance the photo.');
+  } finally { btn.disabled = false; $('enhance-label').textContent = 'Enhance photo with AI scene'; }
+}
 
 async function onGenerate() {
   if (!post.photoBase64 && !$('raw-line').value.trim()) { toast('Add a photo or a line of text first.'); return; }
   const btn = $('btn-generate'); btn.disabled = true; $('gen-label').textContent = 'Writing your post…';
   try {
-    const r = await fn('generate-post', {
+    const r = await contentFn('generate-post', {
       postType: post.type,
       photoBase64: post.photoBase64,
       photoMediaType: post.photoMediaType,
@@ -238,10 +426,10 @@ function fillResult(r) {
   $('edit-headline').value = r.headline || '';
   $('edit-kicker').value = r.subhead || '';
   $('edit-body').value = r.body || '';
-  // product image
-  const host = $('post-image');
-  if (post.photoDataUrl) host.innerHTML = `<img src="${post.photoDataUrl}" alt="product" />`;
-  else host.innerHTML = '<div class="cbottle"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>';
+  // product image (optional — managers can toggle it off for a text-only poster)
+  post.showImage = !!post.photoDataUrl;
+  $('tog-image').classList.toggle('on', post.showImage);
+  renderPostImage();
   applyPriceUi();
   // live edit bindings
   $('edit-headline').oninput = () => { $('post-headline').textContent = $('edit-headline').value; };
@@ -250,6 +438,13 @@ function fillResult(r) {
   $('post-price-input').oninput = () => { post.price = $('post-price-input').value.trim(); post.price_found = !!post.price; applyPriceBadge(); };
 }
 
+function renderPostImage() {
+  const host = $('post-image');
+  if (!post.showImage) { host.hidden = true; host.innerHTML = ''; return; }
+  host.hidden = false;
+  if (post.photoDataUrl) host.innerHTML = `<img src="${post.photoDataUrl}" alt="product" />`;
+  else host.innerHTML = '<div class="cbottle"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div>';
+}
 function applyPriceUi() {
   $('post-okchip').hidden = !post.price_found;
   $('post-warnbox').hidden = post.price_found;
@@ -259,17 +454,23 @@ function applyPriceUi() {
 function formatPrice(p) { const s = String(p).replace(/[^\d.]/g, ''); return s ? 'R' + s : ''; }
 function applyPriceBadge() {
   const badge = $('post-badge'); const val = $('post-price');
-  if (post.price_found && post.price) { badge.classList.remove('warn'); val.textContent = formatPrice(post.price); }
-  else { badge.classList.add('warn'); val.textContent = '?'; }
+  // Price is optional: show the badge only when a price exists, otherwise hide it entirely.
+  if (post.price && post.price_found) { badge.hidden = false; badge.classList.remove('warn'); val.textContent = formatPrice(post.price); }
+  else { badge.hidden = true; }
 }
 
 function wireResult() {
   $('post-channels').addEventListener('click', (e) => { const t = e.target.closest('.tog'); if (t) t.classList.toggle('on'); });
+  $('tog-image').addEventListener('click', () => {
+    post.showImage = !post.showImage;
+    $('tog-image').classList.toggle('on', post.showImage);
+    renderPostImage();
+  });
   $('btn-approve').addEventListener('click', onApproveSend);
 }
 
 async function onApproveSend() {
-  if (!post.price_found || !post.price) { toast('Add a price before sending — we never guess one.'); $('post-price-input')?.focus(); return; }
+  // Price is optional — send with or without one.
   const channels = [...document.querySelectorAll('#post-channels .tog.on')].map((t) => t.dataset.ch);
   if (!channels.length) { toast('Pick at least one channel.'); return; }
   const btn = $('btn-approve'); btn.disabled = true; btn.textContent = 'Sending…';
@@ -277,18 +478,20 @@ async function onApproveSend() {
   const body = `${$('edit-kicker').value.trim()} — ${$('edit-body').value.trim()}`.replace(/^ — /, '');
   try {
     // 1) record the post as a published special (draft→published, audited)
+    const postImage = (post.showImage && post.photoUrl) || undefined;
     await adminApi('create-post', {
       postType: post.type,
       title: headline,
       body: $('edit-body').value.trim(),
       price: formatPrice(post.price).replace('R', ''),
       kicker: $('edit-kicker').value.trim(),
-      source_photo: post.photoDataUrl ? true : false,
+      source_photo: post.showImage && post.photoDataUrl ? true : false,
+      image_url: postImage,
     }).catch(() => {});
     // 2) broadcast it (push/in-app/email) via the send engine
     const pushChannels = channels.filter((c) => c !== 'web');
     if (pushChannels.length) {
-      await fn('send-push', { title: headline, body, audience: { type: 'all' }, channels: pushChannels, sent_by: 'admin' });
+      await fn('send-push', { title: headline, body, image: postImage, audience: { type: 'all' }, channels: pushChannels, sent_by: 'admin' });
     }
     toast('Post approved & sent.');
     go('dash', 'dash');
@@ -307,8 +510,8 @@ async function downloadCard() {
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   // gold hairline frame
   x.strokeStyle = 'rgba(194,162,90,.6)'; x.lineWidth = 3; x.strokeRect(40, 40, W - 80, H - 80);
-  // product photo (centred, not restyled)
-  if (post.photoDataUrl) {
+  // product photo (centred, not restyled) — only when the image toggle is on
+  if (post.showImage && post.photoDataUrl) {
     const img = await loadImg(post.photoDataUrl);
     const maxW = W * 0.6, maxH = H * 0.42;
     const r = Math.min(maxW / img.width, maxH / img.height);
@@ -334,7 +537,7 @@ async function downloadCard() {
   wrapText(x, $('edit-headline').value || '', W / 2, 960, W - 200, 76);
   x.fillStyle = 'rgba(247,244,238,.85)'; x.font = '400 30px Inter';
   wrapText(x, $('edit-body').value || '', W / 2, 1130, W - 240, 40);
-  x.fillStyle = '#c2a25a'; x.font = '700 22px Inter'; x.fillText('TOPS CELLAR SELECTION CLUB · BEACON ISLE', W / 2, H - 80);
+  x.fillStyle = '#c2a25a'; x.font = '700 22px Inter'; x.fillText('TOPS CELLAR SELECTION · BEACON ISLE', W / 2, H - 80);
 
   const a = document.createElement('a');
   a.href = c.toDataURL('image/png'); a.download = 'cellar-post.png'; a.click();
@@ -374,12 +577,27 @@ async function onBroadcast() {
   if (!channels.length) { toast('Pick at least one channel.'); return; }
   const btn = $('btn-broadcast'); btn.disabled = true; btn.textContent = 'Sending…';
   try {
-    const r = await fn('send-push', { title, body: $('bc-body').value.trim(), link: $('bc-link').value.trim() || undefined, audience, channels, sent_by: 'admin' });
+    const r = await fn('send-push', { title, body: $('bc-body').value.trim(), image: $('bc-image').value.trim() || undefined, link: $('bc-link').value.trim() || undefined, audience, channels, sent_by: 'admin' });
     toast(`Sent. ${r.pushed != null ? r.pushed + ' devices reached.' : ''}`);
-    $('bc-title').value = ''; $('bc-body').value = ''; $('bc-link').value = '';
+    $('bc-title').value = ''; $('bc-body').value = ''; $('bc-image').value = ''; $('bc-link').value = '';
     go('dash', 'dash');
   } catch (err) { toast(err.message || 'Broadcast failed.'); }
   finally { btn.disabled = false; btn.textContent = 'Send broadcast'; }
+}
+
+/* ---------------- RESET TEST DATA ---------------- */
+async function onResetTestData() {
+  const email = prompt('Enter your email address to keep your account.\nAll other members, notifications and prize draws will be deleted.');
+  if (!email) return;
+  if (!confirm(`This will permanently delete all members except "${email}" and clear all notifications.\n\nType OK to continue.`)) return;
+  const btn = $('btn-reset'); btn.disabled = true; btn.textContent = 'Resetting…';
+  try {
+    const r = await adminApi('reset-test-data', { keep_email: email.trim().toLowerCase() });
+    if (r.error) throw new Error(r.error);
+    toast(`Done. Kept ${r.kept} account(s). Reload the page to see updated stats.`);
+    loadStats();
+  } catch (err) { toast(err.message || 'Reset failed.'); }
+  finally { btn.disabled = false; btn.textContent = '🚫 Reset test data'; }
 }
 
 /* ---------------- DRAW / STAFF / SUPPLIERS / MODE / CSV ---------------- */
@@ -453,15 +671,274 @@ function wireDelegation() {
     if (goEl) go(goEl.dataset.go, goEl.dataset.nav);
   });
   $('btn-draw').addEventListener('click', onDraw);
+  $('btn-reset').addEventListener('click', onResetTestData);
   $('member-search').addEventListener('input', () => {
     const q = $('member-search').value.trim().toLowerCase();
     renderMembers(!q ? MEMBERS : MEMBERS.filter((m) => `${m.first_name} ${m.surname} ${m.membership_number} ${m.email}`.toLowerCase().includes(q)));
   });
 }
 
+/* ---------------- MANAGE CATALOGUE (wines / events / boxes) ---------------- */
+// Talks to the Netlify admin-content function (auto-deploys; uses service-role key).
+async function contentApi(action, payload = {}) {
+  const res = await fetch('/.netlify/functions/admin-content', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) throw new Error('Add your admin passphrase as ADMIN_TOKEN in Netlify to manage content.');
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+// Generic caller for any Netlify function that expects the admin token.
+async function contentFn(name, payload = {}) {
+  const res = await fetch(`/.netlify/functions/${name}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) throw new Error('Add your admin passphrase as ADMIN_TOKEN in Netlify.');
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+function toLocalInput(iso) { if (!iso) return ''; const d = new Date(iso); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+
+function fillWine(w) {
+  w = w || {};
+  $('wf-product_code').value = w.product_code || ''; $('wf-category').value = w.category || '';
+  $('wf-name').value = w.name || ''; $('wf-producer').value = w.producer || ''; $('wf-varietal').value = w.varietal || '';
+  $('wf-region').value = w.region || ''; $('wf-country').value = w.country || '';
+  $('wf-vintage').value = w.vintage || ''; $('wf-size').value = w.size || ''; $('wf-alcohol').value = w.alcohol != null ? w.alcohol : '';
+  $('wf-serving_temp').value = w.serving_temp || '';
+  $('wf-selling_price').value = w.selling_price != null ? w.selling_price : ''; $('wf-promo_price').value = w.promo_price != null ? w.promo_price : ''; $('wf-soh').value = w.soh != null ? w.soh : '';
+  $('wf-food_pairings').value = w.food_pairings || ''; $('wf-story').value = w.story || ''; $('wf-tasting_notes').value = w.tasting_notes || '';
+  $('wf-cellaring_potential').value = w.cellaring_potential || ''; $('wf-avg_rating').value = w.avg_rating != null ? w.avg_rating : '';
+  $('wf-awards').value = w.awards || ''; $('wf-image_url').value = w.image_url || '';
+  $('wf-active').value = (w.active === false) ? 'false' : 'true';
+}
+function readWine() {
+  return {
+    product_code: $('wf-product_code').value.trim(), category: $('wf-category').value.trim(),
+    name: $('wf-name').value.trim(), producer: $('wf-producer').value.trim(), varietal: $('wf-varietal').value.trim(),
+    region: $('wf-region').value.trim(), country: $('wf-country').value.trim(),
+    vintage: $('wf-vintage').value.trim(), size: $('wf-size').value.trim(), alcohol: $('wf-alcohol').value.trim(),
+    serving_temp: $('wf-serving_temp').value.trim(),
+    selling_price: $('wf-selling_price').value.trim(), promo_price: $('wf-promo_price').value.trim(), soh: $('wf-soh').value.trim(),
+    food_pairings: $('wf-food_pairings').value.trim(), story: $('wf-story').value.trim(), tasting_notes: $('wf-tasting_notes').value.trim(),
+    cellaring_potential: $('wf-cellaring_potential').value.trim(), avg_rating: $('wf-avg_rating').value.trim(),
+    awards: $('wf-awards').value.trim(), image_url: $('wf-image_url').value.trim(),
+    active: $('wf-active').value,
+  };
+}
+
+function fillEvent(e) { e = e || {}; $('ef-title').value = e.title || ''; $('ef-datetime').value = toLocalInput(e.datetime); $('ef-location').value = e.location || ''; $('ef-capacity').value = e.capacity != null ? e.capacity : ''; $('ef-description').value = e.description || ''; $('ef-image_url').value = e.image_url || ''; }
+function readEvent() { const dt = $('ef-datetime').value; return { title: $('ef-title').value.trim(), datetime: dt ? new Date(dt).toISOString() : null, location: $('ef-location').value.trim(), capacity: $('ef-capacity').value.trim(), description: $('ef-description').value.trim(), image_url: $('ef-image_url').value.trim(), status: 'confirmed' }; }
+
+function fillBox(b) { b = b || {}; $('bf-title').value = b.title || ''; $('bf-month').value = b.month || ''; $('bf-price').value = b.price != null ? b.price : ''; $('bf-included').value = Array.isArray(b.included) ? b.included.join('\n') : ''; $('bf-availability').value = b.availability || ''; $('bf-status').value = b.status || 'waitlist'; $('bf-image_url').value = b.image_url || ''; }
+function readBox() { return { title: $('bf-title').value.trim(), month: $('bf-month').value.trim(), price: $('bf-price').value.trim(), included: $('bf-included').value.split('\n').map((s) => s.trim()).filter(Boolean), availability: $('bf-availability').value.trim(), status: $('bf-status').value, image_url: $('bf-image_url').value.trim() }; }
+
+function fillMag(g) { g = g || {}; $('gf-title').value = g.title || ''; $('gf-issue_date').value = g.issue_date || ''; $('gf-cover_url').value = g.cover_url || ''; $('gf-content_ref').value = g.content_ref || ''; }
+function readMag() { return { title: $('gf-title').value.trim(), issue_date: $('gf-issue_date').value || null, cover_url: $('gf-cover_url').value.trim(), content_ref: $('gf-content_ref').value.trim() }; }
+
+const MGR = {
+  wine: { p: 'wine', f: 'wf', list: 'list-wines', save: 'save-wine', del: 'delete-wine', fill: fillWine, read: readWine, row: (w) => ({ t: w.name, s: [w.producer, w.region].filter(Boolean).join(' · ') }) },
+  event: { p: 'event', f: 'ef', list: 'list-events', save: 'save-event', del: 'delete-event', fill: fillEvent, read: readEvent, row: (e) => ({ t: e.title, s: e.datetime ? new Date(e.datetime).toLocaleString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '' }) },
+  box: { p: 'box', f: 'bf', list: 'list-boxes', save: 'save-box', del: 'delete-box', fill: fillBox, read: readBox, row: (b) => ({ t: b.title, s: [b.month, b.status].filter(Boolean).join(' · ') }) },
+  mag: { p: 'mag', f: 'gf', list: 'list-mags', save: 'save-mag', del: 'delete-mag', fill: fillMag, read: readMag, row: (g) => ({ t: g.title, s: g.issue_date ? new Date(g.issue_date).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' }) : '' }) },
+};
+let MITEMS = { wine: [], event: [], box: [], mag: [] };
+let EDITING = { wine: null, event: null, box: null, mag: null };
+
+function mgrShowForm(p) { $(`${p}-list`).hidden = true; $(`${p}-add`).hidden = true; $(`${p}-form`).hidden = false; $('vp').scrollTop = 0; }
+function mgrShowList(p) { $(`${p}-list`).hidden = false; $(`${p}-add`).hidden = false; $(`${p}-form`).hidden = true; }
+
+async function loadManage(key) {
+  const m = MGR[key];
+  mgrShowList(m.p);
+  $(`${m.p}-list`).innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const r = await contentApi(m.list);
+    MITEMS[key] = r.items || [];
+    renderManage(key);
+  } catch (err) { $(`${m.p}-list`).innerHTML = `<div class="empty">${esc(err.message)}</div>`; }
+}
+function renderManage(key) {
+  const m = MGR[key]; const items = MITEMS[key];
+  $(`${m.p}-list`).innerHTML = items.length
+    ? items.map((it, i) => { const r = m.row(it); return `<div class="crow" data-midx="${i}"><div class="ci"><h4>${esc(r.t || '—')}</h4><p>${esc(r.s || '')}</p></div><div class="ch">›</div></div>`; }).join('')
+    : '<div class="empty">None yet. Tap “Add” to create one.</div>';
+}
+function openMForm(key, item) {
+  const m = MGR[key]; EDITING[key] = item ? item.id : null;
+  m.fill(item);
+  $(`${m.f}-delete`).hidden = !item;
+  mgrShowForm(m.p);
+}
+async function saveMForm(key) {
+  const m = MGR[key]; const body = m.read();
+  if (key === 'wine' && !body.name) { toast('Name is required.'); return; }
+  if (key === 'event' && (!body.title || !body.datetime)) { toast('Title and date are required.'); return; }
+  if (key === 'box' && !body.title) { toast('Title is required.'); return; }
+  const btn = $(`${m.f}-save`); btn.disabled = true; const label = btn.textContent; btn.textContent = 'Saving…';
+  try {
+    await contentApi(m.save, { id: EDITING[key] || undefined, ...body });
+    toast('Saved.');
+    await loadManage(key);
+  } catch (err) { toast(err.message || 'Save failed.'); }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+async function delMForm(key) {
+  const m = MGR[key]; if (!EDITING[key]) { mgrShowList(m.p); return; }
+  if (!confirm('Delete this permanently?')) return;
+  try { await contentApi(m.del, { id: EDITING[key] }); toast('Deleted.'); await loadManage(key); }
+  catch (err) { toast(err.message || 'Delete failed.'); }
+}
+function wireManage() {
+  ['wine', 'event', 'box', 'mag'].forEach((key) => {
+    const m = MGR[key];
+    $(`${m.p}-add`).addEventListener('click', () => openMForm(key, null));
+    $(`${m.f}-save`).addEventListener('click', () => saveMForm(key));
+    $(`${m.f}-cancel`).addEventListener('click', () => mgrShowList(m.p));
+    $(`${m.f}-delete`).addEventListener('click', () => delMForm(key));
+    $(`${m.p}-list`).addEventListener('click', (e) => {
+      const row = e.target.closest('.crow'); if (!row) return;
+      openMForm(key, MITEMS[key][parseInt(row.dataset.midx, 10)]);
+    });
+  });
+}
+
+/* ---------------- BOTTLE IMAGE SCANNER ---------------- */
+let bottleState = { wine: null, topMatches: [] };
+
+function resetBottleScanner() {
+  const prev = $('img-preview'); prev.hidden = true; prev.src = '';
+  $('img-cap').textContent = '📷 Tap to take a photo or choose one';
+  $('img-status').textContent = '';
+  $('img-result').hidden = true;
+  $('img-url').value = '';
+  $('img-match-card').innerHTML = '';
+  $('img-alts-wrap').hidden = true;
+  bottleState = { wine: null, topMatches: [] };
+}
+
+function renderMatchCard(wine, score) {
+  if (!wine) {
+    return `<div style="text-align:center;padding:14px;color:var(--muted);font-style:italic;font-family:var(--disp)">No match found — select from the list below.</div>`;
+  }
+  const cls = score >= 70 ? 'hi' : score >= 45 ? 'med' : 'lo';
+  const lbl = score >= 70 ? '&#10003; High confidence' : score >= 45 ? '~ Likely match' : '? Low confidence — check manually';
+  const sub = [wine.producer, wine.varietal].filter(Boolean).map(esc).join(' &middot; ');
+  return `
+    <div class="im-label">Code ${esc(wine.product_code || '—')}</div>
+    <div class="im-name">${esc(wine.name || '—')}</div>
+    ${sub ? `<div class="im-sub">${sub}</div>` : ''}
+    <span class="im-conf ${cls}">${lbl} &middot; ${Math.round(score)}%</span>
+  `;
+}
+
+function compressImage(dataUrl, maxPx, quality) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = rej;
+    img.src = dataUrl;
+  });
+}
+
+async function onBottlePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  e.target.value = '';
+
+  // show preview immediately
+  const rawDataUrl = await fileToDataUrl(file);
+  const prev = $('img-preview'); prev.src = rawDataUrl; prev.hidden = false;
+  $('img-cap').textContent = '📷 Tap to change photo';
+  $('img-result').hidden = true;
+  $('img-status').textContent = 'Compressing…';
+  bottleState = { wine: null, topMatches: [] };
+
+  try {
+    // compress to max 1400px before sending (stays under Netlify's 6MB payload limit)
+    const compressed = await compressImage(rawDataUrl, 1400, 0.88);
+    const base64 = compressed.split(',')[1];
+    $('img-status').textContent = 'Identifying bottle…';
+
+    const r = await contentFn('identify-bottle', { imageBase64: base64, imageMediaType: 'image/jpeg' });
+
+    bottleState.topMatches = r.top_matches || [];
+    bottleState.wine = r.best_match || null;
+
+    $('img-match-card').innerHTML = renderMatchCard(bottleState.wine, (bottleState.wine || {}).match_score || 0);
+
+    // alt dropdown — shown when there are multiple candidates
+    const alts = bottleState.topMatches;
+    if (alts.length > 1) {
+      $('img-alt-select').innerHTML = alts.map((w, i) =>
+        `<option value="${esc(String(w.id))}" data-idx="${i}">${esc(w.name)}${w.match_score ? ` (${Math.round(w.match_score)}%)` : ''}</option>`
+      ).join('');
+      $('img-alt-select').value = bottleState.wine ? String(bottleState.wine.id) : '';
+      $('img-alts-wrap').hidden = false;
+    } else {
+      $('img-alts-wrap').hidden = true;
+    }
+
+    $('img-url').value = r.image_url || '';
+    $('img-result').hidden = false;
+
+    const lb = r.label || {};
+    const read = [lb.brand, lb.wine_name, lb.variety].filter(Boolean).join(' · ');
+    $('img-status').textContent = read ? `Label read: ${read}` : 'Label read — limited detail visible.';
+  } catch (err) {
+    $('img-status').textContent = 'Identification failed — ' + (err.message || 'unknown error');
+  }
+}
+
+async function onBottleSave() {
+  const wine = bottleState.wine;
+  const imageUrl = $('img-url').value.trim();
+  if (!wine) { toast('No wine selected — please retry or choose one from the list.'); return; }
+  if (!imageUrl) { toast('Add an image URL first.'); return; }
+  const btn = $('img-save'); btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    // include wine.name to pass the name-required check for existing records
+    await contentApi('save-wine', { id: wine.id, name: wine.name, image_url: imageUrl });
+    toast('Image saved to wine database. ✓');
+    resetBottleScanner();
+  } catch (err) {
+    toast(err.message || 'Save failed.');
+  } finally {
+    btn.disabled = false; btn.textContent = '✓ Save image to wine';
+  }
+}
+
+function wireBottleScanner() {
+  $('img-input').addEventListener('change', onBottlePhoto);
+  $('img-save').addEventListener('click', onBottleSave);
+  $('img-alt-select').addEventListener('change', (e) => {
+    const idx = parseInt(e.target.options[e.target.selectedIndex]?.dataset.idx ?? '-1', 10);
+    const wine = bottleState.topMatches[idx];
+    if (wine) {
+      bottleState.wine = wine;
+      $('img-match-card').innerHTML = renderMatchCard(wine, wine.match_score || 0);
+    }
+  });
+}
+
 /* ---------------- boot ---------------- */
 function start() {
-  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation();
+  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance(); wireBottleScanner();
   if (TOKEN) {
     const hr = new Date().getHours();
     $('dash-greeting').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Ashley';

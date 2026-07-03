@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#100f12" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Cellar Club" />
+  <meta name="apple-mobile-web-app-title" content="Tops Cellar" />
   <meta name="description" content="Wine discovery, member specials and exclusive experiences from TOPS at SPAR Beacon Isle." />
-  <title>TOPS Cellar Selection Club</title>
+  <title>Tops Cellar Selection</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="/icons/icon-192.png" />
@@ -18,12 +18,12 @@
   <link rel="stylesheet" href="/css/app.css" />
 </head>
 <body>
-  <noscript>The Cellar Selection Club needs JavaScript enabled.</noscript>
+  <noscript>The Tops Cellar Selection needs JavaScript enabled.</noscript>
 
   <!-- Boot splash (hidden once the first screen renders) -->
   <div id="boot">
     <div class="crest">&#127863;</div>
-    <div class="eb">TOPS Cellar Selection Club</div>
+    <div class="eb">Tops Cellar Selection</div>
     <div class="nm">The Cellar</div>
   </div>
 
@@ -34,7 +34,7 @@
       <section class="view" id="gate">
         <div class="gate">
           <div class="crest">&#127863;</div>
-          <div class="eb"><span class="eyebrow">TOPS CELLAR SELECTION CLUB</span></div>
+          <div class="eb"><span class="eyebrow">TOPS CELLAR SELECTION</span></div>
           <h1>Welcome to<br>the Club</h1>
           <div class="sub">Add the club to your Home Screen to unlock your membership card, Discovery Box alerts and member-only specials.</div>
 
@@ -44,14 +44,14 @@
               <svg class="share-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
               in the browser bar.</div></div>
             <div class="stp"><div class="nm">2</div><div class="tx">Choose <b>Add to Home Screen</b>.</div></div>
-            <div class="stp"><div class="nm">3</div><div class="tx">Open the <b>Cellar Club</b> from your Home Screen to continue.</div></div>
+            <div class="stp"><div class="nm">3</div><div class="tx">Open the <b>Tops Cellar Selection</b> from your Home Screen to continue.</div></div>
           </div>
 
           <!-- Android: native install -->
           <div class="steps" id="gate-android" hidden>
-            <div class="stp"><div class="nm">1</div><div class="tx">Tap <b>Install the Cellar Club</b> below.</div></div>
+            <div class="stp"><div class="nm">1</div><div class="tx">Tap <b>Install the Tops Cellar Selection</b> below.</div></div>
             <div class="stp"><div class="nm">2</div><div class="tx">Confirm <b>Install</b> in the prompt.</div></div>
-            <div class="stp"><div class="nm">3</div><div class="tx">Open the <b>Cellar Club</b> from your Home Screen to continue.</div></div>
+            <div class="stp"><div class="nm">3</div><div class="tx">Open the <b>Tops Cellar Selection</b> from your Home Screen to continue.</div></div>
           </div>
 
           <!-- Desktop / other -->
@@ -62,7 +62,7 @@
           </div>
 
           <div class="cta">
-            <button class="btn block" id="btn-android-install" data-act="android-install" hidden>Install the Cellar Club</button>
+            <button class="btn block" id="btn-android-install" data-act="android-install" hidden>Install the Tops Cellar Selection</button>
             <div class="note">Membership is free. You must be 18+ to join.</div>
           </div>
         </div>
@@ -108,7 +108,7 @@
           </label>
           <div class="consent" style="cursor:default;margin-top:10px">
             <span class="ck on">&#10003;</span>
-            <span>I&rsquo;m 18 or older and agree to join the Cellar Selection Club.</span>
+            <span>I&rsquo;m 18 or older and agree to join the Tops Cellar Selection.</span>
           </div>
           <div style="margin-top:20px"><button class="btn block" type="submit" id="reg-submit">Become a member</button></div>
         </form>
@@ -129,8 +129,8 @@
 
       <!-- ============ HOME ============ -->
       <section class="view" id="home">
-        <div class="topbar"><div><div class="eyebrow">TOPS CELLAR SELECTION CLUB</div><div class="wm">The Cellar</div></div><div class="bell" id="home-bell" data-go="notifications">&#128276;</div></div>
-        <div class="greeting"><div class="hi" id="greeting">Welcome back,<br><em>Member</em></div><div class="meta" id="home-meta">Cellar Selection Club</div></div>
+        <div class="topbar"><div><div class="eyebrow">TOPS CELLAR SELECTION</div><div class="wm">The Cellar</div></div><div class="bell" id="home-bell" data-go="notifications">&#128276;</div></div>
+        <div class="greeting"><div class="hi" id="greeting">Welcome back,<br><em>Member</em></div><div class="meta" id="home-meta">Tops Cellar Selection</div></div>
         <div class="prize" id="home-prize"><span class="ic">&#127942;</span><div class="tx">You&rsquo;re entered in this month&rsquo;s draw &mdash; <b>R3,000 drinks hamper</b></div></div>
 
         <div id="reengage-slot"></div>
@@ -149,6 +149,7 @@
           <div class="qa" data-go="specials"><div class="ic">&#127991;</div><div class="t">Specials</div></div>
           <div class="qa" data-go="discover" data-nav="discover"><div class="ic">&#11088;</div><div class="t">Rate wines</div></div>
           <div class="qa" data-go="card" data-nav="card"><div class="ic">&#127183;</div><div class="t">My card</div></div>
+          <div class="qa" data-go="guide"><div class="ic">&#10067;</div><div class="t">User guide</div></div>
         </div>
 
         <div class="label"><span>This week</span><div class="ln"></div></div>
@@ -165,6 +166,7 @@
           </div>
         </div>
         <div class="sp"></div>
+        <div style="text-align:center;padding:6px 0 18px"><a href="/admin.html" style="font-size:10px;color:#3a3830;letter-spacing:.5px;text-decoration:none;text-transform:uppercase">Staff access</a></div>
       </section>
 
       <!-- ============ BOX ============ -->
@@ -190,7 +192,7 @@
       <!-- ============ DISCOVER (wine library) ============ -->
       <section class="view" id="discover">
         <div class="bhead"><div class="ti">Wine Library</div></div>
-        <div style="padding:0 22px"><input class="fi" id="wine-search" placeholder="&#128269;  Search wines, regions, producers" style="background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:11px 14px;font-size:12px;color:var(--paper);width:100%"></div>
+        <div style="padding:0 22px"><input class="fi" id="wine-search" placeholder="&#128269;  Search wines, regions, producers" style="background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:11px 14px;font-size:16px;color:var(--paper);width:100%"></div>
         <div id="wine-list" style="margin-top:8px">
           <div class="lrow" data-go="wine" data-wine="seed-palladius"><div class="mb"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="li"><h4>Palladius 2022</h4><div class="sm">Sadie Family &middot; Swartland</div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733; 4.8</div></div></div>
           <div class="lrow" data-go="wine" data-wine="seed-heritage"><div class="mb"><div class="nk"></div><div class="bd"></div><div class="lb"></div></div><div class="li"><h4>Heritage Heroes</h4><div class="sm">Nederburg &middot; Western Cape</div><div class="stars">&#9733;&#9733;&#9733;&#9733;&#9734; 4.2</div></div></div>
@@ -247,7 +249,7 @@
         <div class="bhead"><div class="ti">Membership</div></div>
         <div class="cardview">
           <div class="memcard">
-            <div class="eb"><span class="eyebrow">TOPS CELLAR SELECTION CLUB</span></div>
+            <div class="eb"><span class="eyebrow">TOPS CELLAR SELECTION</span></div>
             <div class="nm" id="card-name">Cellar Member</div>
             <div class="no" id="card-no">MEMBER NO. ----</div>
             <div class="qr" id="card-qr">
@@ -274,14 +276,71 @@
         </div>
       </section>
 
-      <!-- ============ CELLAR (Phase 2 stub) ============ -->
-      <section class="view" id="cellar">
-        <div class="ph-screen"><div class="ic">&#128214;</div><h1>My Cellar &amp;<br>Magazine</h1><p>Your ratings, tasting notes, favourites and the digital magazine live here.</p><div class="soon">Phase 2</div></div>
+      <!-- ============ NOTIFICATION DETAIL ============ -->
+      <section class="view" id="notif-detail">
+        <div class="bhead"><div class="bk" data-go="notifications" data-nav="notifications">&#8249;</div><div class="ti">Message</div></div>
+        <div class="ndimg" id="nd-img" hidden></div>
+        <div class="wbody" id="nd-body"></div>
       </section>
 
-      <!-- ============ SOMMELIER (Phase 3 stub) ============ -->
+      <!-- ============ CELLAR ============ -->
+      <section class="view" id="cellar">
+        <div class="bhead"><div class="ti">My Cellar</div></div>
+        <div class="ctabs">
+          <div class="ctab on" data-tab="favs">Favourites</div>
+          <div class="ctab" data-tab="ratings">My Ratings</div>
+          <div class="ctab" data-tab="magazine">Magazine</div>
+        </div>
+        <div class="cpanel on" id="cpanel-favs">
+          <div id="fav-list" class="empty">Your favourited wines will appear here.</div>
+        </div>
+        <div class="cpanel" id="cpanel-ratings">
+          <div id="rating-list" class="empty">Wines you rate will appear here.</div>
+        </div>
+        <div class="cpanel" id="cpanel-magazine">
+          <div id="mag-list" class="empty">No issues yet.</div>
+        </div>
+      </section>
+
+      <!-- ============ RATE WINE MODAL ============ -->
+      <div class="rmodal" id="rate-modal" hidden>
+        <div class="rmdrop" data-act="close-rate"></div>
+        <div class="rmcard">
+          <div class="rmtitle" id="rm-wine-name">Rate this wine</div>
+          <div class="rmstars" id="rm-stars">
+            <span data-star="1">★</span><span data-star="2">★</span><span data-star="3">★</span><span data-star="4">★</span><span data-star="5">★</span>
+          </div>
+          <textarea class="tinput" id="rm-note" placeholder="Optional tasting note…" style="margin-top:14px;font-size:16px;min-height:80px"></textarea>
+          <button class="btn block" id="rm-save" data-act="save-rating" style="margin-top:14px">Save rating</button>
+        </div>
+      </div>
+
+      <!-- ============ SOMMELIER ============ -->
       <section class="view" id="sommelier">
-        <div class="ph-screen"><div class="ic">&#9678;</div><h1>AI Sommelier</h1><p>&ldquo;I&rsquo;ve got steak tonight&rdquo; &mdash; ask, and get the perfect bottle. Your personal wine guide.</p><div class="soon">Phase 3</div></div>
+        <div class="bhead"><div class="ti">AI Sommelier</div></div>
+        <div class="som-wrap">
+          <div class="som-intro" id="som-intro">
+            <div class="som-ic">&#9678;</div>
+            <p>Your personal wine guide. Ask me anything.</p>
+            <div class="som-chips">
+              <div class="schip" data-q="What wine goes well with a braai?">Wine for a braai?</div>
+              <div class="schip" data-q="Suggest a good Chenin Blanc under R150">Chenin under R150</div>
+              <div class="schip" data-q="What's the difference between Shiraz and Syrah?">Shiraz vs Syrah</div>
+              <div class="schip" data-q="Best South African red wine under R200?">SA red under R200</div>
+            </div>
+          </div>
+          <div class="som-messages" id="som-messages"></div>
+        </div>
+        <div class="som-bar">
+          <textarea class="som-input" id="som-q" rows="1" placeholder="Ask the Sommelier…"></textarea>
+          <button class="som-send" id="som-send">&#9654;</button>
+        </div>
+      </section>
+
+      <!-- USER GUIDE -->
+      <section class="view" id="guide">
+        <div class="bhead"><div class="bk" data-go="home">&#8249;</div><div class="ti">User guide</div></div>
+        <div class="mdwrap" id="guide-body"><div class="empty">Loading…</div></div>
       </section>
 
     </div>
