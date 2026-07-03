@@ -1,4 +1,4 @@
-# TOPS Cellar Selection Club — Manager Guide
+# Tops Cellar Selection — Manager Guide
 
 Everything you need to run the Club from your phone. Sign in to the admin panel with your manager passphrase.
 
@@ -17,9 +17,9 @@ Your home base: key stats (members, waiting list, push open rate, prize entrants
 7. Use the **Include a picture** toggle to show or hide the bottle/photo (turn off for a clean text-only poster).
 8. Tap **Save card** to download the designed poster, or **Approve & send** to publish and broadcast it.
 
-## Manage catalogue
+## Manage Backend
 
-Add, edit and remove everything members see — no technical knowledge needed. **Dashboard → Manage catalogue**:
+Add, edit and remove everything members see — no technical knowledge needed. **Dashboard → Manage Backend**:
 
 - **Wines** — name, producer, region, varietal, story, pairing, tasting notes, awards, rating, image. These appear in the member app's Discover list and become favouritable and ratable.
 - **Events** — title, date & time, location, capacity, description, image. These show under Events with RSVP.
@@ -36,7 +36,7 @@ The member Home screen has three live areas you control:
 
 The hero shows the **newest box whose status is not "Past."** To feature this month's box:
 
-1. Go to **Manage catalogue → Discovery Boxes**.
+1. Go to **Manage Backend → Discovery Boxes**.
 2. Edit the current box (or **+ Add** a new one) and set its **Status** to **Waiting list** or **Live**.
 3. Set last month's box to **Past** so only the current one shows.
 
@@ -49,20 +49,20 @@ The two "This week" cards update **automatically**:
 - The first card shows your **current Discovery Box**.
 - The second card shows your **next upcoming event**.
 
-So to change what appears here, simply edit your Discovery Box and add/update events in **Manage catalogue**. No separate step needed.
+So to change what appears here, simply edit your Discovery Box and add/update events in **Manage Backend**. No separate step needed.
 
 ### Featured wine
 
 The Home screen automatically features your **highest-rated wine**. To put a specific wine in that spot:
 
-1. Go to **Manage catalogue → Wines** and open the wine you want to feature.
+1. Go to **Manage Backend → Wines** and open the wine you want to feature.
 2. Set its **Rating** to the highest value (e.g. 4.9 or 5.0) and save.
 
 The top-rated wine is shown as the Featured wine. As members rate wines, the highest-rated one naturally takes the spot.
 
 ## Magazine
 
-Give members something to read under **Cellar → Magazine**. In **Manage catalogue → Magazine**:
+Give members something to read under **Cellar → Magazine**. In **Manage Backend → Magazine**:
 
 1. Tap **+ Add an issue**.
 2. Enter the **issue title** (e.g. "Meet the Winemaker").

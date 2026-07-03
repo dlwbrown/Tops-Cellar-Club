@@ -1,4 +1,4 @@
-# TOPS Cellar Selection Club — Member Guide
+# Tops Cellar Selection — Member Guide
 
 Welcome to the Club. Here's everything your app can do.
 

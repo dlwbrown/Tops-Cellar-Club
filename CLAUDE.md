@@ -1,4 +1,4 @@
-# TOPS Cellar Selection Club — project notes for Claude
+# Tops Cellar Selection — project notes for Claude
 
 ## ⚠️ ALWAYS keep the in-app guides in sync
 Whenever you change, add, or remove a feature, you MUST update the matching guide(s)

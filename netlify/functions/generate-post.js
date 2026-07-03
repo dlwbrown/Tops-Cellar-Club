@@ -35,7 +35,7 @@ exports.handler = async (event) => {
   const { postType = 'Member Special', photoBase64, photoMediaType = 'image/jpeg', rawText = '' } = payload;
 
   const sys = [
-    'You write short, premium, on-brand copy for the TOPS Cellar Selection Club, a luxury wine-magazine-style members club in South Africa.',
+    'You write short, premium, on-brand copy for the Tops Cellar Selection, a luxury wine-magazine-style members club in South Africa.',
     'Voice: elegant, warm, confident, never salesy or shouty. South African English. Rand prices as "R89.99".',
     'CRITICAL RULES:',
     '- NEVER invent or guess a price. Use only a price the manager typed or one clearly legible in the photo.',

@@ -142,7 +142,7 @@ function wireInstallQr() {
   $('qr-print').addEventListener('click', () => window.print());
   $('qr-download').addEventListener('click', () => {
     if (!qrCanvas) { toast('QR not ready yet.'); return; }
-    const a = document.createElement('a'); a.href = qrCanvas.toDataURL('image/png'); a.download = 'cellar-club-install-qr.png'; a.click();
+    const a = document.createElement('a'); a.href = qrCanvas.toDataURL('image/png'); a.download = 'tops-cellar-selection-install-qr.png'; a.click();
   });
 }
 
@@ -448,7 +448,7 @@ async function downloadCard() {
   wrapText(x, $('edit-headline').value || '', W / 2, 960, W - 200, 76);
   x.fillStyle = 'rgba(247,244,238,.85)'; x.font = '400 30px Inter';
   wrapText(x, $('edit-body').value || '', W / 2, 1130, W - 240, 40);
-  x.fillStyle = '#c2a25a'; x.font = '700 22px Inter'; x.fillText('TOPS CELLAR SELECTION CLUB · BEACON ISLE', W / 2, H - 80);
+  x.fillStyle = '#c2a25a'; x.font = '700 22px Inter'; x.fillText('TOPS CELLAR SELECTION · BEACON ISLE', W / 2, H - 80);
 
   const a = document.createElement('a');
   a.href = c.toDataURL('image/png'); a.download = 'cellar-post.png'; a.click();

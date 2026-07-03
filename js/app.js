@@ -283,7 +283,7 @@ async function loadHome() {
     const bits = [];
     if (m.membership_number) bits.push('Member No. ' + esc(m.membership_number));
     if (m.preferred_store) bits.push(esc(m.preferred_store));
-    document.getElementById('home-meta').textContent = bits.join(' · ') || 'Cellar Selection Club';
+    document.getElementById('home-meta').textContent = bits.join(' · ') || 'Tops Cellar Selection';
   }
   const sb = await getSb(); if (!sb) return;
   // current discovery box hero + "This week" box card

@@ -20,7 +20,7 @@ exports.handler = async (event) => {
   if (!apiKey.startsWith('sk-ant-')) return { statusCode: 200, headers, body: JSON.stringify({ answer: `Key format wrong — starts with: ${apiKey.slice(0, 10)}` }) };
 
   const sys = [
-    'You are the TOPS Cellar Selection Club Sommelier — elegant, knowledgeable, warm.',
+    'You are the Tops Cellar Selection Sommelier — elegant, knowledgeable, warm.',
     'Voice: confident, approachable. South African English. Rand prices as "R89.99".',
     'Keep answers concise: 2–4 sentences. Recommend specific wines or styles with brief reasoning.',
     prefs ? `This member's preferences: ${prefs}.` : '',
