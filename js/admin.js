@@ -89,6 +89,7 @@ function loadFor(id) {
   if (id === 'm-events') loadManage('event');
   if (id === 'm-boxes') loadManage('box');
   if (id === 'm-mags') loadManage('mag');
+  if (id === 'm-specials') loadManage('special');
   if (id === 'm-prizes') loadManage('prize');
   if (id === 'luckydraw') loadDrawPrizes();
   if (id === 'prizereports') loadPrizeReports();
@@ -1018,6 +1019,7 @@ function wirePhotos() {
     ['bf-photo', 'bf-image_url', 'bf-photo-preview', 'box', false],
     ['gf-photo', 'gf-cover_url', 'gf-photo-preview', 'mag', false],
     ['pf-photo', 'pf-image_url', 'pf-photo-preview', 'prize', false],
+    ['sf-photo', 'sf-image_url', 'sf-photo-preview', 'special', false],
   ].forEach(([inp, target, prev, prefix, rmbg]) => {
     const el = $(inp); if (!el) return;
     el.addEventListener('change', (e) => {
@@ -1052,6 +1054,9 @@ function readBox() { return { title: $('bf-title').value.trim(), month: $('bf-mo
 function fillMag(g) { g = g || {}; $('gf-title').value = g.title || ''; $('gf-category').value = g.category || 'Article'; $('gf-issue_date').value = g.issue_date || ''; $('gf-excerpt').value = g.excerpt || ''; $('gf-body').value = g.body || ''; $('gf-cover_url').value = g.cover_url || ''; $('gf-content_ref').value = g.content_ref || ''; setPreview('gf-photo-preview', g.cover_url); }
 function readMag() { return { title: $('gf-title').value.trim(), category: $('gf-category').value, issue_date: $('gf-issue_date').value || null, excerpt: $('gf-excerpt').value.trim(), body: $('gf-body').value.trim(), cover_url: $('gf-cover_url').value.trim(), content_ref: $('gf-content_ref').value.trim() }; }
 
+function fillSpecial(s) { s = s || {}; $('sf-title').value = s.title || ''; $('sf-category').value = s.category || ''; $('sf-member_price').value = s.member_price != null ? s.member_price : ''; $('sf-normal_price').value = s.normal_price != null ? s.normal_price : ''; $('sf-valid_until').value = s.valid_until || ''; $('sf-image_url').value = s.image_url || ''; $('sf-link').value = s.link || ''; $('sf-status').value = s.status || 'published'; setPreview('sf-photo-preview', s.image_url); }
+function readSpecial() { return { title: $('sf-title').value.trim(), category: $('sf-category').value.trim(), member_price: $('sf-member_price').value.trim(), normal_price: $('sf-normal_price').value.trim(), valid_until: $('sf-valid_until').value || null, image_url: $('sf-image_url').value.trim(), link: $('sf-link').value.trim(), status: $('sf-status').value }; }
+
 function fillPrize(p) {
   p = p || {};
   $('pf-name').value = p.name || ''; $('pf-description').value = p.description || '';
@@ -1077,9 +1082,11 @@ const MGR = {
   box: { p: 'box', f: 'bf', list: 'list-boxes', save: 'save-box', del: 'delete-box', fill: fillBox, read: readBox, row: (b) => ({ t: b.title, s: [b.month, b.status].filter(Boolean).join(' · ') }) },
   mag: { p: 'mag', f: 'gf', list: 'list-mags', save: 'save-mag', del: 'delete-mag', fill: fillMag, read: readMag, row: (g) => ({ t: g.title, s: `${g.category || 'Article'}${g.issue_date ? ' · ' + new Date(g.issue_date).toLocaleDateString('en-ZA', { month: 'short', year: 'numeric' }) : ''}` }) },
   prize: { p: 'prize', f: 'pf', list: 'list-prizes', save: 'save-prize', del: 'delete-prize', fill: fillPrize, read: readPrize, row: (p) => { const rem = (p.qty_available || 0) - (p.qty_awarded || 0); return { t: p.name + (p.is_bonus ? ' · Bonus' : ''), s: `${p.value ? rands(p.value) + ' · ' : ''}${rem}/${p.qty_available || 0} left${p.active === false ? ' · inactive' : ''}` }; } },
+  special: { p: 'special', f: 'sf', list: 'list-specials', save: 'save-special', del: 'delete-special', fill: fillSpecial, read: readSpecial, row: (s) => ({ t: s.title, s: `${s.member_price ? rands(s.member_price) : ''}${s.category ? ' · ' + s.category : ''}${s.status !== 'published' ? ' · ' + s.status : ''}` }) },
 };
-let MITEMS = { wine: [], event: [], box: [], mag: [], prize: [] };
-let EDITING = { wine: null, event: null, box: null, mag: null, prize: null };
+let MITEMS = { wine: [], event: [], box: [], mag: [], prize: [], special: [] };
+let EDITING = { wine: null, event: null, box: null, mag: null, prize: null, special: null };
+let MSEARCH = { wine: '' };
 
 function mgrShowForm(p) { $(`${p}-list`).hidden = true; $(`${p}-add`).hidden = true; $(`${p}-form`).hidden = false; $('vp').scrollTop = 0; }
 function mgrShowList(p) { $(`${p}-list`).hidden = false; $(`${p}-add`).hidden = false; $(`${p}-form`).hidden = true; }
@@ -1094,11 +1101,21 @@ async function loadManage(key) {
     renderManage(key);
   } catch (err) { $(`${m.p}-list`).innerHTML = `<div class="empty">${esc(err.message)}</div>`; }
 }
+function mFilter(key, items) {
+  const q = (MSEARCH[key] || '').trim().toLowerCase();
+  if (!q) return items;
+  return items.filter((it) => {
+    const r = MGR[key].row(it);
+    const extra = [it.product_code, it.region, it.producer, it.varietal, it.category].filter(Boolean).join(' ');
+    return `${r.t} ${r.s} ${extra}`.toLowerCase().includes(q);
+  });
+}
 function renderManage(key) {
-  const m = MGR[key]; const items = MITEMS[key];
+  const m = MGR[key]; const items = mFilter(key, MITEMS[key]);
+  const total = MITEMS[key].length;
   $(`${m.p}-list`).innerHTML = items.length
-    ? items.map((it, i) => { const r = m.row(it); return `<div class="crow" data-midx="${i}"><div class="ci"><h4>${esc(r.t || '—')}</h4><p>${esc(r.s || '')}</p></div><div class="ch">›</div></div>`; }).join('')
-    : '<div class="empty">None yet. Tap “Add” to create one.</div>';
+    ? items.map((it) => { const r = m.row(it); return `<div class="crow" data-mid="${esc(it.id)}"><div class="ci"><h4>${esc(r.t || '—')}</h4><p>${esc(r.s || '')}</p></div><div class="ch">›</div></div>`; }).join('')
+    : `<div class="empty">${MSEARCH[key] ? 'No matches for “' + esc(MSEARCH[key]) + '”.' : (total ? '' : 'None yet. Tap “Add” to create one.')}</div>`;
 }
 function openMForm(key, item) {
   const m = MGR[key]; EDITING[key] = item ? item.id : null;
@@ -1113,6 +1130,7 @@ async function saveMForm(key) {
   if (key === 'box' && !body.title) { toast('Title is required.'); return; }
   if (key === 'prize' && !body.name) { toast('Prize name is required.'); return; }
   if (key === 'mag' && !body.title) { toast('Issue title is required.'); return; }
+  if (key === 'special' && !body.title) { toast('Title is required.'); return; }
   const btn = $(`${m.f}-save`); btn.disabled = true; const label = btn.textContent; btn.textContent = 'Saving…';
   try {
     await contentApi(m.save, { id: EDITING[key] || undefined, ...body });
@@ -1128,7 +1146,7 @@ async function delMForm(key) {
   catch (err) { toast(err.message || 'Delete failed.'); }
 }
 function wireManage() {
-  ['wine', 'event', 'box', 'mag', 'prize'].forEach((key) => {
+  ['wine', 'event', 'box', 'mag', 'prize', 'special'].forEach((key) => {
     const m = MGR[key];
     $(`${m.p}-add`).addEventListener('click', () => openMForm(key, null));
     $(`${m.f}-save`).addEventListener('click', () => saveMForm(key));
@@ -1136,9 +1154,10 @@ function wireManage() {
     $(`${m.f}-delete`).addEventListener('click', () => delMForm(key));
     $(`${m.p}-list`).addEventListener('click', (e) => {
       const row = e.target.closest('.crow'); if (!row) return;
-      openMForm(key, MITEMS[key][parseInt(row.dataset.midx, 10)]);
+      openMForm(key, MITEMS[key].find((x) => x.id === row.dataset.mid));
     });
   });
+  const ws = $('wine-msearch'); if (ws) ws.addEventListener('input', () => { MSEARCH.wine = ws.value; renderManage('wine'); });
 }
 
 /* ---------------- boot ---------------- */

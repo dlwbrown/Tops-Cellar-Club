@@ -25,8 +25,9 @@ Add, edit and remove everything members see — no technical knowledge needed. *
 - **Events** — title, date & time, location, capacity, description, image. These show under Events with RSVP.
 - **Discovery Boxes** — title, month, price, what's inside (one item per line), availability, status, image.
 - **Magazine** — issues members can read (see below).
+- **Specials** — member-only pricing shown on the Specials screen (title, category, member & normal price, valid-until date, photo, link, and a published/draft status).
 
-Tap any item to edit it; tap **+ Add** to create one. Tap **Delete** inside an item to remove it. Changes appear in the member app the next time a member opens it.
+Tap any item to edit it; tap **+ Add** to create one. Tap **Delete** inside an item to remove it. Changes appear in the member app the next time a member opens it. The **Wines** list has a **search box** (name, code, region, producer) for finding a wine fast in a large catalogue.
 
 ## Maintenance — wine database
 

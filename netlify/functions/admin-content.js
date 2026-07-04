@@ -28,6 +28,7 @@ const FIELDS = {
   discovery_boxes: ['month', 'title', 'image_url', 'price', 'included', 'availability', 'status'],
   magazines: ['title', 'issue_date', 'cover_url', 'content_ref', 'category', 'excerpt', 'body'],
   prizes: ['name', 'description', 'image_url', 'value', 'qty_available', 'qty_awarded', 'start_date', 'end_date', 'is_bonus', 'active'],
+  specials: ['category', 'title', 'member_price', 'normal_price', 'image_url', 'link', 'valid_until', 'status'],
 };
 
 function pick(table, body) {
@@ -264,11 +265,12 @@ exports.handler = async (event) => {
     'list-mags': 'magazines', 'save-mag': 'magazines', 'delete-mag': 'magazines',
     'list-prizes': 'prizes', 'save-prize': 'prizes', 'delete-prize': 'prizes',
     'list-orders': 'orders', 'delete-order': 'orders',
+    'list-specials': 'specials', 'save-special': 'specials', 'delete-special': 'specials',
   };
   const table = TABLE[action];
   if (!table) return json({ error: 'Unknown action: ' + action }, 400);
 
-  const order = table === 'events' ? 'datetime.asc' : (table === 'discovery_boxes' || table === 'prizes' || table === 'orders') ? 'created_at.desc' : table === 'magazines' ? 'issue_date.desc' : 'name.asc';
+  const order = table === 'events' ? 'datetime.asc' : (table === 'discovery_boxes' || table === 'prizes' || table === 'orders' || table === 'specials') ? 'created_at.desc' : table === 'magazines' ? 'issue_date.desc' : 'name.asc';
 
   try {
     // LIST
@@ -296,10 +298,11 @@ exports.handler = async (event) => {
       if (body.capacity !== undefined && body.capacity !== null && body.capacity !== '') body.capacity = parseInt(body.capacity, 10) || null;
       if (body.price !== undefined && body.price !== null && body.price !== '') body.price = parseFloat(body.price) || null;
       if (body.avg_rating !== undefined && body.avg_rating !== null && body.avg_rating !== '') body.avg_rating = parseFloat(body.avg_rating) || 0;
-      for (const k of ['selling_price', 'promo_price', 'alcohol']) {
+      for (const k of ['selling_price', 'promo_price', 'alcohol', 'member_price', 'normal_price']) {
         if (body[k] === '' ) body[k] = null;
         else if (body[k] !== undefined && body[k] !== null) body[k] = parseFloat(String(body[k]).replace(/[^\d.]/g, '')) || null;
       }
+      if (body.valid_until === '') body.valid_until = null;
       if (body.soh !== undefined) body.soh = (body.soh === '' || body.soh === null) ? 0 : (parseInt(body.soh, 10) || 0);
       if (body.product_code === '') body.product_code = null;
       if (body.value === '') body.value = null;
