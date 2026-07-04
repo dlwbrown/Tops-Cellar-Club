@@ -40,15 +40,29 @@ exports.handler = async (event) => {
     if (!rmKey) { note = 'Background not removed — REMOVE_BG_API_KEY is not set in Netlify.'; }
     else {
       try {
+        // Ask remove.bg for a transparent PNG cut-out, then flatten it onto a
+        // solid white background ourselves (below) so the result is *guaranteed*
+        // white — remove.bg's own bg_color param proved unreliable here.
         const fd = new FormData();
         fd.append('image_file_b64', b64);
         fd.append('size', 'auto');
-        fd.append('bg_color', 'ffffff'); // composite the cut-out bottle onto a clean white background
-        fd.append('format', 'jpg');
+        fd.append('format', 'png');
         const rb = await fetch('https://api.remove.bg/v1.0/removebg', { method: 'POST', headers: { 'X-Api-Key': rmKey }, body: fd });
-        if (rb.ok) { bytes = Buffer.from(await rb.arrayBuffer()); mime = 'image/jpeg'; removed = true; }
+        if (rb.ok) { bytes = Buffer.from(await rb.arrayBuffer()); mime = 'image/png'; removed = true; }
         else { const t = await rb.text(); note = 'remove.bg error: ' + t.slice(0, 160); }
       } catch (e) { note = 'remove.bg failed: ' + String(e).slice(0, 120); }
+    }
+  }
+
+  // Flatten the transparent cut-out onto a clean white background and re-encode
+  // as JPEG. This is what makes the bottle sit on white instead of transparency.
+  if (removed) {
+    try {
+      const sharp = require('sharp');
+      bytes = await sharp(bytes).flatten({ background: '#ffffff' }).jpeg({ quality: 90 }).toBuffer();
+      mime = 'image/jpeg';
+    } catch (e) {
+      note = (note ? note + ' ' : '') + 'White fill skipped: ' + String(e).slice(0, 120);
     }
   }
 

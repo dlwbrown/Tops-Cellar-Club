@@ -3,6 +3,7 @@
   "private": true,
   "description": "Netlify Functions dependencies for Tops Cellar Selection.",
   "dependencies": {
+    "sharp": "^0.33.5",
     "web-push": "^3.6.7"
   }
 }

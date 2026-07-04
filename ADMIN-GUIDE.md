@@ -51,7 +51,7 @@ Tap **Export wine database (Excel)** to download the full catalogue in the same 
 
 To add a **bottle photo**, open the wine and tap **Take / choose photo** — snap it with the camera or pick from the library. It's resized, uploaded and set as that wine's thumbnail automatically (just **Save** the wine to keep it). You can still paste an image URL instead if you prefer.
 
-Leave **Remove background** on (the default) for a clean cut-out bottle on the dark theme; switch it off to keep the photo as-is. (Background removal only runs if a remove.bg key is configured.)
+Leave **Remove background** on (the default) to cut the bottle out and place it on a clean **white background** (like a catalogue product shot); switch it off to keep the photo as-is. (Background removal only runs if a remove.bg key is configured.)
 
 ## Managing the Home screen
 
