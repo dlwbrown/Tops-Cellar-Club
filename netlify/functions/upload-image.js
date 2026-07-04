@@ -40,9 +40,10 @@ exports.handler = async (event) => {
       const fd = new FormData();
       fd.append('image_file_b64', b64);
       fd.append('size', 'auto');
-      fd.append('format', 'png');
+      fd.append('bg_color', 'ffffff'); // composite the cut-out bottle onto a clean white background
+      fd.append('format', 'jpg');
       const rb = await fetch('https://api.remove.bg/v1.0/removebg', { method: 'POST', headers: { 'X-Api-Key': rmKey }, body: fd });
-      if (rb.ok) { bytes = Buffer.from(await rb.arrayBuffer()); mime = 'image/png'; }
+      if (rb.ok) { bytes = Buffer.from(await rb.arrayBuffer()); mime = 'image/jpeg'; }
     } catch { /* keep original */ }
   }
 

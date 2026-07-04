@@ -993,7 +993,11 @@ function resizeImage(file, max = 700, quality = 0.82) {
     img.onerror = reject; img.src = url;
   });
 }
-function setPreview(previewId, url) { const pv = $(previewId); if (!pv) return; if (url) { pv.src = url; pv.hidden = false; } else { pv.hidden = true; pv.src = ''; } }
+function setPreview(previewId, url) {
+  const pv = $(previewId); if (pv) { if (url) { pv.src = url; pv.hidden = false; } else { pv.hidden = true; pv.src = ''; } }
+  const rm = $(previewId.replace('-preview', '-rm')); if (rm) rm.hidden = !url;
+}
+function removePhoto(urlId, previewId) { $(urlId).value = ''; setPreview(previewId, ''); toast('Photo removed — save to apply.'); }
 async function handlePhotoPick(e, targetInputId, previewId, prefix, removeBg) {
   const file = e.target.files[0]; if (!file) return;
   const pv = $(previewId);
@@ -1002,7 +1006,7 @@ async function handlePhotoPick(e, targetInputId, previewId, prefix, removeBg) {
     if (pv) { pv.src = dataUrl; pv.hidden = false; }
     toast(removeBg ? 'Uploading & removing background…' : 'Uploading photo…');
     const r = await contentFn('upload-image', { imageBase64: dataUrl.split(',')[1], mime: 'image/jpeg', prefix, removeBg: !!removeBg });
-    $(targetInputId).value = r.url; if (pv) pv.src = r.url;
+    $(targetInputId).value = r.url; setPreview(previewId, r.url);
     toast('Photo added — save to keep it.');
   } catch (err) { toast(err.message || 'Upload failed.'); }
   finally { e.target.value = ''; }
@@ -1020,6 +1024,7 @@ function wirePhotos() {
       const removeBg = (prefix === 'wine') ? $('wf-removebg').classList.contains('on') : !!rmbg;
       handlePhotoPick(e, target, prev, prefix, removeBg);
     });
+    const rmBtn = $(prev.replace('-preview', '-rm')); if (rmBtn) rmBtn.addEventListener('click', () => removePhoto(target, prev));
   });
   const rb = $('wf-removebg'); if (rb) rb.addEventListener('click', () => rb.classList.toggle('on'));
 }
