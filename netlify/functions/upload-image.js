@@ -32,38 +32,22 @@ exports.handler = async (event) => {
   let mime = p.mime || 'image/jpeg';
   let bytes = Buffer.from(b64, 'base64');
 
-  // Optional background removal for product shots (e.g. bottle photos).
-  // Needs REMOVE_BG_API_KEY; falls back to the original image if unset or on error.
-  const rmKey = (process.env.REMOVE_BG_API_KEY || '').trim();
-  let removed = false, note = '';
-  if (p.removeBg) {
-    if (!rmKey) { note = 'Background not removed — REMOVE_BG_API_KEY is not set in Netlify.'; }
-    else {
-      try {
-        // Ask remove.bg for a transparent PNG cut-out, then flatten it onto a
-        // solid white background ourselves (below) so the result is *guaranteed*
-        // white — remove.bg's own bg_color param proved unreliable here.
-        const fd = new FormData();
-        fd.append('image_file_b64', b64);
-        fd.append('size', 'auto');
-        fd.append('format', 'png');
-        const rb = await fetch('https://api.remove.bg/v1.0/removebg', { method: 'POST', headers: { 'X-Api-Key': rmKey }, body: fd });
-        if (rb.ok) { bytes = Buffer.from(await rb.arrayBuffer()); mime = 'image/png'; removed = true; }
-        else { const t = await rb.text(); note = 'remove.bg error: ' + t.slice(0, 160); }
-      } catch (e) { note = 'remove.bg failed: ' + String(e).slice(0, 120); }
-    }
-  }
-
-  // Flatten the transparent cut-out onto a clean white background and re-encode
-  // as JPEG. This is what makes the bottle sit on white instead of transparency.
-  if (removed) {
+  // Cut-out mode: run remove.bg and return the transparent PNG as base64 WITHOUT
+  // uploading. The browser then flattens it onto solid white (guaranteed white,
+  // no server-side image library needed) and re-uploads the final JPEG.
+  if (p.removeBg && p.cutoutOnly) {
+    const rmKey = (process.env.REMOVE_BG_API_KEY || '').trim();
+    if (!rmKey) return json({ removed: false, note: 'Background not removed — REMOVE_BG_API_KEY is not set in Netlify.' });
     try {
-      const sharp = require('sharp');
-      bytes = await sharp(bytes).flatten({ background: '#ffffff' }).jpeg({ quality: 90 }).toBuffer();
-      mime = 'image/jpeg';
-    } catch (e) {
-      note = (note ? note + ' ' : '') + 'White fill skipped: ' + String(e).slice(0, 120);
-    }
+      const fd = new FormData();
+      fd.append('image_file_b64', b64);
+      fd.append('size', 'auto');
+      fd.append('format', 'png'); // transparent cut-out; the browser paints white behind it
+      const rb = await fetch('https://api.remove.bg/v1.0/removebg', { method: 'POST', headers: { 'X-Api-Key': rmKey }, body: fd });
+      if (rb.ok) return json({ removed: true, cutoutBase64: Buffer.from(await rb.arrayBuffer()).toString('base64') });
+      const t = await rb.text();
+      return json({ removed: false, note: 'remove.bg error: ' + t.slice(0, 160) });
+    } catch (e) { return json({ removed: false, note: 'remove.bg failed: ' + String(e).slice(0, 120) }); }
   }
 
   const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg';
@@ -80,6 +64,6 @@ exports.handler = async (event) => {
       method: 'POST', headers: { ...auth, 'Content-Type': mime, 'x-upsert': 'true' }, body: bytes,
     });
     if (!up.ok) return json({ error: 'Upload failed: ' + (await up.text()) }, 400);
-    return json({ url: `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${name}`, removed, note });
+    return json({ url: `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${name}` });
   } catch (e) { return json({ error: String(e) }, 500); }
 };

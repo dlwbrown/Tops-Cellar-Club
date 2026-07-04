@@ -999,17 +999,46 @@ function setPreview(previewId, url) {
   const rm = $(previewId.replace('-preview', '-rm')); if (rm) rm.hidden = !url;
 }
 function removePhoto(urlId, previewId) { $(urlId).value = ''; setPreview(previewId, ''); toast('Photo removed — save to apply.'); }
+// Paint a (possibly transparent) PNG cut-out onto a solid white canvas and export
+// a JPEG. This is what puts the bottle on a clean white background — done in the
+// browser so it never depends on a server-side image library.
+function flattenOnWhite(base64png, max = 700, quality = 0.9) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > h && w > max) { h = Math.round(h * max / w); w = max; } else if (h > max) { w = Math.round(w * max / h); h = max; }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject; img.src = 'data:image/png;base64,' + base64png;
+  });
+}
 async function handlePhotoPick(e, targetInputId, previewId, prefix, removeBg) {
   const file = e.target.files[0]; if (!file) return;
   const pv = $(previewId);
   try {
-    const dataUrl = await resizeImage(file);
+    let dataUrl = await resizeImage(file);
     if (pv) { pv.src = dataUrl; pv.hidden = false; }
-    toast(removeBg ? 'Uploading & removing background…' : 'Uploading photo…');
-    const r = await contentFn('upload-image', { imageBase64: dataUrl.split(',')[1], mime: 'image/jpeg', prefix, removeBg: !!removeBg });
+    let bgNote = '';
+    if (removeBg) {
+      toast('Removing background…');
+      // Step 1: server runs remove.bg (needs the API key) and returns a transparent cut-out.
+      const cut = await contentFn('upload-image', { imageBase64: dataUrl.split(',')[1], mime: 'image/jpeg', prefix, removeBg: true, cutoutOnly: true });
+      if (cut.removed && cut.cutoutBase64) {
+        // Step 2: flatten the cut-out onto white here in the browser.
+        dataUrl = await flattenOnWhite(cut.cutoutBase64);
+        if (pv) pv.src = dataUrl;
+      } else { bgNote = cut.note || 'Background not removed.'; }
+    }
+    toast('Uploading photo…');
+    // Upload the final image (white-flattened, or the original if removal was skipped).
+    const r = await contentFn('upload-image', { imageBase64: dataUrl.split(',')[1], mime: 'image/jpeg', prefix });
     $(targetInputId).value = r.url; setPreview(previewId, r.url);
-    if (removeBg && r.removed === false) toast(r.note || 'Uploaded — but background was not removed.');
-    else toast('Photo added — save to keep it.');
+    toast(bgNote ? bgNote + ' Photo added anyway — save to keep it.' : 'Photo added — save to keep it.');
   } catch (err) { toast(err.message || 'Upload failed.'); }
   finally { e.target.value = ''; }
 }
