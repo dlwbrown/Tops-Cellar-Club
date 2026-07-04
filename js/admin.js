@@ -975,7 +975,38 @@ function fillWine(w) {
   $('wf-cellaring_potential').value = w.cellaring_potential || ''; $('wf-avg_rating').value = w.avg_rating != null ? w.avg_rating : '';
   $('wf-awards').value = w.awards || ''; $('wf-image_url').value = w.image_url || '';
   $('wf-active').value = (w.active === false) ? 'false' : 'true';
+  const pv = $('wf-photo-preview'); if (pv) { if (w.image_url) { pv.src = w.image_url; pv.hidden = false; } else { pv.hidden = true; pv.src = ''; } }
 }
+
+// Shrink a chosen photo to a tidy thumbnail before upload (keeps storage light).
+function resizeImage(file, max = 700, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let w = img.width, h = img.height;
+      if (w > h && w > max) { h = Math.round(h * max / w); w = max; } else if (h > max) { w = Math.round(w * max / h); h = max; }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject; img.src = url;
+  });
+}
+async function onWinePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const pv = $('wf-photo-preview');
+  try {
+    const dataUrl = await resizeImage(file);
+    pv.src = dataUrl; pv.hidden = false;
+    toast('Uploading photo…');
+    const r = await contentFn('upload-image', { imageBase64: dataUrl.split(',')[1], mime: 'image/jpeg', prefix: 'wine' });
+    $('wf-image_url').value = r.url; pv.src = r.url;
+    toast('Photo added — save the wine to keep it.');
+  } catch (err) { toast(err.message || 'Upload failed.'); }
+  finally { e.target.value = ''; }
+}
+function wireWinePhoto() { const inp = $('wf-photo'); if (inp) inp.addEventListener('change', onWinePhoto); }
 function readWine() {
   return {
     product_code: $('wf-product_code').value.trim(), category: $('wf-category').value.trim(),
@@ -1090,7 +1121,7 @@ function wireManage() {
 
 /* ---------------- boot ---------------- */
 function start() {
-  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance(); wirePrizes(); wireOrders();
+  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance(); wirePrizes(); wireOrders(); wireWinePhoto();
   if (TOKEN) {
     const hr = new Date().getHours();
     $('dash-greeting').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Ashley';

@@ -48,6 +48,8 @@ Tap **Export wine database (Excel)** to download the full catalogue in the same 
 
 **Maintenance → Wines** (or Manage Backend → Wines) opens the full editor, where each wine can carry Product Code, category, producer, country, region, variety, vintage, size, alcohol %, tasting notes, food pairing, serving temperature, cellaring potential, bottle image, selling & promo price, stock, rating and an Active/Inactive switch. Fields can be filled in over time.
 
+To add a **bottle photo**, open the wine and tap **Take / choose photo** — snap it with the camera or pick from the library. It's resized, uploaded and set as that wine's thumbnail automatically (just **Save** the wine to keep it). You can still paste an image URL instead if you prefer.
+
 ## Managing the Home screen
 
 The member Home screen has three live areas you control:
