@@ -993,20 +993,29 @@ function resizeImage(file, max = 700, quality = 0.82) {
     img.onerror = reject; img.src = url;
   });
 }
-async function onWinePhoto(e) {
+function setPreview(previewId, url) { const pv = $(previewId); if (!pv) return; if (url) { pv.src = url; pv.hidden = false; } else { pv.hidden = true; pv.src = ''; } }
+async function handlePhotoPick(e, targetInputId, previewId, prefix) {
   const file = e.target.files[0]; if (!file) return;
-  const pv = $('wf-photo-preview');
+  const pv = $(previewId);
   try {
     const dataUrl = await resizeImage(file);
-    pv.src = dataUrl; pv.hidden = false;
+    if (pv) { pv.src = dataUrl; pv.hidden = false; }
     toast('Uploading photo…');
-    const r = await contentFn('upload-image', { imageBase64: dataUrl.split(',')[1], mime: 'image/jpeg', prefix: 'wine' });
-    $('wf-image_url').value = r.url; pv.src = r.url;
-    toast('Photo added — save the wine to keep it.');
+    const r = await contentFn('upload-image', { imageBase64: dataUrl.split(',')[1], mime: 'image/jpeg', prefix });
+    $(targetInputId).value = r.url; if (pv) pv.src = r.url;
+    toast('Photo added — save to keep it.');
   } catch (err) { toast(err.message || 'Upload failed.'); }
   finally { e.target.value = ''; }
 }
-function wireWinePhoto() { const inp = $('wf-photo'); if (inp) inp.addEventListener('change', onWinePhoto); }
+function wirePhotos() {
+  [
+    ['wf-photo', 'wf-image_url', 'wf-photo-preview', 'wine'],
+    ['ef-photo', 'ef-image_url', 'ef-photo-preview', 'event'],
+    ['bf-photo', 'bf-image_url', 'bf-photo-preview', 'box'],
+    ['gf-photo', 'gf-cover_url', 'gf-photo-preview', 'mag'],
+    ['pf-photo', 'pf-image_url', 'pf-photo-preview', 'prize'],
+  ].forEach(([inp, target, prev, prefix]) => { const el = $(inp); if (el) el.addEventListener('change', (e) => handlePhotoPick(e, target, prev, prefix)); });
+}
 function readWine() {
   return {
     product_code: $('wf-product_code').value.trim(), category: $('wf-category').value.trim(),
@@ -1022,13 +1031,13 @@ function readWine() {
   };
 }
 
-function fillEvent(e) { e = e || {}; $('ef-title').value = e.title || ''; $('ef-datetime').value = toLocalInput(e.datetime); $('ef-location').value = e.location || ''; $('ef-capacity').value = e.capacity != null ? e.capacity : ''; $('ef-description').value = e.description || ''; $('ef-image_url').value = e.image_url || ''; }
+function fillEvent(e) { e = e || {}; $('ef-title').value = e.title || ''; $('ef-datetime').value = toLocalInput(e.datetime); $('ef-location').value = e.location || ''; $('ef-capacity').value = e.capacity != null ? e.capacity : ''; $('ef-description').value = e.description || ''; $('ef-image_url').value = e.image_url || ''; setPreview('ef-photo-preview', e.image_url); }
 function readEvent() { const dt = $('ef-datetime').value; return { title: $('ef-title').value.trim(), datetime: dt ? new Date(dt).toISOString() : null, location: $('ef-location').value.trim(), capacity: $('ef-capacity').value.trim(), description: $('ef-description').value.trim(), image_url: $('ef-image_url').value.trim(), status: 'confirmed' }; }
 
-function fillBox(b) { b = b || {}; $('bf-title').value = b.title || ''; $('bf-month').value = b.month || ''; $('bf-price').value = b.price != null ? b.price : ''; $('bf-included').value = Array.isArray(b.included) ? b.included.join('\n') : ''; $('bf-availability').value = b.availability || ''; $('bf-status').value = b.status || 'waitlist'; $('bf-image_url').value = b.image_url || ''; }
+function fillBox(b) { b = b || {}; $('bf-title').value = b.title || ''; $('bf-month').value = b.month || ''; $('bf-price').value = b.price != null ? b.price : ''; $('bf-included').value = Array.isArray(b.included) ? b.included.join('\n') : ''; $('bf-availability').value = b.availability || ''; $('bf-status').value = b.status || 'waitlist'; $('bf-image_url').value = b.image_url || ''; setPreview('bf-photo-preview', b.image_url); }
 function readBox() { return { title: $('bf-title').value.trim(), month: $('bf-month').value.trim(), price: $('bf-price').value.trim(), included: $('bf-included').value.split('\n').map((s) => s.trim()).filter(Boolean), availability: $('bf-availability').value.trim(), status: $('bf-status').value, image_url: $('bf-image_url').value.trim() }; }
 
-function fillMag(g) { g = g || {}; $('gf-title').value = g.title || ''; $('gf-category').value = g.category || 'Article'; $('gf-issue_date').value = g.issue_date || ''; $('gf-excerpt').value = g.excerpt || ''; $('gf-body').value = g.body || ''; $('gf-cover_url').value = g.cover_url || ''; $('gf-content_ref').value = g.content_ref || ''; }
+function fillMag(g) { g = g || {}; $('gf-title').value = g.title || ''; $('gf-category').value = g.category || 'Article'; $('gf-issue_date').value = g.issue_date || ''; $('gf-excerpt').value = g.excerpt || ''; $('gf-body').value = g.body || ''; $('gf-cover_url').value = g.cover_url || ''; $('gf-content_ref').value = g.content_ref || ''; setPreview('gf-photo-preview', g.cover_url); }
 function readMag() { return { title: $('gf-title').value.trim(), category: $('gf-category').value, issue_date: $('gf-issue_date').value || null, excerpt: $('gf-excerpt').value.trim(), body: $('gf-body').value.trim(), cover_url: $('gf-cover_url').value.trim(), content_ref: $('gf-content_ref').value.trim() }; }
 
 function fillPrize(p) {
@@ -1039,6 +1048,7 @@ function fillPrize(p) {
   $('pf-is_bonus').value = p.is_bonus ? 'true' : 'false'; $('pf-active').value = (p.active === false) ? 'false' : 'true';
   const rem = (p.qty_available || 0) - (p.qty_awarded || 0);
   $('pf-remaining').textContent = p.id ? `Awarded ${p.qty_awarded || 0} · ${rem} remaining` : '';
+  setPreview('pf-photo-preview', p.image_url);
 }
 function readPrize() {
   return {
@@ -1121,7 +1131,7 @@ function wireManage() {
 
 /* ---------------- boot ---------------- */
 function start() {
-  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance(); wirePrizes(); wireOrders(); wireWinePhoto();
+  wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance(); wirePrizes(); wireOrders(); wirePhotos();
   if (TOKEN) {
     const hr = new Date().getHours();
     $('dash-greeting').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Ashley';

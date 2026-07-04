@@ -337,8 +337,11 @@
             </div>
             <div class="flabel">Description</div>
             <textarea class="tinput" id="ef-description" placeholder="An evening of Swartland's finest…"></textarea>
-            <div class="flabel">Image URL (optional)</div>
-            <input class="tinput" id="ef-image_url" placeholder="https://…" />
+            <div class="flabel">Photo</div>
+            <img id="ef-photo-preview" alt="" hidden style="max-height:120px;border-radius:12px;display:block;margin-bottom:8px" />
+            <label class="btn block ghost" style="display:block;text-align:center">&#128247; Take / choose photo
+              <input type="file" id="ef-photo" accept="image/*" hidden /></label>
+            <input class="tinput" id="ef-image_url" placeholder="…or paste an image URL" />
             <div style="display:flex;gap:10px;margin-top:16px">
               <button class="btn" style="flex:1" id="ef-save">Save event</button>
               <button class="btn ghost" id="ef-cancel">Cancel</button>
@@ -371,8 +374,11 @@
               <option value="live">Live</option>
               <option value="past">Past</option>
             </select>
-            <div class="flabel">Image URL (optional)</div>
-            <input class="tinput" id="bf-image_url" placeholder="https://…" />
+            <div class="flabel">Photo</div>
+            <img id="bf-photo-preview" alt="" hidden style="max-height:120px;border-radius:12px;display:block;margin-bottom:8px" />
+            <label class="btn block ghost" style="display:block;text-align:center">&#128247; Take / choose photo
+              <input type="file" id="bf-photo" accept="image/*" hidden /></label>
+            <input class="tinput" id="bf-image_url" placeholder="…or paste an image URL" />
             <div style="display:flex;gap:10px;margin-top:16px">
               <button class="btn" style="flex:1" id="bf-save">Save box</button>
               <button class="btn ghost" id="bf-cancel">Cancel</button>
@@ -402,8 +408,11 @@
             <input class="tinput" id="gf-excerpt" placeholder="One-line teaser shown in the list" />
             <div class="flabel">Article body</div>
             <textarea class="tinput" id="gf-body" placeholder="Write the article here…" style="min-height:120px"></textarea>
-            <div class="flabel">Cover image URL</div>
-            <input class="tinput" id="gf-cover_url" placeholder="https://…" />
+            <div class="flabel">Cover photo</div>
+            <img id="gf-photo-preview" alt="" hidden style="max-height:120px;border-radius:12px;display:block;margin-bottom:8px" />
+            <label class="btn block ghost" style="display:block;text-align:center">&#128247; Take / choose photo
+              <input type="file" id="gf-photo" accept="image/*" hidden /></label>
+            <input class="tinput" id="gf-cover_url" placeholder="…or paste an image URL" />
             <div class="flabel">External link (optional)</div>
             <input class="tinput" id="gf-content_ref" placeholder="https://… PDF or web link" />
             <div style="display:flex;gap:10px;margin-top:16px">
@@ -502,8 +511,11 @@
               <div><div class="flabel">Start date</div><input class="tinput" id="pf-start_date" type="date" /></div>
               <div><div class="flabel">End date</div><input class="tinput" id="pf-end_date" type="date" /></div>
             </div>
-            <div class="flabel">Image URL (optional)</div>
-            <input class="tinput" id="pf-image_url" placeholder="https://…" />
+            <div class="flabel">Photo</div>
+            <img id="pf-photo-preview" alt="" hidden style="max-height:120px;border-radius:12px;display:block;margin-bottom:8px" />
+            <label class="btn block ghost" style="display:block;text-align:center">&#128247; Take / choose photo
+              <input type="file" id="pf-photo" accept="image/*" hidden /></label>
+            <input class="tinput" id="pf-image_url" placeholder="…or paste an image URL" />
             <div class="frow">
               <div><div class="flabel">Type</div><select class="tinput" id="pf-is_bonus"><option value="false">Standard prize</option><option value="true">Bonus prize</option></select></div>
               <div><div class="flabel">Status</div><select class="tinput" id="pf-active"><option value="true">Active</option><option value="false">Inactive</option></select></div>
