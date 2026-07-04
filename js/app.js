@@ -948,6 +948,14 @@ async function start() {
   loadHome(); loadBox(); loadSpecials(); loadEvents(); loadWines(); loadNotifications(); loadCellar(); refreshMemberType();
   checkReengagement();
 
+  // refresh content whenever the app returns to the foreground (so admin changes — new
+  // images, prices, wines — show up without a full restart)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && getMember()) {
+      loadHome(); loadWines(); loadSpecials(); loadEvents(); loadBox(); loadNotifications(); loadCellar();
+    }
+  });
+
   // deep link from a tapped notification (?link=/specials etc.)
   const link = new URLSearchParams(location.search).get('link');
   if (link && state.stage === 'home') { const id = link.replace(/^\//, ''); if (document.getElementById(id)) go(id); }

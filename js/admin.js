@@ -994,14 +994,14 @@ function resizeImage(file, max = 700, quality = 0.82) {
   });
 }
 function setPreview(previewId, url) { const pv = $(previewId); if (!pv) return; if (url) { pv.src = url; pv.hidden = false; } else { pv.hidden = true; pv.src = ''; } }
-async function handlePhotoPick(e, targetInputId, previewId, prefix) {
+async function handlePhotoPick(e, targetInputId, previewId, prefix, removeBg) {
   const file = e.target.files[0]; if (!file) return;
   const pv = $(previewId);
   try {
     const dataUrl = await resizeImage(file);
     if (pv) { pv.src = dataUrl; pv.hidden = false; }
-    toast('Uploading photo…');
-    const r = await contentFn('upload-image', { imageBase64: dataUrl.split(',')[1], mime: 'image/jpeg', prefix });
+    toast(removeBg ? 'Uploading & removing background…' : 'Uploading photo…');
+    const r = await contentFn('upload-image', { imageBase64: dataUrl.split(',')[1], mime: 'image/jpeg', prefix, removeBg: !!removeBg });
     $(targetInputId).value = r.url; if (pv) pv.src = r.url;
     toast('Photo added — save to keep it.');
   } catch (err) { toast(err.message || 'Upload failed.'); }
@@ -1009,12 +1009,12 @@ async function handlePhotoPick(e, targetInputId, previewId, prefix) {
 }
 function wirePhotos() {
   [
-    ['wf-photo', 'wf-image_url', 'wf-photo-preview', 'wine'],
-    ['ef-photo', 'ef-image_url', 'ef-photo-preview', 'event'],
-    ['bf-photo', 'bf-image_url', 'bf-photo-preview', 'box'],
-    ['gf-photo', 'gf-cover_url', 'gf-photo-preview', 'mag'],
-    ['pf-photo', 'pf-image_url', 'pf-photo-preview', 'prize'],
-  ].forEach(([inp, target, prev, prefix]) => { const el = $(inp); if (el) el.addEventListener('change', (e) => handlePhotoPick(e, target, prev, prefix)); });
+    ['wf-photo', 'wf-image_url', 'wf-photo-preview', 'wine', true],
+    ['ef-photo', 'ef-image_url', 'ef-photo-preview', 'event', false],
+    ['bf-photo', 'bf-image_url', 'bf-photo-preview', 'box', false],
+    ['gf-photo', 'gf-cover_url', 'gf-photo-preview', 'mag', false],
+    ['pf-photo', 'pf-image_url', 'pf-photo-preview', 'prize', false],
+  ].forEach(([inp, target, prev, prefix, rmbg]) => { const el = $(inp); if (el) el.addEventListener('change', (e) => handlePhotoPick(e, target, prev, prefix, rmbg)); });
 }
 function readWine() {
   return {
