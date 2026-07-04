@@ -1014,7 +1014,14 @@ function wirePhotos() {
     ['bf-photo', 'bf-image_url', 'bf-photo-preview', 'box', false],
     ['gf-photo', 'gf-cover_url', 'gf-photo-preview', 'mag', false],
     ['pf-photo', 'pf-image_url', 'pf-photo-preview', 'prize', false],
-  ].forEach(([inp, target, prev, prefix, rmbg]) => { const el = $(inp); if (el) el.addEventListener('change', (e) => handlePhotoPick(e, target, prev, prefix, rmbg)); });
+  ].forEach(([inp, target, prev, prefix, rmbg]) => {
+    const el = $(inp); if (!el) return;
+    el.addEventListener('change', (e) => {
+      const removeBg = (prefix === 'wine') ? $('wf-removebg').classList.contains('on') : !!rmbg;
+      handlePhotoPick(e, target, prev, prefix, removeBg);
+    });
+  });
+  const rb = $('wf-removebg'); if (rb) rb.addEventListener('click', () => rb.classList.toggle('on'));
 }
 function readWine() {
   return {
