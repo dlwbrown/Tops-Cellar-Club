@@ -35,16 +35,21 @@ exports.handler = async (event) => {
   // Optional background removal for product shots (e.g. bottle photos).
   // Needs REMOVE_BG_API_KEY; falls back to the original image if unset or on error.
   const rmKey = (process.env.REMOVE_BG_API_KEY || '').trim();
-  if (p.removeBg && rmKey) {
-    try {
-      const fd = new FormData();
-      fd.append('image_file_b64', b64);
-      fd.append('size', 'auto');
-      fd.append('bg_color', 'ffffff'); // composite the cut-out bottle onto a clean white background
-      fd.append('format', 'jpg');
-      const rb = await fetch('https://api.remove.bg/v1.0/removebg', { method: 'POST', headers: { 'X-Api-Key': rmKey }, body: fd });
-      if (rb.ok) { bytes = Buffer.from(await rb.arrayBuffer()); mime = 'image/jpeg'; }
-    } catch { /* keep original */ }
+  let removed = false, note = '';
+  if (p.removeBg) {
+    if (!rmKey) { note = 'Background not removed — REMOVE_BG_API_KEY is not set in Netlify.'; }
+    else {
+      try {
+        const fd = new FormData();
+        fd.append('image_file_b64', b64);
+        fd.append('size', 'auto');
+        fd.append('bg_color', 'ffffff'); // composite the cut-out bottle onto a clean white background
+        fd.append('format', 'jpg');
+        const rb = await fetch('https://api.remove.bg/v1.0/removebg', { method: 'POST', headers: { 'X-Api-Key': rmKey }, body: fd });
+        if (rb.ok) { bytes = Buffer.from(await rb.arrayBuffer()); mime = 'image/jpeg'; removed = true; }
+        else { const t = await rb.text(); note = 'remove.bg error: ' + t.slice(0, 160); }
+      } catch (e) { note = 'remove.bg failed: ' + String(e).slice(0, 120); }
+    }
   }
 
   const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg';
@@ -61,6 +66,6 @@ exports.handler = async (event) => {
       method: 'POST', headers: { ...auth, 'Content-Type': mime, 'x-upsert': 'true' }, body: bytes,
     });
     if (!up.ok) return json({ error: 'Upload failed: ' + (await up.text()) }, 400);
-    return json({ url: `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${name}` });
+    return json({ url: `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${name}`, removed, note });
   } catch (e) { return json({ error: String(e) }, 500); }
 };

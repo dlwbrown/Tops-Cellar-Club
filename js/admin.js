@@ -1008,7 +1008,8 @@ async function handlePhotoPick(e, targetInputId, previewId, prefix, removeBg) {
     toast(removeBg ? 'Uploading & removing background…' : 'Uploading photo…');
     const r = await contentFn('upload-image', { imageBase64: dataUrl.split(',')[1], mime: 'image/jpeg', prefix, removeBg: !!removeBg });
     $(targetInputId).value = r.url; setPreview(previewId, r.url);
-    toast('Photo added — save to keep it.');
+    if (removeBg && r.removed === false) toast(r.note || 'Uploaded — but background was not removed.');
+    else toast('Photo added — save to keep it.');
   } catch (err) { toast(err.message || 'Upload failed.'); }
   finally { e.target.value = ''; }
 }
