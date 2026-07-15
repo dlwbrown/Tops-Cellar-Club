@@ -2,6 +2,8 @@
 
 Everything you need to run the Club from your phone. Sign in to the admin panel with your manager passphrase.
 
+**Getting in:** open the member app, tap **Settings** (Quick actions), and enter your **manager passphrase** under *Manager access* — it takes you straight to the admin dashboard. (You can also go to `/admin.html` directly.)
+
 ## Dashboard
 
 Your home base: key stats (members, waiting list, push open rate, prize entrants) and quick links to every tool.

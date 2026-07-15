@@ -56,11 +56,11 @@ html,body{background:var(--bg);color:var(--paper);font-family:var(--body);
 .btn{background:transparent;border:1px solid var(--gold);padding:14px 22px;border-radius:var(--r-sm);cursor:pointer;font-family:var(--cond);
   font-size:12px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold-br);
   transition:background .3s ease,border-color .3s ease,color .3s ease}
-.btn:hover{background:var(--wine);border-color:var(--wine-lift);color:var(--paper)}
+@media (hover:hover){.btn:hover{background:var(--wine);border-color:var(--wine-lift);color:var(--paper)}}
 .btn:active{background:var(--wine);border-color:var(--wine);color:var(--paper)}
 .btn--block{width:100%;padding:16px;font-size:12px}
 .btn--ghost{border-color:var(--hair)}
-.btn--ghost:hover{border-color:var(--gold-br);background:transparent;color:var(--gold-br)}
+@media (hover:hover){.btn--ghost:hover{border-color:var(--gold-br);background:transparent;color:var(--gold-br)}}
 
 .card{background:var(--surface);border:1px solid var(--cardbd);border-radius:var(--r-md)}
 .hairline{height:1px;background:var(--hair)}

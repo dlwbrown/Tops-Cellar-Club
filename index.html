@@ -155,6 +155,7 @@
           <div class="qa" data-go="discover" data-nav="discover"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/></svg></div><div class="t">Rate wines</div></div>
           <div class="qa" data-go="card" data-nav="card"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18"/></svg></div><div class="t">My card</div></div>
           <div class="qa" data-go="guide"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.5"/><path d="M12 17.2h.01"/></svg></div><div class="t">User guide</div></div>
+          <div class="qa" data-go="settings"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 17.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H2.8a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.7 7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9.5a1.7 1.7 0 0 0 1-1.5v-.2a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.4 1z"/></svg></div><div class="t">Settings</div></div>
         </div>
 
         <div class="label"><span>This week</span><div class="ln"></div></div>
@@ -171,7 +172,6 @@
           </div>
         </div>
         <div class="sp"></div>
-        <div style="text-align:center;padding:6px 0 18px"><a href="/admin.html" style="font-size:10px;color:#3a3830;letter-spacing:.5px;text-decoration:none;text-transform:uppercase">Staff access</a></div>
       </section>
 
       <!-- ============ BOX ============ -->
@@ -362,6 +362,25 @@
       <section class="view" id="guide">
         <div class="bhead"><div class="bk" data-go="home">&#8249;</div><div class="ti">User guide</div></div>
         <div class="mdwrap" id="guide-body"><div class="empty">Loading…</div></div>
+      </section>
+
+      <!-- ============ SETTINGS ============ -->
+      <section class="view" id="settings">
+        <div class="bhead"><div class="bk" data-go="home" data-nav="home">&#8249;</div><div class="ti">Settings</div></div>
+        <div style="padding:6px 24px calc(40px + env(safe-area-inset-bottom))">
+          <div class="label" style="padding-left:0;padding-right:0"><span>Membership</span><div class="ln"></div></div>
+          <div class="disp" id="set-name" style="font-size:22px;color:var(--paper)">&mdash;</div>
+          <div class="meta" id="set-no" style="margin-top:4px">&mdash;</div>
+
+          <div class="label" style="padding-left:0;padding-right:0"><span>Help</span><div class="ln"></div></div>
+          <button class="btn block ghost" data-go="guide">Read the user guide</button>
+
+          <div class="label" style="padding-left:0;padding-right:0"><span>Manager access</span><div class="ln"></div></div>
+          <p class="muted" style="font-size:12px;line-height:1.6;margin-bottom:14px">For store managers only. Enter the manager passphrase to open the admin panel.</p>
+          <div class="field" style="margin-top:0"><input class="fi" id="set-adminpass" type="password" inputmode="text" autocomplete="off" placeholder="Manager passphrase"></div>
+          <div id="set-adminerr" style="font-size:11px;min-height:15px;margin-top:8px;letter-spacing:.3px;color:var(--muted)"></div>
+          <button class="btn block" id="set-adminbtn" data-act="admin-unlock" style="margin-top:6px">Enter the admin panel</button>
+        </div>
       </section>
 
     </div>

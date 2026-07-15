@@ -617,6 +617,47 @@ function markNotificationsSeen() {
 }
 
 /* ============================================================= *
+ * SETTINGS + manager (admin) access
+ * ============================================================= */
+function renderSettings() {
+  const m = getMember(); if (!m) return;
+  const nm = `${m.first_name || ''} ${m.surname || ''}`.trim() || 'Cellar Member';
+  const nameEl = document.getElementById('set-name'); if (nameEl) nameEl.textContent = nm;
+  const noEl = document.getElementById('set-no'); if (noEl) noEl.textContent = m.membership_number ? ('Member No. ' + m.membership_number) : '';
+  const err = document.getElementById('set-adminerr'); if (err) { err.textContent = ''; err.style.color = 'var(--muted)'; }
+  const pass = document.getElementById('set-adminpass'); if (pass) pass.value = '';
+}
+
+// Validate the manager passphrase server-side (same check the admin panel uses),
+// then hand the token to the admin app via same-origin sessionStorage and open it.
+async function onAdminUnlock(btn) {
+  const inp = document.getElementById('set-adminpass');
+  const err = document.getElementById('set-adminerr');
+  const pass = ((inp && inp.value) || '').trim();
+  const fail = (msg) => { if (err) { err.style.color = '#d98a8a'; err.textContent = msg; } if (btn) btn.disabled = false; };
+  if (!pass) return fail('Enter the manager passphrase.');
+  btn.disabled = true; if (err) { err.style.color = 'var(--muted)'; err.textContent = 'Checking…'; }
+  try {
+    const res = await fetch('/.netlify/functions/admin-content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': pass },
+      body: JSON.stringify({ action: 'list-wine-codes' }),
+    });
+    if (res.status === 401) return fail('Incorrect passphrase.');
+    if (!res.ok && res.status !== 400) {
+      const d = await res.json().catch(() => ({}));
+      return fail(d.error || 'Could not verify right now. Try again.');
+    }
+    // Correct passphrase — the admin app reads this token on load and opens straight to the dashboard.
+    sessionStorage.setItem('cellar.admin', pass);
+    if (inp) inp.value = '';
+    window.location.href = '/admin.html';
+  } catch {
+    fail('Could not verify — check your connection.');
+  }
+}
+
+/* ============================================================= *
  * 11. MEMBERSHIP CARD (real QR)
  * ============================================================= */
 let qrRendered = false;
@@ -680,6 +721,7 @@ function wireDelegation() {
       if (act === 'save-rating') { saveRating(); return; }
       if (act === 'note-wine') { toast('Tasting notes coming soon.'); return; }
       if (act === 'enlarge') { e.stopPropagation(); openLightbox(actEl.dataset.img); return; }
+      if (act === 'admin-unlock') { await onAdminUnlock(actEl); return; }
     }
 
     const notifRow = e.target.closest('.nrow[data-notif-idx]');
@@ -689,6 +731,7 @@ function wireDelegation() {
       if (goEl.hasAttribute('data-stop')) e.stopPropagation();
       const target = goEl.dataset.go;
       if (target === 'wine' && goEl.dataset.wine) openWine(goEl.dataset.wine);
+      if (target === 'settings') renderSettings();
       go(target, goEl.dataset.nav);
     }
   });

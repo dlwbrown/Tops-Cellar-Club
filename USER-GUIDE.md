@@ -10,7 +10,11 @@ Welcome to the Club. Here's everything your app can do.
 
 ## Home
 
-Your home screen shows your membership at a glance, this month's highlights, and **Quick actions** to jump anywhere — Discovery Box, Magazine, Events, Specials, Rate wines, and your card.
+Your home screen shows your membership at a glance, this month's highlights, and **Quick actions** to jump anywhere — Discovery Box, Magazine, Events, Specials, Rate wines, your card, and **Settings**.
+
+## Settings
+
+Tap **Settings** (Quick actions) to see your membership details, open the **user guide**, or — for store managers — enter the **manager passphrase** to open the admin panel.
 
 The **bell** (top right) opens your notifications.
 
