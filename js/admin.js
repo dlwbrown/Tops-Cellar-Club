@@ -1194,6 +1194,9 @@ function wireManage() {
 /* ---------------- boot ---------------- */
 function start() {
   wireLogin(); wireCreate(); wireResult(); wireBroadcast(); wireMode(); wireDelegation(); wireManage(); wireInstallQr(); wireMaintenance(); wirePrizes(); wireOrders(); wirePhotos();
+  // Sign out — clear the manager token and return to the member app.
+  const so = $('dash-signout');
+  if (so) so.addEventListener('click', () => { TOKEN = ''; sessionStorage.removeItem(TOKEN_KEY); window.location.href = '/'; });
   if (TOKEN) {
     const hr = new Date().getHours();
     $('dash-greeting').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + ', Ashley';
