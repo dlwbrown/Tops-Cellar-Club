@@ -5,7 +5,7 @@
    3. A conservative cache so the shell loads offline — never cache the SW itself.
    Bump CACHE_VERSION on every release so clients update. */
 
-const CACHE_VERSION = 'cellar-v14';
+const CACHE_VERSION = 'cellar-v15';
 const SHELL = ['/', '/index.html', '/css/tokens.css', '/css/app.css', '/js/app.js', '/js/config.js', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {

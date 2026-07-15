@@ -284,15 +284,15 @@ function drawWheel(names, rot) {
   for (let i = 0; i < N; i++) {
     const a0 = -Math.PI / 2 + i * seg;
     x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, R, a0, a0 + seg); x.closePath();
-    x.fillStyle = i % 2 ? '#6f1d3a' : '#f6f5f2'; x.fill();
+    x.fillStyle = i % 2 ? '#181310' : '#c2a25a'; x.fill();
     x.strokeStyle = 'rgba(0,0,0,.5)'; x.lineWidth = 2; x.stroke();
-    x.save(); x.rotate(a0 + seg / 2); x.textAlign = 'right'; x.fillStyle = i % 2 ? '#f6f5f2' : '#0b0b0c';
+    x.save(); x.rotate(a0 + seg / 2); x.textAlign = 'right'; x.fillStyle = i % 2 ? '#dcc389' : '#181310';
     x.font = '600 20px "Saira Condensed", sans-serif';
     x.fillText(String(names[i] || '').slice(0, 16), R - 14, 7); x.restore();
   }
   x.restore();
-  x.beginPath(); x.arc(cx, cy, 26, 0, Math.PI * 2); x.fillStyle = '#000000'; x.fill();
-  x.strokeStyle = '#f6f5f2'; x.lineWidth = 3; x.stroke();
+  x.beginPath(); x.arc(cx, cy, 26, 0, Math.PI * 2); x.fillStyle = '#080706'; x.fill();
+  x.strokeStyle = '#c2a25a'; x.lineWidth = 3; x.stroke();
 }
 function spinTo(names, winnerIndex) {
   return new Promise((resolve) => {
@@ -322,7 +322,7 @@ async function runDraw() {
 function fireConfetti() {
   const c = $('confetti'); if (!c) return; c.hidden = false;
   const W = c.width = c.offsetWidth || window.innerWidth, H = c.height = c.offsetHeight || window.innerHeight, x = c.getContext('2d');
-  const cols = ['#f6f5f2', '#b3b0a9', '#ffffff', '#6f1d3a'];
+  const cols = ['#c2a25a', '#dcc389', '#f3efe6', '#6f1d3a'];
   const P = Array.from({ length: 130 }, () => ({ x: Math.random() * W, y: -20 - Math.random() * H * 0.4, r: 4 + Math.random() * 5, vy: 2 + Math.random() * 4, vx: -2 + Math.random() * 4, c: cols[Math.floor(Math.random() * cols.length)], a: Math.random() * Math.PI }));
   const t0 = Date.now();
   (function frame() {
@@ -763,10 +763,11 @@ async function downloadCard() {
   const x = c.getContext('2d');
   // wine gradient background
   const g = x.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, '#1b1b1e'); g.addColorStop(.58, '#0c0c0d'); g.addColorStop(1, '#000000');
+  g.addColorStop(0, '#181310'); g.addColorStop(.58, '#0b0906'); g.addColorStop(1, '#050403');
   x.fillStyle = g; x.fillRect(0, 0, W, H);
-  // white hairline frame
-  x.strokeStyle = 'rgba(246,245,242,.55)'; x.lineWidth = 3; x.strokeRect(40, 40, W - 80, H - 80);
+  // champagne-gold hairline frame
+  x.strokeStyle = 'rgba(194,162,90,.6)'; x.lineWidth = 2; x.strokeRect(40, 40, W - 80, H - 80);
+  x.strokeStyle = 'rgba(194,162,90,.28)'; x.lineWidth = 1; x.strokeRect(54, 54, W - 108, H - 108);
   // product photo (centred, not restyled) — only when the image toggle is on
   if (post.showImage && post.photoDataUrl) {
     const img = await loadImg(post.photoDataUrl);
@@ -776,25 +777,25 @@ async function downloadCard() {
     x.drawImage(img, (W - dw) / 2, 360, dw, dh);
   }
   // ribbon
-  x.fillStyle = '#f6f5f2'; roundRect(x, 70, 80, 360, 60, 4); x.fill();
-  x.fillStyle = '#0b0b0c'; x.font = '600 28px "Saira Condensed", sans-serif'; x.textBaseline = 'middle';
+  x.fillStyle = '#c2a25a'; roundRect(x, 70, 80, 360, 60, 4); x.fill();
+  x.fillStyle = '#181310'; x.font = '600 28px "Saira Condensed", sans-serif'; x.textBaseline = 'middle';
   x.fillText(post.type.toUpperCase(), 100, 111);
   // price badge
   if (post.price_found && post.price) {
-    x.beginPath(); x.arc(W - 150, 150, 86, 0, Math.PI * 2); x.fillStyle = '#000000'; x.fill();
-    x.lineWidth = 3; x.strokeStyle = '#f6f5f2'; x.stroke();
-    x.fillStyle = '#b3b0a9'; x.font = '600 22px "Saira Condensed"'; x.textAlign = 'center'; x.fillText('ONLY', W - 150, 122);
-    x.fillStyle = '#f6f5f2'; x.font = '600 46px "Cormorant Garamond", serif'; x.fillText(formatPrice(post.price), W - 150, 168);
+    x.beginPath(); x.arc(W - 150, 150, 86, 0, Math.PI * 2); x.fillStyle = '#080706'; x.fill();
+    x.lineWidth = 2; x.strokeStyle = '#c2a25a'; x.stroke();
+    x.fillStyle = '#dcc389'; x.font = '600 22px "Saira Condensed"'; x.textAlign = 'center'; x.fillText('ONLY', W - 150, 122);
+    x.fillStyle = '#f3efe6'; x.font = '600 46px "Playfair Display", serif'; x.fillText(formatPrice(post.price), W - 150, 168);
     x.textAlign = 'left';
   }
   // copy
   x.textAlign = 'center';
-  x.fillStyle = '#b3b0a9'; x.font = '600 28px "Saira Condensed"'; x.fillText(($('edit-kicker').value || '').toUpperCase(), W / 2, 880);
-  x.fillStyle = '#f6f5f2'; x.font = '600 72px "Cormorant Garamond", serif';
+  x.fillStyle = '#c2a25a'; x.font = '600 28px "Saira Condensed"'; x.fillText(($('edit-kicker').value || '').toUpperCase(), W / 2, 880);
+  x.fillStyle = '#f3efe6'; x.font = '600 72px "Playfair Display", serif';
   wrapText(x, $('edit-headline').value || '', W / 2, 960, W - 200, 76);
-  x.fillStyle = 'rgba(246,245,242,.85)'; x.font = '400 30px Jost';
+  x.fillStyle = 'rgba(243,239,230,.85)'; x.font = '400 30px Jost';
   wrapText(x, $('edit-body').value || '', W / 2, 1130, W - 240, 40);
-  x.fillStyle = '#b3b0a9'; x.font = '600 24px "Saira Condensed"'; x.fillText('TOPS CELLAR SELECTION · BEACON ISLE', W / 2, H - 80);
+  x.fillStyle = '#c2a25a'; x.font = '600 24px "Saira Condensed"'; x.fillText('TOPS CELLAR SELECTION · BEACON ISLE', W / 2, H - 80);
 
   const a = document.createElement('a');
   a.href = c.toDataURL('image/png'); a.download = 'cellar-post.png'; a.click();

@@ -1,49 +1,47 @@
-/* TOPS Cellar Selection — "Quiet Luxury" design system (LOCKED source of truth).
-   Single source of truth for colour, type and core components.
-   Pure-black private-cellar aesthetic: deep burgundy for action & selection,
-   a whisper of champagne for fine metallic marks, Jost (geometric sans) paired
-   with Cormorant Garamond (editorial serif). Keep token NAMES stable. */
+/* TOPS Cellar Selection — "Estate & Vintage" design system (LOCKED source of truth).
+   An elite collection-club aesthetic: warm near-black canvas with a soft gold
+   glow, fine champagne-gold hairline frames, high-contrast serif display
+   (Playfair Display) with Cormorant italics, Futura Condensed (Saira Condensed)
+   for uppercase labels, and Jost for body. Keep token NAMES stable. */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@300;400;500;600;700&family=Saira+Condensed:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Jost:wght@300;400;500;600&family=Saira+Condensed:wght@400;500;600;700&display=swap');
 
 :root{
-  /* ---- colour: black & white, hits of burgundy ---- */
-  --bg:#000000;            /* pure black canvas */
-  --surface:#0b0b0c;       /* near-black card */
-  --surface2:#141416;      /* graphite, raised */
-  --paper:#f6f5f2;         /* clean white — primary text */
-  --muted:#8c8a86;         /* soft grey — secondary text */
+  /* ---- colour: warm dark cellar, champagne gold, a whisper of wine ---- */
+  --bg:#080706;            /* warm near-black canvas */
+  --surface:#0f0d0b;       /* warm charcoal card */
+  --surface2:#17140f;      /* raised, warmer */
+  --paper:#f3efe6;         /* warm ivory — primary text */
+  --muted:#8f887b;         /* soft warm grey — secondary text */
 
-  /* white/grey accents — the old "gold" tokens are now monochrome so the whole
-     system reads black & white. Kept the NAMES so nothing breaks. */
-  --gold:#b3b0a9;          /* soft grey — eyebrows, fine labels, hairline marks */
-  --gold-br:#f6f5f2;       /* white — emphasis, active states, prices, icons */
+  /* champagne gold — the metallic accent: hairline frames, prices, fine labels */
+  --gold:#c2a25a; --gold-br:#dcc389;
 
-  /* burgundy — the single colour accent, used sparingly */
+  /* wine — a quiet secondary hit (selected states, the members' card) */
   --wine:#6f1d3a; --wine2:#4a1426; --wine-lift:#87264a;
 
   /* structure */
-  --hair:rgba(255,255,255,.13);        /* crisp white hairline */
-  --cardbd:rgba(255,255,255,.06);      /* fine card border */
+  --hair:rgba(194,162,90,.28);         /* champagne-gold hairline */
+  --hair-soft:rgba(194,162,90,.16);
+  --cardbd:rgba(220,195,137,.1);       /* fine warm border */
   --amber:#e0a93b; --green:#8fc97f;
 
   /* radii — architectural, never playful */
   --r-sm:2px; --r-md:4px; --r-lg:8px; --r-pill:2px;
 
   /* elevation — soft, deep, quiet */
-  --shadow:0 18px 50px rgba(0,0,0,.6);
-  --shadow-sm:0 8px 24px rgba(0,0,0,.45);
+  --shadow:0 20px 55px rgba(0,0,0,.6);
+  --shadow-sm:0 10px 26px rgba(0,0,0,.5);
 
   /* ---- type ----
-     Futura Condensed is the MAIN font: brand marks AND display headings.
-     Jost is the Futura family for body. Serif is a rare premium accent only.
-     --cond / --disp : Futura Condensed (Saira Condensed stand-in)
-     --body          : Jost (Futura family)
-     --serif         : Cormorant — subtle editorial accent (quotes, empty states) */
-  --cond:'Saira Condensed', 'Jost', 'Helvetica Neue', sans-serif;
-  --disp:'Saira Condensed', 'Jost', 'Helvetica Neue', sans-serif;
-  --body:'Jost', 'Helvetica Neue', Arial, sans-serif;
+     --disp  : Playfair Display — high-contrast serif for hero display & names
+     --serif : Cormorant — refined italic accents, quotes, empty states
+     --cond  : Saira Condensed — Futura Condensed uppercase labels/nav/buttons
+     --body  : Jost — the Futura family, for body copy */
+  --disp:'Playfair Display', 'Cormorant Garamond', Georgia, serif;
   --serif:'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --cond:'Saira Condensed', 'Jost', 'Helvetica Neue', sans-serif;
+  --body:'Jost', 'Helvetica Neue', Arial, sans-serif;
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
@@ -51,22 +49,22 @@ html,body{background:var(--bg);color:var(--paper);font-family:var(--body);
   -webkit-font-smoothing:antialiased;letter-spacing:.2px}
 
 .disp{font-family:var(--disp)}
-.eyebrow{font-family:var(--cond);font-size:11px;letter-spacing:3px;color:var(--paper);font-weight:500;text-transform:uppercase}
+.eyebrow{font-family:var(--cond);font-size:11px;letter-spacing:3.5px;color:var(--gold);font-weight:500;text-transform:uppercase}
 
-/* Buttons — Woolworths inverted block: solid white, black text. */
+/* Buttons — solid ivory block, black text (primary); gold hairline (secondary). */
 .btn{border:none;padding:15px 20px;border-radius:var(--r-sm);cursor:pointer;font-family:var(--cond);
   font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
-  background:var(--paper);color:#000;
+  background:var(--paper);color:#100c06;
   transition:background .28s ease,transform .28s ease,opacity .28s ease}
-.btn:hover{background:#e4e2dc}
+.btn:hover{background:#fff}
 .btn--block{width:100%;padding:17px;font-size:12px}
-.btn--ghost{background:transparent;border:1px solid var(--paper);color:var(--paper);font-weight:600}
-.btn--ghost:hover{background:rgba(255,255,255,.06)}
+.btn--ghost{background:transparent;border:1px solid var(--hair);color:var(--gold-br);font-weight:600}
+.btn--ghost:hover{border-color:var(--gold-br)}
 
 .card{background:var(--surface);border:1px solid var(--cardbd);border-radius:var(--r-md)}
 .hairline{height:1px;background:var(--hair)}
 
-.field-label{font-family:var(--cond);font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-weight:500;margin-bottom:9px}
+.field-label{font-family:var(--cond);font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;font-weight:500;margin-bottom:9px}
 .field-input{background:var(--surface);border:1px solid var(--cardbd);border-radius:var(--r-sm);padding:15px 15px;
   font-size:13px;color:var(--paper);width:100%;font-family:var(--body);transition:border-color .25s ease}
 .field-input::placeholder{color:var(--muted)}
