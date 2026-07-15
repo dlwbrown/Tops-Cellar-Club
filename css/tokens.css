@@ -51,15 +51,16 @@ html,body{background:var(--bg);color:var(--paper);font-family:var(--body);
 .disp{font-family:var(--disp)}
 .eyebrow{font-family:var(--cond);font-size:11px;letter-spacing:3.5px;color:var(--gold);font-weight:500;text-transform:uppercase}
 
-/* Buttons — solid ivory block, black text (primary); gold hairline (secondary). */
-.btn{border:none;padding:15px 20px;border-radius:var(--r-sm);cursor:pointer;font-family:var(--cond);
-  font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
-  background:var(--paper);color:#100c06;
-  transition:background .28s ease,transform .28s ease,opacity .28s ease}
-.btn:hover{background:#fff}
-.btn--block{width:100%;padding:17px;font-size:12px}
-.btn--ghost{background:transparent;border:1px solid var(--hair);color:var(--gold-br);font-weight:600}
-.btn--ghost:hover{border-color:var(--gold-br)}
+/* Buttons — thin outlined "box" (Elegance Cellars): champagne border, gold text,
+   filling deep burgundy on press to bring the wine-red through on interaction. */
+.btn{background:transparent;border:1px solid var(--gold);padding:14px 22px;border-radius:var(--r-sm);cursor:pointer;font-family:var(--cond);
+  font-size:12px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold-br);
+  transition:background .3s ease,border-color .3s ease,color .3s ease}
+.btn:hover{background:var(--wine);border-color:var(--wine-lift);color:var(--paper)}
+.btn:active{background:var(--wine);border-color:var(--wine);color:var(--paper)}
+.btn--block{width:100%;padding:16px;font-size:12px}
+.btn--ghost{border-color:var(--hair)}
+.btn--ghost:hover{border-color:var(--gold-br);background:transparent;color:var(--gold-br)}
 
 .card{background:var(--surface);border:1px solid var(--cardbd);border-radius:var(--r-md)}
 .hairline{height:1px;background:var(--hair)}
