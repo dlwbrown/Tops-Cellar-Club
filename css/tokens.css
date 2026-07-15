@@ -9,8 +9,8 @@
 :root{
   /* ---- colour: warm dark cellar, champagne gold, a whisper of wine ---- */
   --bg:#080706;            /* warm near-black canvas */
-  --surface:#0f0d0b;       /* warm charcoal card */
-  --surface2:#17140f;      /* raised, warmer */
+  --surface:rgba(20,15,11,.72);   /* warm charcoal card — slightly translucent so the backdrop glows through */
+  --surface2:rgba(31,24,18,.82);  /* raised, warmer */
   --paper:#f3efe6;         /* warm ivory — primary text */
   --muted:#8f887b;         /* soft warm grey — secondary text */
 
