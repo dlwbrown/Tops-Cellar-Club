@@ -64,8 +64,17 @@ export async function triggerAndroidInstall() {
  * ============================================================= */
 export async function registerSW() {
   if (!('serviceWorker' in navigator)) return null;
-  try { return await navigator.serviceWorker.register('/service-worker.js'); }
-  catch { return null; }
+  // When a new service worker takes control (after a deploy), reload once so the
+  // page picks up the fresh CSS/JS immediately instead of running stale code.
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloading) return; reloading = true; window.location.reload();
+  });
+  try {
+    const reg = await navigator.serviceWorker.register('/service-worker.js');
+    reg.update().catch(() => {}); // check for a newer worker on every launch
+    return reg;
+  } catch { return null; }
 }
 
 /* ============================================================= *
