@@ -51,7 +51,7 @@ Tap **Card** for your digital membership card and personal **QR code**. Show it 
 
 ## Discovery Box
 
-Each month's Discovery Box is a hand-picked mix of **wine, craft beer and spirits**. It appears on the home screen — tap it to see what's inside and either **join the priority list** or **reserve** it, depending on the season.
+Each month's Discovery Box is a hand-picked selection of **wines**. It appears on the home screen — tap it to see what's inside and either **join the priority list** or **reserve** it, depending on the season.
 
 ## Events
 
