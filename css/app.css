@@ -102,10 +102,10 @@ body{
 .hi{font-family:var(--disp);font-size:33px;font-weight:500;color:var(--paper);line-height:1.06;letter-spacing:.3px}
 .hi em{font-style:italic;color:var(--gold-br)}
 .meta{margin-top:9px;font-size:9.5px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-weight:500}
-.prize{margin:0 20px 6px;display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:var(--r-md);background:linear-gradient(90deg,rgba(111,29,58,.28),transparent);border:1px solid rgba(228,207,154,.18)}
+.prize{margin:0 20px 6px;display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:var(--r-md);background:linear-gradient(90deg,rgba(111,29,58,.28),transparent);border:1px solid rgba(255,255,255,.18)}
 .prize .ic{font-size:17px}.prize .tx{font-size:10.5px;line-height:1.4;letter-spacing:.2px}.prize .tx b{color:var(--gold-br)}
 .hero{margin:16px 20px 0;border-radius:var(--r-lg);overflow:hidden;position:relative;min-height:214px;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;cursor:pointer;
-  background:radial-gradient(120% 90% at 82% 0%,rgba(135,38,74,.5),transparent 55%),linear-gradient(158deg,var(--wine),var(--wine2) 55%,#1c0810);border:1px solid rgba(228,207,154,.22);box-shadow:var(--shadow-sm)}
+  background:radial-gradient(120% 90% at 82% 0%,rgba(135,38,74,.5),transparent 55%),linear-gradient(158deg,var(--wine),var(--wine2) 55%,#1c0810);border:1px solid rgba(255,255,255,.22);box-shadow:var(--shadow-sm)}
 .hero::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.02) 0 2px,transparent 2px 10px)}
 .hero.img{background:none}
 .hero.img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.8));z-index:0}
@@ -215,9 +215,9 @@ body{
 
 /* card */
 .cardview{padding:10px 24px 28px;text-align:center}
-.memcard{margin-top:10px;border-radius:var(--r-lg);padding:28px 24px;background:linear-gradient(158deg,#1a1a1e,#050506);border:1px solid rgba(228,207,154,.24);position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.memcard{margin-top:10px;border-radius:var(--r-lg);padding:28px 24px;background:linear-gradient(158deg,#1a1a1e,#050506);border:1px solid rgba(255,255,255,.24);position:relative;overflow:hidden;box-shadow:var(--shadow)}
 .memcard::before{content:"";position:absolute;inset:0;background:radial-gradient(130% 80% at 82% 0%,rgba(111,29,58,.35),transparent 55%)}
-.memcard::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(228,207,154,.06) 50%,transparent 60%)}
+.memcard::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.06) 50%,transparent 60%)}
 .memcard .eb{position:relative}
 .memcard .nm{position:relative;font-family:var(--disp);font-size:29px;font-weight:600;margin-top:8px;letter-spacing:.3px}
 .memcard .no{position:relative;font-size:10.5px;letter-spacing:2.4px;color:var(--gold-br);margin-top:6px}
@@ -313,7 +313,7 @@ body{
 .som-send:hover{background:var(--wine-lift)}
 
 /* re-engagement banner (notifications later disabled) */
-.reengage{margin:12px 20px 0;background:rgba(111,29,58,.22);border:1px solid rgba(228,207,154,.2);border-radius:var(--r-md);padding:14px 16px;display:flex;gap:12px;align-items:center}
+.reengage{margin:12px 20px 0;background:rgba(111,29,58,.22);border:1px solid rgba(255,255,255,.2);border-radius:var(--r-md);padding:14px 16px;display:flex;gap:12px;align-items:center}
 .reengage .tx{flex:1;font-size:11px;color:var(--paper);line-height:1.45}
 .reengage .tx b{color:var(--gold-br)}
 .reengage .btn{padding:10px 15px;font-size:10px}
@@ -393,3 +393,15 @@ body{
 .bhead{position:relative;z-index:6}
 .bhead .bk{position:relative;z-index:6}
 .wdhero .bk2,.wdhero .fav{z-index:6}
+
+/* ---- Futura Condensed brand voice ----
+   Placed last so it wins over the serif (--disp) set on wordmark/titles above.
+   Serif stays on editorial NAMES (wines, collection box, greeting, magazine). */
+.wm,.bhead .ti,.gate h1,.alerts h1,.meta,.label span,.hero .ht,.hero .hn,
+.mini .te,.mini .dt,.winfo .te,.wbody .te,.spec .k,.ev .cal .mo,.ev .cal .dy,
+.mag-b .te,.magt .te,.qa .t,.ni2,.ctab,.schip,.pill,.memcard .no,.nrow .nt .tm,
+.nd-tm,.soon,.field .fl,.stp .nm,.btn,.reengage .btn,.ev .ei .rsvp,
+#boot .nm,#boot .eb{font-family:var(--cond)}
+.wm{font-size:22px;letter-spacing:.5px}
+.bhead .ti{font-size:24px;letter-spacing:.5px}
+.gate h1,.alerts h1{text-transform:uppercase;letter-spacing:1.5px}

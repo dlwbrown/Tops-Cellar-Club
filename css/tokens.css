@@ -4,36 +4,41 @@
    a whisper of champagne for fine metallic marks, Jost (geometric sans) paired
    with Cormorant Garamond (editorial serif). Keep token NAMES stable. */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@300;400;500;600;700&family=Saira+Condensed:wght@400;500;600;700&display=swap');
 
 :root{
-  /* ---- colour ---- */
+  /* ---- colour: black & white, hits of burgundy ---- */
   --bg:#000000;            /* pure black canvas */
-  --surface:#0c0c0e;       /* charcoal card */
-  --surface2:#151518;      /* graphite, raised */
-  --paper:#f4f1ea;         /* warm white — primary text */
-  --muted:#8f8b83;         /* soft grey — secondary text */
+  --surface:#0b0b0c;       /* near-black card */
+  --surface2:#141416;      /* graphite, raised */
+  --paper:#f6f5f2;         /* clean white — primary text */
+  --muted:#8c8a86;         /* soft grey — secondary text */
 
-  /* champagne metallic — RESERVED: fine marks, eyebrows, hairlines, badges.
-     Never a large fill; luxury is restraint. */
-  --gold:#bda15f; --gold-br:#e4cf9a;
+  /* white/grey accents — the old "gold" tokens are now monochrome so the whole
+     system reads black & white. Kept the NAMES so nothing breaks. */
+  --gold:#b3b0a9;          /* soft grey — eyebrows, fine labels, hairline marks */
+  --gold-br:#f6f5f2;       /* white — emphasis, active states, prices, icons */
 
-  /* burgundy — the accent for action, selection, CTAs and highlights */
+  /* burgundy — the single colour accent, used sparingly */
   --wine:#6f1d3a; --wine2:#4a1426; --wine-lift:#87264a;
 
   /* structure */
-  --hair:rgba(228,207,154,.18);        /* champagne hairline */
-  --cardbd:rgba(255,255,255,.055);     /* fine card border */
+  --hair:rgba(255,255,255,.13);        /* crisp white hairline */
+  --cardbd:rgba(255,255,255,.06);      /* fine card border */
   --amber:#e0a93b; --green:#8fc97f;
 
   /* radii — architectural, never playful */
   --r-sm:2px; --r-md:4px; --r-lg:8px; --r-pill:2px;
 
   /* elevation — soft, deep, quiet */
-  --shadow:0 18px 50px rgba(0,0,0,.55);
-  --shadow-sm:0 8px 24px rgba(0,0,0,.4);
+  --shadow:0 18px 50px rgba(0,0,0,.6);
+  --shadow-sm:0 8px 24px rgba(0,0,0,.45);
 
-  /* ---- type ---- */
+  /* ---- type ----
+     --cond : Futura Condensed brand voice (wordmark, titles, labels, buttons)
+     --disp : Cormorant serif for premium editorial moments
+     --body : Jost, the geometric Futura family, for everything else */
+  --cond:'Saira Condensed', 'Jost', 'Helvetica Neue', sans-serif;
   --disp:'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   --body:'Jost', 'Helvetica Neue', Arial, sans-serif;
 }
@@ -43,11 +48,11 @@ html,body{background:var(--bg);color:var(--paper);font-family:var(--body);
   -webkit-font-smoothing:antialiased;letter-spacing:.2px}
 
 .disp{font-family:var(--disp)}
-.eyebrow{font-size:9px;letter-spacing:3px;color:var(--gold-br);font-weight:600;text-transform:uppercase}
+.eyebrow{font-family:var(--cond);font-size:11px;letter-spacing:3px;color:var(--paper);font-weight:500;text-transform:uppercase}
 
 /* Buttons — rectangular, letter-spaced, confident. Burgundy = primary action. */
-.btn{border:none;padding:15px 20px;border-radius:var(--r-sm);cursor:pointer;
-  font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+.btn{border:none;padding:15px 20px;border-radius:var(--r-sm);cursor:pointer;font-family:var(--cond);
+  font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
   background:var(--wine);color:var(--paper);
   transition:background .28s ease,transform .28s ease,opacity .28s ease}
 .btn:hover{background:var(--wine-lift)}
@@ -58,7 +63,7 @@ html,body{background:var(--bg);color:var(--paper);font-family:var(--body);
 .card{background:var(--surface);border:1px solid var(--cardbd);border-radius:var(--r-md)}
 .hairline{height:1px;background:var(--hair)}
 
-.field-label{font-size:9px;letter-spacing:2px;color:var(--gold-br);text-transform:uppercase;font-weight:600;margin-bottom:9px}
+.field-label{font-family:var(--cond);font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-weight:500;margin-bottom:9px}
 .field-input{background:var(--surface);border:1px solid var(--cardbd);border-radius:var(--r-sm);padding:15px 15px;
   font-size:13px;color:var(--paper);width:100%;font-family:var(--body);transition:border-color .25s ease}
 .field-input::placeholder{color:var(--muted)}
