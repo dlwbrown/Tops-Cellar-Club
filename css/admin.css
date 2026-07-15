@@ -76,7 +76,7 @@ body{background:radial-gradient(135% 80% at 50% -12%,#141416,#000 58%);min-heigh
 .tinput{margin-top:11px;background:var(--surface);border:1px solid var(--cardbd);border-radius:var(--r-sm);padding:14px 15px;font-size:16px;color:var(--paper);width:100%;font-family:var(--body);transition:border-color .25s ease}
 .tinput:focus{outline:none;border-color:var(--gold-br)}
 textarea.tinput{min-height:66px;resize:vertical}
-.hint{font-size:10px;color:var(--muted);margin-top:7px;font-style:italic;font-family:var(--disp)}
+.hint{font-size:11px;color:var(--muted);margin-top:7px;font-style:italic;font-family:var(--serif)}
 .gen{margin-top:18px;width:100%;border:none;padding:16px;border-radius:var(--r-sm);cursor:pointer;background:var(--paper);color:#000;font-weight:600;font-size:12px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:9px;transition:background .28s ease}
 .gen:hover{background:#e4e2dc}
 
@@ -171,7 +171,7 @@ textarea.tinput{min-height:66px;resize:vertical}
 .tier.d{background:rgba(170,170,180,.13);color:#c9c9d2;border:1px solid rgba(170,170,180,.32)}
 .tier.p{background:linear-gradient(180deg,var(--gold-br),var(--gold));color:#1a1206}
 
-.empty{padding:44px 32px;text-align:center;color:var(--muted);font-style:italic;font-family:var(--disp);font-size:15px}
+.empty{padding:44px 32px;text-align:center;color:var(--muted);font-style:italic;font-family:var(--serif);font-size:17px}
 .sp{height:22px}
 
 /* nav */
