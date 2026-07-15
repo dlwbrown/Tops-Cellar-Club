@@ -157,7 +157,17 @@ export async function registerMember(form) {
     install_completed: isInstalled(),
     marketing_consent: !!form.marketing_consent,
   });
-  setMember({ ...member, fav_wine_styles: form.fav_wine_styles || [], fav_spirits: form.fav_spirits || [] });
+  // Keep the display name/number locally even if the register response omits them,
+  // so the app can greet the member by name straight away.
+  setMember({
+    ...member,
+    first_name: member.first_name || form.first_name || '',
+    surname: member.surname || form.surname || '',
+    membership_number: member.membership_number || member.membership_no || '',
+    preferred_store: member.preferred_store || form.preferred_store || '',
+    fav_wine_styles: form.fav_wine_styles || [],
+    fav_spirits: form.fav_spirits || [],
+  });
   return member;
 }
 
@@ -518,12 +528,35 @@ function renderWineDetail(w) {
     <div style="margin-top:18px;display:flex;gap:10px"><button class="btn" style="flex:1" data-act="rate-wine" data-wine="${esc(w.id)}" data-wname="${esc(w.name)}">Add my rating</button><button class="btn ghost" data-act="note-wine">My notes</button></div>`;
 }
 
-// Refresh the member's membership type (set by admin) so in-app targeting is accurate.
+// Refresh the member's membership type (set by admin) and hydrate their name/number
+// from the server, so the app greets them by name even if the local record is old.
 async function refreshMemberType() {
   const m = getMember(); if (!m) return;
   try {
     const me = await memberApi('get-me', { member_id: m.id });
-    if (me && ('membership_type' in me)) { setMember({ ...m, membership_type: me.membership_type }); loadNotifications(); }
+    if (!me || me.error) return;
+    const patch = { ...m };
+    if ('membership_type' in me) patch.membership_type = me.membership_type;
+    if (me.first_name) patch.first_name = me.first_name;
+    if (me.surname) patch.surname = me.surname;
+    if (me.membership_number) patch.membership_number = me.membership_number;
+    setMember(patch);
+    loadNotifications();
+    // Re-render the greeting and card now that the real name/number are available.
+    const g = document.getElementById('greeting');
+    if (g && patch.first_name) {
+      const hour = new Date().getHours();
+      const part = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+      g.innerHTML = `${part},<br><em>${esc(patch.first_name)}</em>`;
+      const meta = document.getElementById('home-meta');
+      if (meta) {
+        const bits = [];
+        if (patch.membership_number) bits.push('Member No. ' + esc(patch.membership_number));
+        if (patch.preferred_store) bits.push(esc(patch.preferred_store));
+        meta.textContent = bits.join(' · ') || 'Tops Cellar Selection';
+      }
+    }
+    if (document.getElementById('card')?.classList.contains('on')) renderCard();
   } catch {}
 }
 

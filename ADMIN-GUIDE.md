@@ -23,7 +23,7 @@ Add, edit and remove everything members see — no technical knowledge needed. *
 
 - **Wines** — name, producer, region, varietal, story, pairing, tasting notes, awards, rating, image. These appear in the member app's Discover list and become favouritable and ratable.
 - **Events** — title, date & time, location, capacity, description, image. These show under Events with RSVP.
-- **Discovery Boxes** — title, month, price, what's inside (one item per line), availability, status, image.
+- **Discovery Boxes** — title, month, price, what's inside (one item per line — mix wine, craft beer and spirits freely), availability, status, image.
 - **Magazine** — issues members can read (see below).
 - **Specials** — member-only pricing shown on the Specials screen (title, category, member & normal price, valid-until date, photo, link, and a published/draft status).
 
