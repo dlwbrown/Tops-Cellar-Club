@@ -50,15 +50,15 @@ html,body{background:var(--bg);color:var(--paper);font-family:var(--body);
 .disp{font-family:var(--disp)}
 .eyebrow{font-family:var(--cond);font-size:11px;letter-spacing:3px;color:var(--paper);font-weight:500;text-transform:uppercase}
 
-/* Buttons — rectangular, letter-spaced, confident. Burgundy = primary action. */
+/* Buttons — Woolworths inverted block: solid white, black text. */
 .btn{border:none;padding:15px 20px;border-radius:var(--r-sm);cursor:pointer;font-family:var(--cond);
   font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
-  background:var(--wine);color:var(--paper);
+  background:var(--paper);color:#000;
   transition:background .28s ease,transform .28s ease,opacity .28s ease}
-.btn:hover{background:var(--wine-lift)}
+.btn:hover{background:#e4e2dc}
 .btn--block{width:100%;padding:17px;font-size:12px}
-.btn--ghost{background:transparent;border:1px solid var(--hair);color:var(--gold-br);font-weight:600}
-.btn--ghost:hover{border-color:var(--gold-br)}
+.btn--ghost{background:transparent;border:1px solid var(--paper);color:var(--paper);font-weight:600}
+.btn--ghost:hover{background:rgba(255,255,255,.06)}
 
 .card{background:var(--surface);border:1px solid var(--cardbd);border-radius:var(--r-md)}
 .hairline{height:1px;background:var(--hair)}

@@ -763,7 +763,7 @@ async function downloadCard() {
   const x = c.getContext('2d');
   // wine gradient background
   const g = x.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, '#6f1d3a'); g.addColorStop(.58, '#3d121b'); g.addColorStop(1, '#160709');
+  g.addColorStop(0, '#1b1b1e'); g.addColorStop(.58, '#0c0c0d'); g.addColorStop(1, '#000000');
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   // white hairline frame
   x.strokeStyle = 'rgba(246,245,242,.55)'; x.lineWidth = 3; x.strokeRect(40, 40, W - 80, H - 80);
