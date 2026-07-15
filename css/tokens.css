@@ -1,37 +1,65 @@
-/* TOPS Cellar Selection Club — "Hushed Luxury" design system (LOCKED)
+/* TOPS Cellar Selection — "Quiet Luxury" design system (LOCKED source of truth).
    Single source of truth for colour, type and core components.
-   Port screen markup from the approved prototypes; keep these tokens. */
+   Pure-black private-cellar aesthetic: deep burgundy for action & selection,
+   a whisper of champagne for fine metallic marks, Jost (geometric sans) paired
+   with Cormorant Garamond (editorial serif). Keep token NAMES stable. */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@300;400;500;600;700&display=swap');
 
 :root{
-  /* colour */
-  --bg:#100f12; --surface:#1a1a1e; --surface2:#222227;
-  --paper:#f7f4ee; --muted:#8a857c;
-  --gold:#c2a25a; --gold-br:#d8bd7e;
-  --wine:#5e1a27; --wine2:#3d121b;
-  --hair:rgba(194,162,90,.26); --cardbd:rgba(255,255,255,.06);
+  /* ---- colour ---- */
+  --bg:#000000;            /* pure black canvas */
+  --surface:#0c0c0e;       /* charcoal card */
+  --surface2:#151518;      /* graphite, raised */
+  --paper:#f4f1ea;         /* warm white — primary text */
+  --muted:#8f8b83;         /* soft grey — secondary text */
+
+  /* champagne metallic — RESERVED: fine marks, eyebrows, hairlines, badges.
+     Never a large fill; luxury is restraint. */
+  --gold:#bda15f; --gold-br:#e4cf9a;
+
+  /* burgundy — the accent for action, selection, CTAs and highlights */
+  --wine:#6f1d3a; --wine2:#4a1426; --wine-lift:#87264a;
+
+  /* structure */
+  --hair:rgba(228,207,154,.18);        /* champagne hairline */
+  --cardbd:rgba(255,255,255,.055);     /* fine card border */
   --amber:#e0a93b; --green:#8fc97f;
-  /* type */
-  --disp:'Cormorant Garamond', serif;
-  --body:'Inter', sans-serif;
+
+  /* radii — architectural, never playful */
+  --r-sm:2px; --r-md:4px; --r-lg:8px; --r-pill:2px;
+
+  /* elevation — soft, deep, quiet */
+  --shadow:0 18px 50px rgba(0,0,0,.55);
+  --shadow-sm:0 8px 24px rgba(0,0,0,.4);
+
+  /* ---- type ---- */
+  --disp:'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --body:'Jost', 'Helvetica Neue', Arial, sans-serif;
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{background:var(--bg);color:var(--paper);font-family:var(--body);-webkit-font-smoothing:antialiased}
+html,body{background:var(--bg);color:var(--paper);font-family:var(--body);
+  -webkit-font-smoothing:antialiased;letter-spacing:.2px}
 
 .disp{font-family:var(--disp)}
-.eyebrow{font-size:8px;letter-spacing:2.4px;color:var(--gold);font-weight:700;text-transform:uppercase}
+.eyebrow{font-size:9px;letter-spacing:3px;color:var(--gold-br);font-weight:600;text-transform:uppercase}
 
-.btn{border:none;padding:13px 18px;border-radius:30px;cursor:pointer;font-size:13px;font-weight:700;
-  letter-spacing:.2px;background:linear-gradient(180deg,var(--gold-br),var(--gold));color:#241a08}
-.btn--block{width:100%;padding:15px;font-size:14px}
+/* Buttons — rectangular, letter-spaced, confident. Burgundy = primary action. */
+.btn{border:none;padding:15px 20px;border-radius:var(--r-sm);cursor:pointer;
+  font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  background:var(--wine);color:var(--paper);
+  transition:background .28s ease,transform .28s ease,opacity .28s ease}
+.btn:hover{background:var(--wine-lift)}
+.btn--block{width:100%;padding:17px;font-size:12px}
 .btn--ghost{background:transparent;border:1px solid var(--hair);color:var(--gold-br);font-weight:600}
+.btn--ghost:hover{border-color:var(--gold-br)}
 
-.card{background:var(--surface);border:1px solid var(--cardbd);border-radius:16px}
+.card{background:var(--surface);border:1px solid var(--cardbd);border-radius:var(--r-md)}
 .hairline{height:1px;background:var(--hair)}
 
-.field-label{font-size:10px;letter-spacing:1.4px;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:7px}
-.field-input{background:var(--surface);border:1px solid var(--cardbd);border-radius:12px;padding:13px 14px;
-  font-size:13px;color:var(--paper);width:100%;font-family:var(--body)}
+.field-label{font-size:9px;letter-spacing:2px;color:var(--gold-br);text-transform:uppercase;font-weight:600;margin-bottom:9px}
+.field-input{background:var(--surface);border:1px solid var(--cardbd);border-radius:var(--r-sm);padding:15px 15px;
+  font-size:13px;color:var(--paper);width:100%;font-family:var(--body);transition:border-color .25s ease}
 .field-input::placeholder{color:var(--muted)}
+.field-input:focus{outline:none;border-color:var(--gold-br)}
